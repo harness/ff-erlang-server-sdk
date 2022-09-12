@@ -1,4 +1,4 @@
--module(cache_repository).
+-module(cfclient_cache_repository).
 
 -export([]).
 
