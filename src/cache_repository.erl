@@ -6,7 +6,12 @@
 %% @end
 get_flag_and_cache(CachePID, Identifier) ->
   FlagKey = format_flag_key(Identifier),
-  Flag = lru:get(CachePID, FlagKey).
+  Flag = lru:get(CachePID, FlagKey),
+  if
+    Flag /= undefined->
+      Flag
+  end.
+
 
 
 
