@@ -1,6 +1,6 @@
 -module(cfclient_cache_repository).
 
--export([]).
+-export([get_flag_and_cache/2]).
 
 %% @doc Get flag value from cache
 %% @end
@@ -12,8 +12,10 @@ get_flag_and_cache(CachePID, Identifier) ->
       Flag;
     %% TODO need to return an OAPI generated model for FeatureConfig once OAPI is integrated.
     true ->
-      io:fwrite(flag.DefaultOnState)
-end
+    %%      cfapi_feature_config
+    undefined
+
+end.
 
 
 
