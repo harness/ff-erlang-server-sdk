@@ -5,7 +5,8 @@
 
 get_flag_and_cache_test() ->
   meck:new(lru),
-  meck:expect(lru, lru:get, undefined),
-  ?assertEqual(undefined, cfclient_cache_repository:get_flag_and_cache(21, yes)),
+  FakePID = spawn(cfclient_cache_repository_test),
+  meck:expect(lru, get, fun(FakePID , "yes") -> 21 end),
+  ?assertEqual(undefined, cfclient_cache_repository:get_flag_and_cache(FakePID, "yes")),
   meck:unload(lru).
 
