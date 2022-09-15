@@ -18,5 +18,11 @@ get_flag_and_cache_test() ->
   ?assertEqual(undefined, cfclient_cache_repository:get_flag_and_cache(PID, "does_not_exist")),
   meck:unload(lru).
 
+format_flag_key_test() ->
+  Identifier = "target_1",
+  ?assertEqual("flags/target_1", cfclient_cache_repository:format_flag_key(Identifier)).
 
 
+format_segment_key_test() ->
+  Identifier = "segment_1",
+  ?assertEqual("segments/segment_1", cfclient_cache_repository:format_segment_key(Identifier)).
