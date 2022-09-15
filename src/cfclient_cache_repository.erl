@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
--export([get_from_cache/2, set_to_cache/3]).
+-export([get_from_cache/2, set_to_cache/3, format_key/1]).
 
 -type flag() :: {flag, Identifier :: string()}.
 -type segment() :: {segment, Identifier :: string()}.
@@ -15,10 +15,10 @@
 %% @TODO Should NOT return string. This needs to be cfapi_feature_config for flag and cfapi_segment for segment
 -spec get_from_cache(flag() | segment(), CachePID :: pid()) -> string().
 get_from_cache({flag, Identifier}, CachePID) ->
-  FlagKey = format_flag_key({flag, Identifier}),
+  FlagKey = format_key({flag, Identifier}),
   get(CachePID, FlagKey);
 get_from_cache({segment, Identifier}, CachePID) ->
-  FlagKey = format_segment_key({segment, Identifier}),
+  FlagKey = format_key({segment, Identifier}),
   get(CachePID, FlagKey).
 
 -spec get(CachePID :: pid(), Identifier :: string()) -> term().
@@ -35,24 +35,27 @@ get(CachePID, FlagKey) ->
 %% @doc Places a flag or segment into the cache with the new value
 %% @end
 %% @TODO - relies on cfapi_feature_config type
--spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> string().
+-spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> boolean().
 set_to_cache({flag, _}, Feature,  CachePID) ->
   erlang:error(not_implemented).
 
-%%-spec set(CachePID :: pid(), Identifier :: string()) -> term().
-%%set(_Arg0, _Arg1) ->
-%%  erlang:error(not_implemented).
-%%
-%%%% @TODO - relies on cfapi_feature_config type
-%%-spec is_flag_outdated(target() | segment(), any()) -> any().
-%%is_flag_outdated({flag, Identifier}, CachePID) ->
-%%  erlang:error(not_implemented).
+-spec set(CachePID :: pid(), Identifier :: string()) -> term().
+set(_Arg0, _Arg1) ->
+  erlang:error(not_implemented).
 
--spec format_flag_key(flag() | segment()) -> string().
-format_flag_key({flag, Identifier}) ->
-  "flags/" ++ Identifier.
-format_segment_key({segment, Identifier}) ->
+%%%%%% @TODO - relies on cfapi_feature_config type
+%%-spec is_outdated(target() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment()) -> boolean().
+%%is_outdated({flag, Identifier}, Feature) ->
+%%  false;
+%%is_outdated({segment, Identifier}, {segment, Identifier}) ->
+%%  true.
+
+-spec format_key(flag() | segment()) -> string().
+format_key({flag, Identifier}) ->
+  "flags/" ++ Identifier;
+format_key({segment, Identifier}) ->
   "segments/" ++ Identifier.
+
 
 
 

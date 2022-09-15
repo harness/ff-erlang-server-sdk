@@ -30,9 +30,6 @@ get_from_cache_test() ->
   ?assertEqual(undefined, cfclient_cache_repository:get_from_cache({segment, "does_not_exist"}, PID)),
   meck:unload(lru).
 
-format_flag_key_test() ->
-  ?assertEqual("flags/flag_1", cfclient_cache_repository:format_flag_key({flag, "flag_1"})).
-
-
-format_segment_key_test() ->
-  ?assertEqual("segments/segment_1", cfclient_cache_repository:format_segment_key({segment, "segment_1"})).
+format_key_test() ->
+  ?assertEqual("flags/flag_1", cfclient_cache_repository:format_key({flag, "flag_1"})),
+  ?assertEqual("segments/segment_1", cfclient_cache_repository:format_key({segment, "segment_1"})).
