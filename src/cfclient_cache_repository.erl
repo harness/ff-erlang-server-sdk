@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
--export([get_from_cache/2, set_to_cache/2]).
+-export([get_from_cache/2, set_to_cache/3]).
 
 -type flag() :: {flag, Identifier :: string()}.
 -type segment() :: {segment, Identifier :: string()}.
@@ -35,8 +35,8 @@ get(CachePID, FlagKey) ->
 %% @doc Places a flag or segment into the cache with the new value
 %% @end
 %% @TODO - relies on cfapi_feature_config type
--spec set_to_cache(flag() | segment(), cfapi_feature_config(), CachePID :: pid()) -> string().
-set_to_cache({flag, Identifier}, CachePID) ->
+-spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> string().
+set_to_cache({flag, _}, Feature,  CachePID) ->
   erlang:error(not_implemented).
 
 %%-spec set(CachePID :: pid(), Identifier :: string()) -> term().
