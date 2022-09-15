@@ -5,7 +5,8 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
--export([get_from_cache/2, set_to_cache/3, format_key/1]).
+%% TODO some of these don't need to be exported. Re-visit.
+-export([get_from_cache/2, set_to_cache/3, format_key/1, is_outdated/3]).
 
 -type flag() :: {flag, Identifier :: string()}.
 -type segment() :: {segment, Identifier :: string()}.
@@ -44,11 +45,13 @@ set(_Arg0, _Arg1) ->
   erlang:error(not_implemented).
 
 %%%%%% @TODO - relies on cfapi_feature_config type
-%%-spec is_outdated(target() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment()) -> boolean().
-%%is_outdated({flag, Identifier}, Feature) ->
-%%  false;
-%%is_outdated({segment, Identifier}, {segment, Identifier}) ->
-%%  true.
+-spec is_outdated(target() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID) -> boolean().
+is_outdated({flag, Identifier}, Feature, CachePID) ->
+  OldFeature = get_from_cache({flag, Identifier}, CachePID),
+  %% TODO return if new feature version is greater than old feature version
+  true;
+is_outdated({segment, Identifier}, Segment, CachePID) ->
+  false.
 
 -spec format_key(flag() | segment()) -> string().
 format_key({flag, Identifier}) ->
