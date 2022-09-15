@@ -1,27 +1,27 @@
 %%%-------------------------------------------------------------------
 %%% @doc
-%%% LRU Repository for Target and Segment configuration
+%%% LRU Repository for Flag and Segment configuration
 %%% @end
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
--export([get_flag_and_cache/2, get_segment_and_cache/2]).
+-export([get_from_cache/2]).
 
-%% @doc Get flag value from cache
+-type flag() :: {flag, Identifier :: string()}.
+-type segment() :: {segment, Identifier :: string()}.
+
+%% @doc Get a flag or segment from the cache.
 %% @end
+-spec get_from_cache(flag() | segment(), CachePID :: pid()) -> string().
+get_from_cache({flag, Identifier}, CachePID) ->
+  FlagKey = format_flag_key({flag, Identifier}),
+  get(CachePID, FlagKey);
+get_from_cache({segment, Identifier}, CachePID) ->
+  FlagKey = format_segment_key({segment, Identifier}),
+  get(CachePID, FlagKey).
 
--spec get_flag_and_cache(CachePID :: pid(), Identifier :: string()) -> string().
-get_flag_and_cache(CachePID, Identifier) ->
-  FlagKey = format_flag_key(Identifier),
-  get_from_cache(CachePID, FlagKey).
-
--spec get_segment_and_cache(CachePID :: pid(), Identifier :: string()) -> string().
-get_segment_and_cache(CachePID, Identifier) ->
-  FlagKey = format_flag_key(Identifier),
-  get_from_cache(CachePID, FlagKey).
-
--spec get_from_cache(CachePID :: pid(), Identifier :: string()) -> term().
-get_from_cache(CachePID, FlagKey) ->
+-spec get(CachePID :: pid(), Identifier :: string()) -> term().
+get(CachePID, FlagKey) ->
   Flag = lru:get(CachePID, FlagKey),
   if
     Flag /= undefined ->
@@ -31,10 +31,8 @@ get_from_cache(CachePID, FlagKey) ->
       undefined
   end.
 
--spec format_flag_key(string()) -> string().
-format_flag_key(Identifier) ->
+-spec format_flag_key(flag() | segment()) -> string().
+format_flag_key({flag, Identifier}) ->
   "flags/" ++ Identifier.
-
--spec format_segment_key(string()) -> string().
-format_segment_key(Identifier) ->
+format_segment_key({segment, Identifier}) ->
   "segments/" ++ Identifier.

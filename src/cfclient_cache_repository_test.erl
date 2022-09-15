@@ -3,26 +3,36 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-get_flag_and_cache_test() ->
+get_from_cache_test() ->
   PID = self(),
 
-  %% Key is found in cache
+  %% Flag is found in cache
   meck:new(lru),
   meck:expect(lru, get,  fun(PID, "flags/does_exist") -> "flags/does_exist" end),
-  ?assertEqual("flags/does_exist", cfclient_cache_repository:get_flag_and_cache(PID, "does_exist")),
+  ?assertEqual("flags/does_exist", cfclient_cache_repository:get_from_cache({flag, "does_exist"}, PID)),
   meck:unload(lru),
 
-  %% Key is not found in cache
+  %% Flag is not found in cache
   meck:new(lru),
   meck:expect(lru, get,  fun(PID, "flags/does_not_exist") -> undefined end),
-  ?assertEqual(undefined, cfclient_cache_repository:get_flag_and_cache(PID, "does_not_exist")),
+  ?assertEqual(undefined, cfclient_cache_repository:get_from_cache({flag, "does_not_exist"}, PID)),
+  meck:unload(lru),
+
+  %% Segment is found in cache
+  meck:new(lru),
+  meck:expect(lru, get,  fun(PID, "segments/does_exist") -> "segments/does_exist" end),
+  ?assertEqual("segments/does_exist", cfclient_cache_repository:get_from_cache({segment, "does_exist"}, PID)),
+  meck:unload(lru),
+
+  %% Segment is not found in cache
+  meck:new(lru),
+  meck:expect(lru, get,  fun(PID, "segments/does_not_exist") -> undefined end),
+  ?assertEqual(undefined, cfclient_cache_repository:get_from_cache({segment, "does_not_exist"}, PID)),
   meck:unload(lru).
 
 format_flag_key_test() ->
-  Identifier = "target_1",
-  ?assertEqual("flags/target_1", cfclient_cache_repository:format_flag_key(Identifier)).
+  ?assertEqual("flags/flag_1", cfclient_cache_repository:format_flag_key({flag, "flag_1"})).
 
 
 format_segment_key_test() ->
-  Identifier = "segment_1",
-  ?assertEqual("segments/segment_1", cfclient_cache_repository:format_segment_key(Identifier)).
+  ?assertEqual("segments/segment_1", cfclient_cache_repository:format_segment_key({segment, "segment_1"})).
