@@ -36,13 +36,19 @@ get(CachePID, FlagKey) ->
 %% @doc Places a flag or segment into the cache with the new value
 %% @end
 %% @TODO - relies on cfapi_feature_config type
--spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> boolean().
-set_to_cache({flag, _}, Feature,  CachePID) ->
-  erlang:error(not_implemented).
+-spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> atom().
+set_to_cache({flag, Identifier}, Feature,  CachePID) ->
+  IsOutdated = is_outdated({flag, Identifier}, Feature, CachePID),
+  set(CachePID, Identifier, Feature, IsOutdated).
 
--spec set(CachePID :: pid(), Identifier :: string()) -> term().
-set(_Arg0, _Arg1) ->
-  erlang:error(not_implemented).
+-spec set(CachePID :: pid(), Identifier :: string(), Value,  Outdated :: boolean()) -> atom().
+set(CachePID, Identifier, Value, true) ->
+  lru:add(CachePID, Identifier, Value),
+  logger:debug("The flag is outdated"),
+  ok;
+set(_, _, _, false) ->
+  logger:debug("The flag is outdated"),
+  not_ok.
 
 %%%%%% @TODO - relies on cfapi_feature_config type
 -spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
