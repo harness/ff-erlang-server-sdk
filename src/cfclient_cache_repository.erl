@@ -13,8 +13,7 @@
 
 %% @doc Get a flag or segment from the cache.
 %% @end
-%% @TODO Should NOT return string. This needs to be cfapi_feature_config for flag and cfapi_segment for segment
--spec get_from_cache(flag() | segment(), CachePID :: pid()) -> string().
+-spec get_from_cache(flag() | segment(), CachePID :: pid()) -> cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment().
 get_from_cache({flag, Identifier}, CachePID) ->
   FlagKey = format_key({flag, Identifier}),
   get(CachePID, FlagKey);
@@ -41,7 +40,7 @@ set_to_cache({flag, Identifier}, Feature,  CachePID) ->
   IsOutdated = is_outdated({flag, Identifier}, Feature, CachePID),
   set(CachePID, Identifier, Feature, IsOutdated).
 
--spec set(CachePID :: pid(), Identifier :: string(), Value,  Outdated :: boolean()) -> atom().
+-spec set(CachePID :: pid(), Identifier :: string(), Value :: cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(),  Outdated :: boolean()) -> atom().
 set(CachePID, Identifier, Value, true) ->
   lru:add(CachePID, Identifier, Value),
   logger:debug("The flag is outdated"),
