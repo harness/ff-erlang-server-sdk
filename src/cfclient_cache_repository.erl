@@ -45,13 +45,17 @@ set(_Arg0, _Arg1) ->
   erlang:error(not_implemented).
 
 %%%%%% @TODO - relies on cfapi_feature_config type
--spec is_outdated(target() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID) -> boolean().
+-spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
 is_outdated({flag, Identifier}, Feature, CachePID) ->
   OldFeature = get_from_cache({flag, Identifier}, CachePID),
-  %% TODO return if new feature version is greater than old feature version
-  true;
+  #{version := OldFeatureVersion} = OldFeature,
+  #{version := NewFeatureVersion} = Feature,
+  OldFeatureVersion > NewFeatureVersion;
 is_outdated({segment, Identifier}, Segment, CachePID) ->
-  false.
+  OldSegment = get_from_cache({segment, Identifier}, CachePID),
+  #{version := OldSegmentVersion} = OldSegment,
+  #{version := NewSegmentVersion} = Segment,
+  OldSegmentVersion > NewSegmentVersion.
 
 -spec format_key(flag() | segment()) -> string().
 format_key({flag, Identifier}) ->
