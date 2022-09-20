@@ -14,11 +14,8 @@
 %% @doc Get a flag or segment from the cache.
 %% @end
 -spec get_from_cache(flag() | segment(), CachePID :: pid()) -> cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment().
-get_from_cache({flag, Identifier}, CachePID) ->
-  FlagKey = format_key({flag, Identifier}),
-  get(CachePID, FlagKey);
-get_from_cache({segment, Identifier}, CachePID) ->
-  FlagKey = format_key({segment, Identifier}),
+get_from_cache({Type, Identifier}, CachePID) ->
+  FlagKey = format_key({Type, Identifier}),
   get(CachePID, FlagKey).
 
 -spec get(CachePID :: pid(), Identifier :: string()) -> term().
