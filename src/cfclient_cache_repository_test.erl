@@ -1,5 +1,4 @@
 -module(cfclient_cache_repository_test).
--author("erowlands").
 
 -include_lib("eunit/include/eunit.hrl").
 
