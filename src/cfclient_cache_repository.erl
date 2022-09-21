@@ -5,8 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
-%% TODO some of these don't need to be exported. Re-visit.
--export([get_from_cache/2, set_to_cache/3, format_key/1, is_outdated/3]).
+-export([get_from_cache/2, set_to_cache/3]).
 
 -type flag() :: {flag, Identifier :: string()}.
 -type segment() :: {segment, Identifier :: string()}.

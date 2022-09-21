@@ -3,6 +3,9 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+%% TODO - used so we can actually use the debugger as there is a default timeout of 5 seconds
+%% for eunit tests. This is a temporary workaround and should be replaced with a better solution as
+%% as it slows down tests when debugging isn't needed.
  slow_test_() ->
            {timeout, 60,
           fun() ->
