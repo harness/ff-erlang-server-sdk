@@ -2,7 +2,7 @@
 [{<<"certifi">>,{pkg,<<"certifi">>,<<"2.9.0">>},2},
  {<<"cfapi_client_api">>,
   {git,"https://github.com/harness/ff-erlang-client-api",
-       {ref,"1aa4a5edbf3ebb981ffad55557cf19d6c1ff86bb"}},
+       {ref,"a0521259392efc6c4214792b272fb4d6d65aa5aa"}},
   0},
  {<<"ctx">>,{pkg,<<"ctx">>,<<"0.6.0">>},0},
  {<<"hackney">>,{pkg,<<"hackney">>,<<"1.18.1">>},1},
