@@ -63,7 +63,3 @@ format_key({flag, Identifier}) ->
   "flags/" ++ Identifier;
 format_key({segment, Identifier}) ->
   "segments/" ++ Identifier.
-
-
-
-

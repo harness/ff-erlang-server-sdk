@@ -46,3 +46,4 @@ format_key_test() ->
 
   %% Segment key
   ?assertEqual("segments/segment_1", cfclient_cache_repository:format_key({segment, "segment_1"})).
+
