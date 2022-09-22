@@ -2,14 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-%% TODO - used so we can actually use the debugger as there is a default timeout of 5 seconds
-%% for eunit tests. This is a temporary workaround and should be replaced with a better solution as
-%% as it slows down tests when debugging isn't needed.
- slow_test_() ->
-           {timeout, 60,
-          fun() ->
-                  timer:sleep(10000)
-           end}.
+
 
 get_from_cache_test() ->
   PID = self(),
@@ -45,3 +38,7 @@ format_key_test() ->
 
   %% Segment key
   ?assertEqual("segments/segment_1", cfclient_cache_repository:format_key({segment, "segment_1"})).
+
+
+temp_fun_test() ->
+  blah = cfclient_retrieve:retrieve_flags().
