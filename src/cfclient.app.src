@@ -5,7 +5,8 @@
   {mod, {cfclient_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    cfapi
    ]},
   {env,[]},
   {modules, []},
