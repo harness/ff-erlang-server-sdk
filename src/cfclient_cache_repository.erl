@@ -32,9 +32,9 @@ get(CachePID, FlagKey) ->
 %% @end
 %% @TODO - relies on cfapi_feature_config type
 -spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> atom().
-set_to_cache({TEst, Identifier}, Feature,  CachePID) ->
-  FlagKey = format_key({TEst, Identifier}),
-  IsOutdated = is_outdated({TEst, FlagKey}, Feature, CachePID),
+set_to_cache({Type, Identifier}, Feature,  CachePID) ->
+  IsOutdated = is_outdated({Type, Identifier}, Feature, CachePID),
+  FlagKey = format_key({Type, Identifier}),
   set(CachePID, FlagKey, Feature, IsOutdated).
 
 -spec set(CachePID :: pid(), Identifier :: binary(), Value :: cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(),  Outdated :: boolean()) -> atom().
