@@ -7,17 +7,17 @@
 
 -export([get_from_cache/2, set_to_cache/3]).
 
--type flag() :: {flag, Identifier :: string()}.
--type segment() :: {segment, Identifier :: string()}.
+-type flag() :: {flag, Identifier :: binary()}.
+-type segment() :: {segment, Identifier :: binary()}.
 
 %% @doc Get a flag or segment from the cache.
 %% @end
--spec get_from_cache(flag() | segment(), CachePID :: pid()) -> cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment().
+-spec get_from_cache(flag() | segment(), CachePID :: pid()) -> cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() | undefined.
 get_from_cache({Type, Identifier}, CachePID) ->
   FlagKey = format_key({Type, Identifier}),
   get(CachePID, FlagKey).
 
--spec get(CachePID :: pid(), Identifier :: string()) -> term().
+-spec get(CachePID :: pid(), Identifier :: binary()) -> term().
 get(CachePID, FlagKey) ->
   Flag = lru:get(CachePID, FlagKey),
   if
@@ -32,37 +32,47 @@ get(CachePID, FlagKey) ->
 %% @end
 %% @TODO - relies on cfapi_feature_config type
 -spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> atom().
-set_to_cache({flag, Identifier}, Feature,  CachePID) ->
-  IsOutdated = is_outdated({flag, Identifier}, Feature, CachePID),
-  set(CachePID, Identifier, Feature, IsOutdated).
+set_to_cache({TEst, Identifier}, Feature,  CachePID) ->
+  FlagKey = format_key({TEst, Identifier}),
+  IsOutdated = is_outdated({TEst, FlagKey}, Feature, CachePID),
+  set(CachePID, FlagKey, Feature, IsOutdated).
 
--spec set(CachePID :: pid(), Identifier :: string(), Value :: cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(),  Outdated :: boolean()) -> atom().
-set(CachePID, Identifier, Value, true) ->
+-spec set(CachePID :: pid(), Identifier :: binary(), Value :: cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(),  Outdated :: boolean()) -> atom().
+set(CachePID, Identifier, Value, false) ->
   lru:add(CachePID, Identifier, Value),
-  logger:debug("The flag is outdated"),
+  logger:debug("Updated cache"),
   ok;
-set(_, _, _, false) ->
+set(_, _, _, true) ->
   logger:debug("The flag is outdated"),
   not_ok.
 
 %%%%%% @TODO - relies on cfapi_feature_config type
 -spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
 is_outdated({flag, Identifier}, Feature, CachePID) ->
-  OldFeature = get_from_cache({flag, Identifier}, CachePID),
-  #{version := OldFeatureVersion} = OldFeature,
-  #{version := NewFeatureVersion} = Feature,
-  OldFeatureVersion > NewFeatureVersion;
+  case get_from_cache({flag, Identifier}, CachePID) of
+    undefined ->
+      false;
+    OldFeature ->
+      #{version := OldFeatureVersion} = OldFeature,
+      #{version := NewFeatureVersion} = Feature,
+      OldFeatureVersion > NewFeatureVersion
+  end;
 is_outdated({segment, Identifier}, Segment, CachePID) ->
-  OldSegment = get_from_cache({segment, Identifier}, CachePID),
-  #{version := OldSegmentVersion} = OldSegment,
-  #{version := NewSegmentVersion} = Segment,
-  OldSegmentVersion > NewSegmentVersion.
+  case get_from_cache({segment, Identifier}, CachePID) of
+    undefined ->
+      false;
+    OldSegment ->
+      #{version := OldSegmentVersion} = OldSegment,
+      #{version := NewSegmentVersion} = Segment,
+      OldSegmentVersion > NewSegmentVersion
 
--spec format_key(flag() | segment()) -> string().
+  end.
+
+-spec format_key(flag() | segment()) -> binary().
 format_key({flag, Identifier}) ->
-  "flags/" ++ Identifier;
+  <<"flags/", Identifier/binary>>;
 format_key({segment, Identifier}) ->
-  "segments/" ++ Identifier.
+  <<"segments/", Identifier/binary>>.
 
 
 

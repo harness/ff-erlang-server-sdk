@@ -7,7 +7,7 @@
 
 -behaviour(application).
 
--export([start/2]).
+-export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
     cfclient_sup:start_link().
@@ -15,3 +15,7 @@ start(_StartType, _StartArgs) ->
 
 
 %% internal functions
+
+
+stop(State) ->
+    erlang:error(not_implemented).
