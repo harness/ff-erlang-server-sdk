@@ -2,12 +2,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-%%slow_test_() ->
-%%  {timeout, 3600,
-%%    fun() ->
-%%      timer:sleep(10000)
-%%    end}.
-
 get_from_cache_test() ->
   PID = self(),
 
@@ -42,7 +36,3 @@ format_key_test() ->
 
   %% Segment key
   ?assertEqual(<<"segments/segment_1">>, cfclient_cache_repository:format_key({segment, <<"segment_1">>})).
-
-
-%%temp_fun_test() ->
-%%  blah = cfclient_retrieve:cache_test().
