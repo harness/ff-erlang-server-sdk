@@ -30,7 +30,6 @@ get(CachePID, FlagKey) ->
 
 %% @doc Places a flag or segment into the cache with the new value
 %% @end
-%% @TODO - relies on cfapi_feature_config type
 -spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> atom().
 set_to_cache({Type, Identifier}, Feature,  CachePID) ->
   IsOutdated = is_outdated({Type, Identifier}, Feature, CachePID),
@@ -46,7 +45,6 @@ set(_, _, _, true) ->
   logger:debug("The flag is outdated"),
   not_ok.
 
-%%%%%% @TODO - relies on cfapi_feature_config type
 -spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
 is_outdated({flag, Identifier}, Feature, CachePID) ->
   case get_from_cache({flag, Identifier}, CachePID) of
@@ -73,7 +71,5 @@ format_key({flag, Identifier}) ->
   <<"flags/", Identifier/binary>>;
 format_key({segment, Identifier}) ->
   <<"segments/", Identifier/binary>>.
-
-
 
 
