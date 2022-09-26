@@ -5,7 +5,13 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_retrieve).
 
--export([retrieve_flags/2, authenticate/0, cache_temp_function/0]).
+-export([retrieve_flags/3, authenticate/0, cache_temp_function/0]).
+
+%% TODO - this type should be part of the Client module when it's created. This isn't Golang
+%% where consumers get to say what the interface should be.
+-export_type([client_config/0]).
+
+-type client_config() :: {EnvironmentID :: binary(), BearerToken :: binary()}.
 
 %% Temporary function just to init a cache so this module can be tested.
 cache_temp_function() ->
@@ -18,12 +24,16 @@ cache_temp_function() ->
 
 
 %% TODO type spec and pattern matching
-retrieve_flags(Context, CachePID) ->
+%% TODO ClientConfig type? For now contains env ID and bearer token
+-spec retrieve_flags(Context :: ctx:t(), CachePID :: pid(), ClientConfig :: client_config()) -> ok | not_ok.
+retrieve_flags(Context, CachePID, ClientConfig) ->
   %% TODO All these things should be parameterized - probably coming in as a string? If so, will need list_to_binary. Using binary for this hard code.
-  EnvironmentID = <<"608a206a-f497-4210-b66d-15c6182c0dfb">>,
-  BearerToken = <<"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnZpcm9ubWVudCI6IjYwOGEyMDZhLWY0OTctNDIxMC1iNjZkLTE1YzYxODJjMGRmYiIsImVudmlyb25tZW50SWRlbnRpZmllciI6ImJyeWFuIiwicHJvamVjdCI6ImQ1MTU3MzNjLTIzMzctNDk0Mi04NWY2LTZjMTY2MTE4MTI1YSIsInByb2plY3RJZGVudGlmaWVyIjoiQnJ5YW5fSmVuIiwiYWNjb3VudElEIjoiYTVtQW5oQmpRT0tieGpVSFJfcjNRdyIsIm9yZ2FuaXphdGlvbiI6IjhiMjQxOWMzLWE1Y2YtNGMzMS1iZmYxLWEzZTFiNTJmMjdkYiIsIm9yZ2FuaXphdGlvbklkZW50aWZpZXIiOiJkZWZhdWx0IiwiY2x1c3RlcklkZW50aWZpZXIiOiIyIiwia2V5X3R5cGUiOiJTZXJ2ZXIifQ.yonipuhfW233lOMBm_b5nkxi7b7kMfbR572GXHKu3oo">>,
+  {BearerToken, EnvironmentID} = ClientConfig,
   Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => "https://config.ff.harness.io"},  params => #{cluster => "2" }},
   case  cfapi_client_api:get_feature_config(Context, EnvironmentID, Optional) of
+    %% TODO - do we need the headers from the API response for any reason?
+    %% TODO - case statement for `not_ok`. how do we want to handle that? From looking at the Golang SDK, we want to log
+    %%  if a flag is outdated (which we are doing in the cache repository, but we need to figure out exception handling as well.
     {ok, Features, Headers} ->
       [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Feature)}, Feature, CachePID) || Feature <- Features]
   end.
