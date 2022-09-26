@@ -41,9 +41,11 @@ set(CachePID, Identifier, Value, false) ->
   lru:add(CachePID, Identifier, Value),
   logger:debug("Updated cache"),
   ok;
+%% Don't place in cache if outdated
 set(_, _, _, true) ->
   logger:debug("The flag is outdated"),
   not_ok.
+
 
 -spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
 is_outdated({flag, Identifier}, Feature, CachePID) ->

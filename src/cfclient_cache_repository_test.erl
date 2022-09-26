@@ -2,12 +2,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-%%slow_test_() ->
-%%  {timeout, 3600,
-%%    fun() ->
-%%      timer:sleep(10000)
-%%    end}.
-
 get_from_cache_test() ->
   PID = self(),
 
@@ -36,13 +30,8 @@ get_from_cache_test() ->
   meck:unload(lru).
 
 format_key_test() ->
-  {timeout,3600},
   %% Flag key
   ?assertEqual(<<"flags/flag_1">>, cfclient_cache_repository:format_key({flag, <<"flag_1">>})),
 
   %% Segment key
   ?assertEqual(<<"segments/segment_1">>, cfclient_cache_repository:format_key({segment, <<"segment_1">>})).
-
-
-%%temp_fun_test() ->
-%%  blah = cfclient_retrieve:cache_test().
