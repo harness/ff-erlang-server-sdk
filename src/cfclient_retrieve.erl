@@ -18,9 +18,10 @@
 -spec retrieve_flags(Context :: ctx:t(), CachePID :: pid(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_flags(Context, CachePID, ClientConfig) ->
   {BearerToken, EnvironmentID, ClusterID} = ClientConfig,
+  %% TODO - don't hardcode Optional config map here. We should have a Config handler - maybe in Client module.
   Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => "https://config.ff.harness.io"},  params => #{cluster => ClusterID }},
   case  cfapi_client_api:get_feature_config(Context, EnvironmentID, Optional) of
-    %% TODO - do we need the headers from the API response for any reason?
+    %% TODO - do we need the headers from the API response for agit puny reason?
     %% TODO - case statement for `not_ok`. how do we want to handle that? From looking at the Golang SDK, we want to log
     %%  if a flag is outdated (which we are doing in the cache repository, but we need to figure out exception handling as well.
     {ok, Features, Headers} ->
@@ -32,6 +33,7 @@ retrieve_flags(Context, CachePID, ClientConfig) ->
 -spec retrieve_segments(Context :: ctx:t(), CachePID :: pid(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_segments(Context, CachePID, ClientConfig) ->
   {BearerToken, EnvironmentID, ClusterID} = ClientConfig,
+  %% TODO - don't hardcode Optional config map here. We should have a Config handler - maybe in Client module.
   Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => "https://config.ff.harness.io"},  params => #{cluster => ClusterID }},
   case  cfapi_client_api:get_all_segments(Context, EnvironmentID, Optional) of
     %% TODO - do we need the headers from the API response for any reason?
