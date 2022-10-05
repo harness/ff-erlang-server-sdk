@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
--export([get_from_cache/2, set_to_cache/3]).
+-export([get_from_cache/2, set_to_cache/3, get_cache_name/0]).
 
 -type flag() :: {flag, Identifier :: binary()}.
 -type segment() :: {segment, Identifier :: binary()}.
@@ -75,3 +75,9 @@ format_key({segment, Identifier}) ->
   <<"segments/", Identifier/binary>>.
 
 
+-spec get_cache_name() -> atom().
+%% TODO - We should add a param to this function which appends the cache prefix with maybe the application instance name. hardcoding the ApplicationInstanceName for now as default and not using the Tag param.
+%% For now - just return a hardcoded cache name as below.
+get_cache_name() ->
+  %%list_to_atom("cfclient_cache_" ++ atom_to_list(default)).
+  'cfclient_cache_default'.
