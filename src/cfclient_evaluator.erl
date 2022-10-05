@@ -34,13 +34,15 @@ evaluate_flag(FeatureConfig, Target) ->
       %% At present, targets are associated with groups via rules within a Feature Configuration.
       TargetGroupRules = maps:get(rules, FeatureConfig),
       RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, TargetGroupRules, Target),
-      %% TODO Distribution evaluation or not found
-      %% TODO if last VarOrNotFound == not_found then return default variation
+      %% TODO Distribution
+      %% TODO Pre-requisistes
 
+      %% Return the evaluated variation if one was found.
       if
         RulesVariationOrNotFound /= not_found ->
           RulesVariationOrNotFound;
         true ->
+          %% Otherwise return the flag's default "on" variation.
           DefaultServe = maps:get(defaultServe, FeatureConfig),
           maps:get(variation, DefaultServe)
       end
@@ -49,8 +51,8 @@ evaluate_flag(FeatureConfig, Target) ->
 
 %% Check if the supplied target matches a Target rule by evaluating the Variation to Target map.
 -spec evaluate_target_rule(VariationMap :: cfapi_variation_map:cfapi_variation_map(), Target :: target()) -> binary() | not_found.
-%% TODO - come back to this function guard. VariationMaps CAN be null, but right now in this SDK we haven't made a module which consumes this module yet, so in the
-%%  event a user doesn't supply a Target, we haven't said what the atomic value will be. Probably null. But revisit once that module is made.
+%% TODO - come back to this function guard - we're fine for the VariationMaps null guard, but for the Target guard we haven't decided what the null atomic value will be. Probably
+%%  will be null, but revisit.
 evaluate_target_rule(VariationMap, Target) when VariationMap /= null, Target /= null ->
   TargetIdentifier = maps:get(identifier, Target),
   search_variation_map(TargetIdentifier, VariationMap);
@@ -87,11 +89,6 @@ search_targets(_TargetIdentifier, []) -> not_found.
 -spec evaluate_target_group_rules(TargetVariationOrNotFound :: target() | not_found, Rules :: list(), Target :: target()) -> binary() | not_found.
 %% We only want to evaluate rules if there was no Target found in the previous stage of evaluations.
 evaluate_target_group_rules(TargetVariationOrNotFound, Rules, Target) when TargetVariationOrNotFound == not_found ->
-  %% TODO
-  %%  - [ ] Excluded - precedent 1 (returns early or continues)
-  %%  - [ ] Included - precedent 2(returns early or continues)
-  %%  - [ ] Custom rules - precedent 3
-
   %% Sort Target Group Rules by priority - 0 is highest.
   PrioritizedRules = lists:sort(
     fun(A, B) ->
@@ -100,6 +97,7 @@ evaluate_target_group_rules(TargetVariationOrNotFound, Rules, Target) when Targe
 
   %% Check if a target is included or excluded from the rules.
   search_rules_for_inclusion(PrioritizedRules, Target);
+
 
 %% Return the Target variation immediately as it takes precedence over target group
 evaluate_target_group_rules(TargetVariationOrNotFound, _, _) ->
@@ -113,7 +111,6 @@ search_rules_for_inclusion([Head | Tail], Target) ->
   IsRuleIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
   if
     IsRuleIncluded == found ->
-      %% TODO need to evaluate distribution
       %% If no distribution return variation
       Serve = maps:get(serve, Head),
       maps:get(variation, Serve);

@@ -35,7 +35,21 @@ evaluate_flag_test() ->
         value => <<"false">>}],
     version => 4},
 
-  FeatureStateOnNoTargets = #{defaultServe => #{variation => <<"true">>},
+  FeatureStateOnNoTargetsOrGroups = #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"flag1">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [], project => <<"erlangsdktest">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4},
+
+  FeatureStateOnNoTargetsButGroup = #{defaultServe => #{variation => <<"true">>},
     environment => <<"dev">>, feature => <<"flag1">>,
     kind => <<"boolean">>, offVariation => <<"false">>,
     prerequisites => [], project => <<"erlangsdktest">>,
@@ -57,19 +71,11 @@ evaluate_flag_test() ->
         value => <<"false">>}],
     version => 4},
 
-  FeatureStateOnSingleTarget = #{defaultServe => #{variation => <<"true">>},
+  FeatureStateOnSingleTargetNoGroups = #{defaultServe => #{variation => <<"true">>},
     environment => <<"dev">>, feature => <<"flag1">>,
     kind => <<"boolean">>, offVariation => <<"false">>,
     prerequisites => [], project => <<"erlangsdktest">>,
-    rules =>
-    [#{clauses =>
-    [#{attribute => <<>>,
-      id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
-      negate => false, op => <<"segmentMatch">>,
-      values => [<<"target_group_1">>]}],
-      priority => 0,
-      ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
-      serve => #{variation => <<"true">>}}],
+    rules => [],
     state => <<"on">>,
     variationToTargetMap =>
     [#{targets =>
@@ -90,19 +96,40 @@ evaluate_flag_test() ->
   },
 
   %% Mock LRU Cache
-  meck:new(lru),
+  CachedGroup = #{environment => <<"dev">>, identifier => <<"target_group_1">>,
+    excluded =>
+    [#{account => <<>>, environment => <<>>,
+      identifier => <<"target_that_has_been_excluded">>,
+      name => <<"I'm_excluded">>, org => <<>>, project => <<>>},
+      #{account => <<>>, environment => <<>>,
+        identifier => <<"another_excluded_target">>,
+        name => <<"also_excluded">>, org => <<>>, project => <<>>}],
+    included =>
+    [#{account => <<>>, environment => <<>>,
+      identifier => <<"target_that_has_been_inlcuded">>,
+      name => <<"I'm_included">>, org => <<>>, project => <<>>},
+      #{account => <<>>, environment => <<>>,
+        identifier => <<"another_included_target">>,
+        name => <<"also_included">>, org => <<>>, project => <<>>}],
+    name => <<"target_group_1">>, version => 3},
 
+
+  meck:new(lru),
   %%-------------------- Flag is off --------------------
   OffVariation = <<"false">>,
   ?assertEqual(OffVariation, cfclient_evaluator:evaluate_flag(FeatureStateOff, ExistingTargetA)),
 
-  %%-------------------- No Targets to Evaluate --------------------
+  %%-------------------- No Targets or Groups to Evaluate --------------------
+  meck:expect(lru, get,  fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
   OnVariation = <<"true">>,
-  ?assertEqual(OnVariation, cfclient_evaluator:evaluate_flag(FeatureStateOnNoTargets, ExistingTargetA)),
+  ?assertEqual(OnVariation, cfclient_evaluator:evaluate_flag(FeatureStateOnNoTargetsOrGroups, ExistingTargetA)),
 
-  %%-------------------- Single Target to Evaluate --------------------
+  %%-------------------- Single Target and no Groups to Evaluate --------------------
   TargetEvaluation = <<"false">>,
-  ?assertEqual(TargetEvaluation, cfclient_evaluator:evaluate_flag(FeatureStateOnSingleTarget, ExistingTargetA)).
+  ?assertEqual(TargetEvaluation, cfclient_evaluator:evaluate_flag(FeatureStateOnSingleTargetNoGroups, ExistingTargetA)),
+
+  meck:unload(lru).
+
 
 
 evaluate_target_rule_test() ->
