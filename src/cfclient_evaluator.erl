@@ -24,7 +24,9 @@ evaluate_flag(FlagIdentifier, Target) ->
   if
   %% If flag is turned off we always return default off variation
     State == <<"off">> ->
-      maps:get(offVariation, Flag);
+      OffVariationIdentifier = maps:get(offVariation, Flag),
+      OffVariation = get_variation(maps:get(variations, Flag), OffVariationIdentifier),
+      maps:get(value, OffVariation);
 
     true ->
       %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
@@ -43,11 +45,14 @@ evaluate_flag(FlagIdentifier, Target) ->
       %% Return the evaluated variation if one was found.
       if
         RulesVariationOrNotFound /= not_found ->
-          RulesVariationOrNotFound;
+          Variation = get_variation(maps:get(variations, Flag), RulesVariationOrNotFound),
+          maps:get(value, Variation);
         true ->
           %% Otherwise return the flag's default "on" variation.
           DefaultServe = maps:get(defaultServe, Flag),
-          maps:get(variation, DefaultServe)
+          DefaultServeIdentifier = maps:get(variation, DefaultServe),
+          DefaultVariation = get_variation(maps:get(variations, Flag), DefaultServeIdentifier),
+          maps:get(value, DefaultVariation)
       end
   end.
 
