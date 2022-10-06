@@ -15,7 +15,7 @@ attributes := #{atom() := any()}
 }.
 
 %% TODO - At present we don't check the Flag type (boolean, multivariate etc.) matches the Variation Request. For example,
-  %% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
+%% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
 -spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> cfapi_variation:cfapi_variation().
 evaluate_flag(FlagIdentifier, Target) ->
   CacheName = cfclient_cache_repository:get_cache_name(),
@@ -147,23 +147,23 @@ is_target_in_list(Found, TargetIdentifier, [Head | Tail]) when Found /= true ->
   ListTargetIdentifier = maps:get(identifier, Head),
   if
     TargetIdentifier == ListTargetIdentifier ->
-      true ;
+      true;
     true -> is_target_in_list(Found, TargetIdentifier, Tail)
   end;
 is_target_in_list(_, _, _) -> false;
 is_target_in_list(_, _, []) -> false.
 
--spec bool_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: boolean()) -> boolean().
+-spec bool_variation(Identifier :: binary(), Target :: target(), DefaultValue :: boolean()) -> boolean().
 bool_variation(FlagIdentifier, Target, DefaultValue) ->
   Variation = evaluate_flag(FlagIdentifier, Target),
   binary_to_list(Variation) == "true".
 
--spec string_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> string().
+-spec string_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> string().
 string_variation(FlagIdentifier, Target, DefaultValue) ->
   Variation = evaluate_flag(FlagIdentifier, Target),
   binary_to_list(Variation).
 
--spec number_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> number().
+-spec number_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> number().
 number_variation(FlagIdentifier, Target, DefaultValue) ->
   Variation = evaluate_flag(FlagIdentifier, Target),
   try binary_to_float(Variation)
@@ -173,10 +173,9 @@ number_variation(FlagIdentifier, Target, DefaultValue) ->
 
 
 %% TODO - not implemented
--spec json_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> binary().
+-spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> binary().
 json_variation(FlagIdentifier, Target, DefaultValue) ->
   not_implemented.
-
 
 
 %% TODO - refactor using recursion so can exit upon condition.
