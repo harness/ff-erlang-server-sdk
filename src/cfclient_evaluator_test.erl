@@ -419,7 +419,17 @@ is_rule_included_or_excluded_test() ->
   meck:unload(lru).
 
 
+bool_variation_test() ->
+  %% Target Sample Data
+  TargetA = #{'identifier' => <<"target_identifier_1">>,
+    name => <<"target_name_1">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
 
+  ?assertEqual(true, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetA, false)),
+
+  asd.
 
 
 

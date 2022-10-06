@@ -5,34 +5,37 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_evaluator).
 
--export([evaluate_flag/2]).
+-export([evaluate_flag/2, number_variation/3, string_variation/3, bool_variation/3]).
 
 -type target() ::
 #{identifier := binary(),
 name := binary(),
 anonymous => boolean(),
-attributes := list()
+attributes := #{atom() := any()}
 }.
 
-%% TODO - maybe call this Evaluate and make it the public API
--spec evaluate_flag(FeatureConfig :: cfapi_feature_config:cfapi_feature_config(), Target :: target()) -> cfapi_variation:cfapi_variation().
-evaluate_flag(FeatureConfig, Target) ->
-  State = maps:get(state, FeatureConfig),
+%% TODO - At present we don't check the Flag type (boolean, multivariate etc.) matches the Variation Request. For example,
+  %% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
+-spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> cfapi_variation:cfapi_variation().
+evaluate_flag(FlagIdentifier, Target) ->
+  CacheName = cfclient_cache_repository:get_cache_name(),
+  Flag = cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CacheName),
+  State = maps:get(state, Flag),
   if
   %% If flag is turned off we always return default off variation
     State == <<"off">> ->
-      maps:get(offVariation, FeatureConfig);
+      maps:get(offVariation, Flag);
 
     true ->
       %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
       %% apply, and no further evaluations will take place.
 
       %% Evaluate for target rules
-      TargetVariationOrNotFound = evaluate_target_rule(maps:get(variationToTargetMap, FeatureConfig), Target),
+      TargetVariationOrNotFound = evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target),
 
       %% Evaluate for target group rules.
       %% At present, targets are associated with groups via rules within a Feature Configuration.
-      TargetGroupRules = maps:get(rules, FeatureConfig),
+      TargetGroupRules = maps:get(rules, Flag),
       RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, TargetGroupRules, Target),
       %% TODO Distribution
       %% TODO Pre-requisistes
@@ -43,7 +46,7 @@ evaluate_flag(FeatureConfig, Target) ->
           RulesVariationOrNotFound;
         true ->
           %% Otherwise return the flag's default "on" variation.
-          DefaultServe = maps:get(defaultServe, FeatureConfig),
+          DefaultServe = maps:get(defaultServe, Flag),
           maps:get(variation, DefaultServe)
       end
   end.
@@ -146,6 +149,29 @@ is_target_in_list(Found, TargetIdentifier, [Head | Tail]) when Found /= true ->
 is_target_in_list(_, _, _) -> false;
 is_target_in_list(_, _, []) -> false.
 
+-spec bool_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: boolean()) -> boolean().
+bool_variation(FlagIdentifier, Target, DefaultValue) ->
+  Variation = evaluate_flag(FlagIdentifier, Target),
+  binary_to_list(Variation) == "true".
+
+-spec string_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> string().
+string_variation(FlagIdentifier, Target, DefaultValue) ->
+  Variation = evaluate_flag(FlagIdentifier, Target),
+  binary_to_list(Variation).
+
+-spec number_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> number().
+number_variation(FlagIdentifier, Target, DefaultValue) ->
+  Variation = evaluate_flag(FlagIdentifier, Target),
+  try binary_to_float(Variation)
+  catch
+    error:badarg -> binary_to_integer(Variation)
+  end.
+
+
+%% TODO - not implemented
+-spec number_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> number().
+json_variation(FlagIdentifier, Target, DefaultValue) ->
+  not_implemented.
 
 
 
