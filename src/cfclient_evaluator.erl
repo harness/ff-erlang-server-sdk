@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_evaluator).
 
--export([evaluate_flag/2, number_variation/3, string_variation/3, bool_variation/3]).
+-export([bool_variation/3, string_variation/3, number_variation/3]).
 
 -type target() ::
 #{identifier := binary(),
@@ -113,8 +113,7 @@ evaluate_target_group_rules(TargetVariationOrNotFound, [], _) ->
 search_rules_for_inclusion([Head | Tail], Target) ->
   IsRuleIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
   if
-    IsRuleIncluded == found ->
-      %% If no distribution return variation
+    IsRuleIncluded == true ->
       Serve = maps:get(serve, Head),
       maps:get(variation, Serve);
     true -> search_rules_for_inclusion(Tail, Target)
@@ -169,7 +168,7 @@ number_variation(FlagIdentifier, Target, DefaultValue) ->
 
 
 %% TODO - not implemented
--spec number_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> number().
+-spec json_variation(Identifier :: binary(), Target ::  target(), DefaultValue :: binary()) -> binary().
 json_variation(FlagIdentifier, Target, DefaultValue) ->
   not_implemented.
 
