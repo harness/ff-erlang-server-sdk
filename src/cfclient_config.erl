@@ -49,7 +49,11 @@ parse_options(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
         analytics_enabled => AnalyticsEnabled
     }.
 
--spec get_value(Key :: atom()) -> undefined | term().
+-spec get_value(Key :: atom() | string()) -> string() | term().
+get_value(Key) when is_list(Key) ->
+    get_value(list_to_atom(Key));
 get_value(Key) when is_atom(Key) ->
     {ok, Config} = application:get_env(cfclient, config),
     maps:get(Key, Config).
+
+
