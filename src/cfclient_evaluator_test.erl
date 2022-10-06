@@ -2,138 +2,101 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-%%slow_test_() ->
-%%  {timeout, 360000000,
-%%    fun() ->
-%%      evaluate_flag_test()
-%%    end}.
-
-evaluate_flag_test() ->
-  FeatureStateOff = #{defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>, feature => <<"flag1">>,
-    kind => <<"boolean">>, offVariation => <<"false">>,
-    prerequisites => [], project => <<"erlangsdktest">>,
-    rules =>
-    [#{clauses =>
-    [#{attribute => <<>>,
-      id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
-      negate => false, op => <<"segmentMatch">>,
-      values => [<<"target_group_1">>]}],
-      priority => 0,
-      ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
-      serve => #{variation => <<"true">>}}],
-    state => <<"off">>,
-    variationToTargetMap =>
-    [#{targets =>
-    [#{identifier => <<"target_identifier">>,
-      name => <<"target_test">>}],
-      variation => <<"true">>}],
-    variations =>
-    [#{identifier => <<"true">>, name => <<"True">>,
-      value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>,
-        value => <<"false">>}],
-    version => 4},
-
-  FeatureStateOnNoTargetsOrGroups = #{defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>, feature => <<"flag1">>,
-    kind => <<"boolean">>, offVariation => <<"false">>,
-    prerequisites => [], project => <<"erlangsdktest">>,
-    rules => [],
-    state => <<"on">>,
-    variationToTargetMap => null,
-    variations =>
-    [#{identifier => <<"true">>, name => <<"True">>,
-      value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>,
-        value => <<"false">>}],
-    version => 4},
-
-  FeatureStateOnNoTargetsButGroup = #{defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>, feature => <<"flag1">>,
-    kind => <<"boolean">>, offVariation => <<"false">>,
-    prerequisites => [], project => <<"erlangsdktest">>,
-    rules =>
-    [#{clauses =>
-    [#{attribute => <<>>,
-      id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
-      negate => false, op => <<"segmentMatch">>,
-      values => [<<"target_group_1">>]}],
-      priority => 0,
-      ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
-      serve => #{variation => <<"true">>}}],
-    state => <<"on">>,
-    variationToTargetMap => null,
-    variations =>
-    [#{identifier => <<"true">>, name => <<"True">>,
-      value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>,
-        value => <<"false">>}],
-    version => 4},
-
-  FeatureStateOnSingleTargetNoGroups = #{defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>, feature => <<"flag1">>,
-    kind => <<"boolean">>, offVariation => <<"false">>,
-    prerequisites => [], project => <<"erlangsdktest">>,
-    rules => [],
-    state => <<"on">>,
-    variationToTargetMap =>
-    [#{targets =>
-    [#{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
-      variation => <<"false">>}],
-    variations =>
-    [#{identifier => <<"true">>, name => <<"True">>,
-      value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>,
-        value => <<"false">>}],
-    version => 4},
-
+variations_test() ->
   %% Target Sample Data
   ExistingTargetA = #{'identifier' => <<"target_identifier_1">>,
-    name => <<"target_1">>,
+    name => <<"target_test_1">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
+  TargetExcludedFromGroup = #{'identifier' => <<"target_that_has_been_excluded">>,
+    name => <<"target_test_2">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
+  TargetIncludedFromGroup = #{'identifier' => <<"target_that_has_been_inlcuded">>,
+    name => <<"target_test_1">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
+  ExistingTargetC = #{'identifier' => <<"target_identifier_3">>,
+    name => <<"target_test_3">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
+  ExistingTargetD = #{'identifier' => <<"target_identifier_4">>,
+    name => <<"target_test_4">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
+  ExistingTargetE = #{'identifier' => <<"target_identifier_5">>,
+    name => <<"target_test_5">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
+  NonExistentTarget = #{'identifier' => <<"target_identifier_q2341q41324ad">>,
+    name => <<"target_identifier_q2341q41324ad">>,
     anonymous => <<"">>,
     attributes => <<"">>
   },
 
   %% Mock LRU Cache
-  CachedGroup = #{environment => <<"dev">>, identifier => <<"target_group_1">>,
-    excluded =>
-    [#{account => <<>>, environment => <<>>,
-      identifier => <<"target_that_has_been_excluded">>,
-      name => <<"I'm_excluded">>, org => <<>>, project => <<>>},
-      #{account => <<>>, environment => <<>>,
-        identifier => <<"another_excluded_target">>,
-        name => <<"also_excluded">>, org => <<>>, project => <<>>}],
-    included =>
-    [#{account => <<>>, environment => <<>>,
-      identifier => <<"target_that_has_been_inlcuded">>,
-      name => <<"I'm_included">>, org => <<>>, project => <<>>},
-      #{account => <<>>, environment => <<>>,
-        identifier => <<"another_included_target">>,
-        name => <<"also_included">>, org => <<>>, project => <<>>}],
-    name => <<"target_group_1">>, version => 3},
-
-
   meck:new(lru),
-  %%-------------------- Flag is off --------------------
-  OffVariation = <<"false">>,
-  ?assertEqual(OffVariation, cfclient_evaluator:evaluate_flag(FeatureStateOff, ExistingTargetA)),
 
-  %%-------------------- No Targets or Groups to Evaluate --------------------
-  meck:expect(lru, get,  fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
-  OnVariation = <<"true">>,
-  ?assertEqual(OnVariation, cfclient_evaluator:evaluate_flag(FeatureStateOnNoTargetsOrGroups, ExistingTargetA)),
+  %%-------------------- Bool Variation --------------------
+  %%%%%%%% Flag is off %%%%%%%%
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) -> boolean_flag_off() end),
+  ?assertEqual(false, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA, false)),
 
-  %%-------------------- Single Target and no Groups to Evaluate --------------------
-  TargetEvaluation = <<"false">>,
-  ?assertEqual(TargetEvaluation, cfclient_evaluator:evaluate_flag(FeatureStateOnSingleTargetNoGroups, ExistingTargetA)),
+  %%%%%%%% Flag is on with a single target %%%%%%%%
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) -> boolean_flag_single_target() end),
+  %% Target found
+  ?assertEqual(false, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA, false)),
+  %% Target not found
+  ?assertEqual(true, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget, false)),
 
+  %%%%%%%% Flag is on - no targets - but Groups %%%%%%%%
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_boolean_flag">>) -> boolean_flag_group_only()
+                        end),
+
+  %% Target excluded
+  ?assertEqual(true, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup, false)),
+
+  %% Target included
+  ?assertEqual(false, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup, false)),
+
+  %%-------------------- String Variation --------------------
+  %%%%%%%% Flag is off %%%%%%%%
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_string_flag">>) -> string_flag_off() end),
+  ?assertEqual("Dont_serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA, "some_fake_default_value")),
+
+  %%%%%%%% Flag is on with a single target %%%%%%%%
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_string_flag">>) -> string_flag_target_and_groups()
+                        end),  %% Target found
+  ?assertEqual("Dont_serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA, "some_fake_default_value")),
+  %% Target not found
+  ?assertEqual("Serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, NonExistentTarget, "some_fake_default_value")),
+
+  %%%%%% Flag is on - no targets - but Groups %%%%%%%%
+  %% Target excluded
+  ?assertEqual("Serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetExcludedFromGroup, "some_fake_default_value")),
+
+  %% Target included
+  ?assertEqual("Dont_serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetIncludedFromGroup, "some_fake_default_value")),
   meck:unload(lru).
 
 
-
 evaluate_target_rule_test() ->
-
   %% Target Sample Data
   ExistingTargetA = #{'identifier' => <<"target_identifier_1">>,
     name => <<"target_test_1">>,
@@ -419,18 +382,217 @@ is_rule_included_or_excluded_test() ->
   meck:unload(lru).
 
 
-bool_variation_test() ->
-  %% Target Sample Data
-  TargetA = #{'identifier' => <<"target_identifier_1">>,
-    name => <<"target_name_1">>,
-    anonymous => <<"">>,
-    attributes => <<"">>
-  },
-
-  ?assertEqual(true, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetA, false)),
-
-  asd.
 
 
+boolean_flag_off() ->
+  #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"My_boolean_flag">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [], project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
+      negate => false, op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 0,
+      ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
+      serve => #{variation => <<"true">>}}],
+    state => <<"off">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier">>,
+      name => <<"target_test">>}],
+      variation => <<"true">>}],
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4}.
 
+boolean_flag_no_targets_or_groups() ->
+  #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"My_boolean_flag">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [], project => <<"erlangsdktest">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4}.
 
+boolean_flag_group_only() ->
+  #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"My_boolean_flag">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [], project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
+      negate => false, op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 0,
+      ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
+      serve => #{variation => <<"false">>}}],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4}.
+
+boolean_flag_single_target() ->
+  #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"My_boolean_flag">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [], project => <<"erlangsdktest">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"false">>}],
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4}.
+
+string_flag_off() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_string_flag">>,
+    kind => <<"string">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"1e80543a-c78a-4543-94fa-8277ba8507c1">>,
+      negate => false,op => <<"segmentMatch">>,
+      values => [<<"target_group_2">>]}],
+      priority => 0,
+      ruleId => <<"2f81fac2-cb53-492c-b1e4-1d0766008a21">>,
+      serve => #{variation => <<"Dont_serve_it">>}}],
+    state => <<"off">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_test_1">>,
+      name => <<"target_test_1">>}],
+      variation => <<"Serve_it">>}],
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"serve it">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it ">>,
+        value => <<"don't serve it">>}],
+    version => 2}.
+
+string_flag_no_targets_or_groups() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_string_flag">>,
+    kind => <<"string">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules => [],state => <<"off">>,variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"serve it">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it ">>,
+        value => <<"don't serve it">>}],
+    version => 2}.
+
+string_flag_target_and_groups() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_string_flag">>,
+    kind => <<"string">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"1e80543a-c78a-4543-94fa-8277ba8507c1">>,
+      negate => false,op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 0,
+      ruleId => <<"2f81fac2-cb53-492c-b1e4-1d0766008a21">>,
+      serve => #{variation => <<"Dont_serve_it">>}}],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_1">>,
+      name => <<"target_test_1">>}],
+      variation => <<"Dont_serve_it">>}],
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"serve it">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it ">>,
+        value => <<"don't serve it">>}],
+    version => 2}.
+
+string_flag_only_target() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_string_flag">>,
+    kind => <<"string">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules => null,
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_1">>,
+      name => <<"target_test_1">>},
+      #{identifier => <<"target_identifier_2">>,
+      name => <<"target_test_1">>}],
+      variation => <<"Dont_serve_it">>}],
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"serve it">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it ">>,
+        value => <<"don't serve it">>}],
+    version => 2}.
+
+string_flag_only_group() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_string_flag">>,
+    kind => <<"string">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"1e80543a-c78a-4543-94fa-8277ba8507c1">>,
+      negate => false,op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 0,
+      ruleId => <<"2f81fac2-cb53-492c-b1e4-1d0766008a21">>,
+      serve => #{variation => <<"Dont_serve_it">>}}],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"serve it">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it ">>,
+        value => <<"don't serve it">>}],
+    version => 2}.
+
+target_group_no_custom_rules() ->
+  #{environment => <<"dev">>,
+    excluded =>
+    [#{account => <<>>, environment => <<>>,
+      identifier => <<"target_that_has_been_excluded">>,
+      name => <<"target_test_2">>, org => <<>>, project => <<>>}],
+    identifier => <<"target_group_1">>,
+    included =>
+    [#{account => <<>>, environment => <<>>,
+      identifier => <<"target_that_has_been_inlcuded">>,
+      name => <<"target_test">>, org => <<>>, project => <<>>}],
+    name => <<"target_group_1">>, version => 19}.
