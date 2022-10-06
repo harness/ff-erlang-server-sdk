@@ -116,29 +116,34 @@ variations_test() ->
   meck:expect(lru, get, fun(CacheName, <<"flags/My_cool_number_flag">>) -> number_flag_off() end),
   ?assertEqual(0, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA, 23423452354)),
 
-%%  %%%%%%%% Flag is on with a single target %%%%%%%%
-%%  meck:expect(lru, get, fun
-%%                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
-%%                          (CacheName, <<"flags/My_string_flag">>) -> string_flag_target_and_groups()
-%%                        end),  %% Target found
-%%  ?assertEqual("Dont_serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA, "some_fake_default_value")),
-%%  %% Target not found
-%%  ?assertEqual("Serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, NonExistentTarget, "some_fake_default_value")),
-%%
-%%  %%%%%% Flag is on - no targets - but Groups %%%%%%%%
-%%  %% Target excluded
-%%  ?assertEqual("Serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetExcludedFromGroup, "some_fake_default_value")),
-%%
-%%  %% Target included
-%%  ?assertEqual("Dont_serve_it", cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetIncludedFromGroup, "some_fake_default_value")),
-%%
-%%  %%%%%%%% Flag is on - no targets or groups %%%%%%%%
-%%  %% Default on variation
-%%  meck:expect(lru, get, fun
-%%                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
-%%                          (CacheName, <<"flags/My_boolean_flag">>) -> string_flag_no_targets_or_groups()
-%%                        end),
-%%  ?assertEqual("Serve_it", cfclient_evaluator:string_variation(<<"My_boolean_flag">>, ExistingTargetA, false)),
+  %%%%%%%% Flag is on with a single target %%%%%%%%
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_cool_number_flag">>) -> number_flag_only_targets()
+                        end),
+  %% Target found
+  ?assertEqual(0, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA, 23423452354)),
+  %% Target not found
+  ?assertEqual(12456, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, NonExistentTarget, 23423452354)),
+
+  %%%%%% Flag is on - no targets - but Groups %%%%%%%%
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_cool_number_flag">>) -> number_flag_only_groups()
+                        end),
+  %% Target excluded
+  ?assertEqual(12456, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetExcludedFromGroup, 23423452354)),
+
+  %% Target Included
+  ?assertEqual(0.001, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetIncludedFromGroup, 23423452354)),
+
+  %%%%%%%% Flag is on - no targets or groups %%%%%%%%
+  %% Default on variation
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_cool_number_flag">>) -> number_flag_no_targets_or_groups()
+                        end),
+  ?assertEqual(12456, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA, false)),
 
 
   meck:unload(lru).
@@ -539,7 +544,7 @@ number_flag_off() ->
       values => [<<"target_group_2">>]}],
       priority => 0,
       ruleId => <<"cf5cc01a-e2dc-442b-9d86-f4db6ac2a180">>,
-      serve => #{variation => <<"Serve_an_zero_float">>}},
+      serve => #{variation => <<"Serve_a_zero_float">>}},
       #{clauses =>
       [#{attribute => <<>>,
         id => <<"8f2e5f62-0ee0-43e6-8a64-3a40fe72f9f2">>,
@@ -579,9 +584,9 @@ number_flag_only_targets() ->
     [#{targets =>
     [#{identifier => <<"target_identifier_3434">>,
       name => <<"target_test">>},
-      #{identifier => <<"target_test_1">>,
+      #{identifier => <<"target_identifier_1">>,
         name => <<"target_test_3">>}],
-      variation => <<"Serve_an_int">>}],
+      variation => <<"Serve_a_zero_int">>}],
     variations =>
     [#{identifier => <<"Serve_an_int">>, name => <<"Serve an int">>,
       value => <<"12456">>},
@@ -594,7 +599,27 @@ number_flag_only_targets() ->
     version => 3}.
 
 
-number_flag_on_targets_and_groups() ->
+number_flag_no_targets_or_groups() ->
+  #{defaultServe => #{variation => <<"Serve_an_int">>},
+    environment => <<"dev">>,
+    feature => <<"My_cool_number_flag">>, kind => <<"int">>,
+    offVariation => <<"Serve_a_zero_int">>, prerequisites => [],
+    project => <<"erlangsdktest">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"Serve_an_int">>, name => <<"Serve an int">>,
+      value => <<"12456">>},
+      #{identifier => <<"Serve_a_zero_int">>,
+        name => <<"Serve a zero int">>, value => <<"0">>},
+      #{identifier => <<"Serve_a_float">>,
+        name => <<"Serve a float">>, value => <<"1.55">>},
+      #{identifier => <<"Serve_a_zero_float">>,
+        name => <<"Serve a zero float">>, value => <<"0.001">>}],
+    version => 3}.
+
+number_flag_only_groups() ->
   #{defaultServe => #{variation => <<"Serve_an_int">>},
     environment => <<"dev">>,
     feature => <<"My_cool_number_flag">>, kind => <<"int">>,
@@ -605,10 +630,10 @@ number_flag_on_targets_and_groups() ->
     [#{attribute => <<>>,
       id => <<"a6818821-eaab-467c-ae1c-823b9798619d">>,
       negate => false, op => <<"segmentMatch">>,
-      values => [<<"target_group_2">>]}],
+      values => [<<"target_group_1">>]}],
       priority => 0,
       ruleId => <<"cf5cc01a-e2dc-442b-9d86-f4db6ac2a180">>,
-      serve => #{variation => <<"Serve_an_zero_float">>}},
+      serve => #{variation => <<"Serve_a_zero_float">>}},
       #{clauses =>
       [#{attribute => <<>>,
         id => <<"8f2e5f62-0ee0-43e6-8a64-3a40fe72f9f2">>,
@@ -618,13 +643,7 @@ number_flag_on_targets_and_groups() ->
         ruleId => <<"be265486-b7d8-4382-a27a-6a9b929de365">>,
         serve => #{variation => <<"Serve_a_float">>}}],
     state => <<"on">>,
-    variationToTargetMap =>
-    [#{targets =>
-    [#{identifier => <<"target_identifier_3434">>,
-      name => <<"target_test">>},
-      #{identifier => <<"target_test_1">>,
-        name => <<"target_test_3">>}],
-      variation => <<"Serve_an_int">>}],
+    variationToTargetMap => null,
     variations =>
     [#{identifier => <<"Serve_an_int">>, name => <<"Serve an int">>,
       value => <<"12456">>},
