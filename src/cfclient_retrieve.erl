@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_retrieve).
 
--export([retrieve_flags/3, retrieve_segments/3]).
+-export([retrieve_flags/2, retrieve_segments/2]).
 
 -export_type([client_config/0]).
 
@@ -15,8 +15,9 @@
 
 %% @doc Retrieve all features from the FF API and store them to cache.
 %% @end
--spec retrieve_flags(Context :: ctx:t(), CachePID :: pid(), ClientConfig :: client_config()) -> ok | not_ok.
-retrieve_flags(Context, CachePID, ClientConfig) ->
+-spec retrieve_flags(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
+retrieve_flags(Context, ClientConfig) ->
+  CachePID = cfclient_cache_repository:get_cache_name(),
   {BearerToken, EnvironmentID, ClusterID} = ClientConfig,
   %% TODO - don't hardcode Optional config map here. We should have a Config handler - maybe in Client module.
   Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => "https://config.ff.harness.io"},  params => #{cluster => ClusterID }},
@@ -30,8 +31,9 @@ retrieve_flags(Context, CachePID, ClientConfig) ->
 
 %% @doc Retrieve all segments from the FF API and store them to cache.
 %% @end
--spec retrieve_segments(Context :: ctx:t(), CachePID :: pid(), ClientConfig :: client_config()) -> ok | not_ok.
-retrieve_segments(Context, CachePID, ClientConfig) ->
+-spec retrieve_segments(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
+retrieve_segments(Context, ClientConfig) ->
+  CachePID = cfclient_cache_repository:get_cache_name(),
   {BearerToken, EnvironmentID, ClusterID} = ClientConfig,
   %% TODO - don't hardcode Optional config map here. We should have a Config handler - maybe in Client module.
   Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => "https://config.ff.harness.io"},  params => #{cluster => ClusterID }},
