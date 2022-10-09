@@ -12,10 +12,5 @@
 start(_StartType, _StartArgs) ->
     cfclient_sup:start_link().
 
-
-
-%% internal functions
-
-
-stop(State) ->
-    erlang:error(not_implemented).
+stop(_State) ->
+    cfclient:close().
