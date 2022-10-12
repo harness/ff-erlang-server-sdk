@@ -12,10 +12,14 @@
 
 -define(SERVER, ?MODULE).
 
+-spec(start_link() ->
+  {ok, Pid :: pid()} | ignore | {error, Reason :: term()}).
 start_link() ->
-    Args =[],
+    Args = [],
     supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
 
+-spec init(Args :: term()) ->
+  {ok, {{supervisor:strategy(), non_neg_integer(), pos_integer()}, [supervisor:child_spec()]}}.
 init(_Args) ->
     SupFlags = #{strategy => one_for_one,
                 intensity => 1,

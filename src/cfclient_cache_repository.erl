@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
--export([get_from_cache/2, set_to_cache/3, get_cache_name/0]).
+-export([get_from_cache/2, set_to_cache/3, get_cache_name/0, set_pid/1, get_pid/0]).
 
 -type flag() :: {flag, Identifier :: binary()}.
 -type segment() :: {segment, Identifier :: binary()}.
@@ -46,7 +46,6 @@ set(_, _, _, true) ->
   logger:debug("The flag is outdated"),
   not_ok.
 
-
 -spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
 is_outdated({flag, Identifier}, Feature, CachePID) ->
   case get_from_cache({flag, Identifier}, CachePID) of
@@ -81,3 +80,12 @@ format_key({segment, Identifier}) ->
 get_cache_name() ->
   %%list_to_atom("cfclient_cache_" ++ atom_to_list(default)).
   'cfclient_cache_default'.
+
+-spec set_pid(CachePID :: pid()) -> ok.
+set_pid(CachePID) ->
+  application:set_env(cfclient, cachepid, CachePID).
+
+-spec get_pid() -> pid().
+get_pid() ->
+  {ok, Pid} = application:get_env(cfclient, cachepid),
+  Pid.

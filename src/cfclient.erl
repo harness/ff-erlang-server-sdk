@@ -7,7 +7,9 @@
 
 %% API
 -export([start/1, start/2]).
--export([variation/2]).
+-export([bool_variation/3]).
+-export([retrieve_flags/0]).
+-export([retrieve_segments/0]).
 -export([close/0]).
 
 %% Constants
@@ -16,16 +18,31 @@
 
 -spec start(ApiKey :: string()) -> ok.
 start(ApiKey) ->
-  start(ApiKey, {}).
+  start(ApiKey, #{}).
 
 -spec start(ApiKey :: string(), Options :: map()) -> ok.
 start(ApiKey, Options) ->
-  cfclient_instance:initialize(ApiKey, Options).
+  cfclient_instance:start(ApiKey, Options).
 
--spec variation(FlagKey :: binary(), Default :: cfapi_evaluation:cfapi_evaluation()) -> cfapi_evaluation:cfapi_evaluation().
-variation(FlagKey, Default) ->
-  %%TODO: Call evaluator
-  ok.
+-spec bool_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: cfapi_evaluation:cfapi_evaluation()) -> cfapi_evaluation:cfapi_evaluation().
+bool_variation(FlagKey, Target, Default) ->
+  cfclient_evaluator:bool_variation(FlagKey, Target, Default).
+
+-spec retrieve_flags() -> ok.
+retrieve_flags() ->
+  AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
+  Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
+  ClusterID = list_to_binary(cfclient_instance:get_project_value("clusterIdentifier")),
+  ClientConfig = {AuthToken, Environment, ClusterID},
+  cfclient_retrieve:retrieve_flags(ctx:new(), ClientConfig).
+
+-spec retrieve_segments() -> ok.
+retrieve_segments() ->
+  AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
+  Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
+  ClusterID = list_to_binary(cfclient_instance:get_project_value("clusterIdentifier")),
+  ClientConfig = {AuthToken, Environment, ClusterID},
+  cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
 
 close() ->
   cfclient_instance:close().
