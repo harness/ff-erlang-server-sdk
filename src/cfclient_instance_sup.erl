@@ -1,13 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author bmjen
 %%% @copyright (C) 2022, <COMPANY>
 %%% @doc
 %%%
 %%% @end
-%%% Created : 05. Oct 2022 9:43 AM
 %%%-------------------------------------------------------------------
 -module(cfclient_instance_sup).
--author("bmjen").
 
 -behaviour(supervisor).
 
@@ -49,14 +46,9 @@ init([]) ->
     intensity => MaxRestarts,
     period => MaxSecondsBetweenRestarts},
 
-  AChild = #{id => 'AName',
-    start => {'AModule', start_link, []},
-    restart => permanent,
-    shutdown => 2000,
-    type => worker,
-    modules => ['AModule']},
+  CacheSup = {lru,{lru, start_link, ['cfclient_cache_default',[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']},
 
-  {ok, {SupFlags, [AChild]}}.
+  {ok, {SupFlags, [CacheSup]}}.
 
 %%%===================================================================
 %%% Internal functions

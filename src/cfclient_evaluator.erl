@@ -18,8 +18,8 @@ attributes := #{atom() := any()}
 %% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
 -spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> cfapi_variation:cfapi_variation().
 evaluate_flag(FlagIdentifier, Target) ->
-  CacheName = cfclient_cache_repository:get_cache_name(),
-  Flag = cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CacheName),
+  CachePid = cfclient_cache_repository:get_pid(),
+  Flag = cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid),
   State = maps:get(state, Flag),
   if
   %% If flag is turned off we always return default off variation
@@ -40,7 +40,7 @@ evaluate_flag(FlagIdentifier, Target) ->
       TargetGroupRules = maps:get(rules, Flag),
       RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, TargetGroupRules, Target),
       %% TODO Distribution
-      %% TODO Pre-requisistes
+      %% TODO Pre-requisites
 
       %% Return the evaluated variation if one was found.
       if
@@ -131,8 +131,8 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
     <<"segmentMatch">> ->
       %% At present there is only ever one element in values, so we get the head.
       GroupName = hd(maps:get(values, Head, false)),
-      CacheName = cfclient_cache_repository:get_cache_name(),
-      Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CacheName),
+      CachePid = cfclient_cache_repository:get_pid(),
+      Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
       TargetIdentifier = maps:get(identifier, Target),
       %% First check if the target is explicitly excluded.
       IsTargetExcluded = is_target_in_list(false, TargetIdentifier, maps:get(excluded, Group, [])),
