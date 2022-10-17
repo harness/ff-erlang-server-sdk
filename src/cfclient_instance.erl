@@ -7,19 +7,20 @@
 -module(cfclient_instance).
 
 %% API
--export([initialize/1, initialize/2]).
+-export([start/1, start/2]).
 -export([get_authtoken/0]).
 -export([get_project_value/1]).
+
 -export([close/0]).
 
 -define(DEFAULT_OPTIONS, #{}).
 
--spec initialize(ApiKey :: string()) -> ok.
-initialize(ApiKey) ->
-  initialize(ApiKey, ?DEFAULT_OPTIONS).
+-spec start(ApiKey :: string()) -> ok.
+start(ApiKey) ->
+  start(ApiKey, ?DEFAULT_OPTIONS).
 
--spec initialize(ApiKey :: string(), Options :: map()) -> ok.
-initialize(ApiKey, Options) ->
+-spec start(ApiKey :: string(), Options :: map()) -> ok.
+start(ApiKey, Options) ->
   logger:info("Starting Client"),
   logger:info("Initializing Config"),
   cfclient_config:init(ApiKey, Options),
@@ -30,6 +31,8 @@ initialize(ApiKey, Options) ->
   logger:debug("cluster ~p~n~n", [get_project_value("clusterIdentifier")]),
   logger:debug("env ~p~n~n", [get_project_value("environment")]),
   logger:debug("org ~p~n~n", [get_project_value("organization")]),
+  {ok, CachePID} = supervisor:start_child(cfclient_sup, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+  cfclient_cache_repository:set_pid(CachePID),
   ok.
 
 -spec connect(ApiKey :: string()) -> string() | {error, connect_failure, term()}.
@@ -58,6 +61,7 @@ get_project_value(Key) ->
   {ok, Project} = application:get_env(cfclient, project),
   Value = maps:get(list_to_binary(Key), Project),
   binary_to_list(Value).
+
 
 -spec close() -> ok | {error, not_found, term()}.
 close() ->

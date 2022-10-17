@@ -17,10 +17,10 @@
 %% @end
 -spec retrieve_flags(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_flags(Context, ClientConfig) ->
-  CachePID = cfclient_cache_repository:get_cache_name(),
+  CachePID = cfclient_cache_repository:get_pid(),
   {BearerToken, EnvironmentID, ClusterID} = ClientConfig,
   %% TODO - don't hardcode Optional config map here. We should have a Config handler - maybe in Client module.
-  Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => "https://config.ff.harness.io"},  params => #{cluster => ClusterID }},
+  Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => cfclient_config:get_value("config_url")},  params => #{cluster => ClusterID }},
   case  cfapi_client_api:get_feature_config(Context, EnvironmentID, Optional) of
     %% TODO - do we need the headers from the API response for agit puny reason?
     %% TODO - case statement for `not_ok`. how do we want to handle that? From looking at the Golang SDK, we want to log
@@ -33,7 +33,7 @@ retrieve_flags(Context, ClientConfig) ->
 %% @end
 -spec retrieve_segments(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_segments(Context, ClientConfig) ->
-  CachePID = cfclient_cache_repository:get_cache_name(),
+  CachePID = cfclient_cache_repository:get_pid(),
   {BearerToken, EnvironmentID, ClusterID} = ClientConfig,
   %% TODO - don't hardcode Optional config map here. We should have a Config handler - maybe in Client module.
   Optional = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", BearerToken/binary>>}, host => "https://config.ff.harness.io"},  params => #{cluster => ClusterID }},
