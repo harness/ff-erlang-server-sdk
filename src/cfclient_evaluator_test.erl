@@ -48,6 +48,7 @@ variations_test() ->
 
   %% Mock LRU Cache
   meck:new(lru),
+  meck:expect(cfclient_cache_repository, get_pid, fun() -> self() end),
 
   %%-------------------- Bool Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
