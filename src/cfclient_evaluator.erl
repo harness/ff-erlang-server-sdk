@@ -172,8 +172,7 @@ number_variation(FlagIdentifier, Target, DefaultValue) ->
   end.
 
 
-%% TODO - not implemented
--spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> binary().
+-spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: map()) -> map().
 json_variation(FlagIdentifier, Target, DefaultValue) ->
   Variation = evaluate_flag(FlagIdentifier, Target),
   jsx:decode(Variation, []).

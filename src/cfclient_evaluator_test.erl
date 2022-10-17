@@ -22,24 +22,6 @@ variations_test() ->
     attributes => <<"">>
   },
 
-  ExistingTargetC = #{'identifier' => <<"target_identifier_3">>,
-    name => <<"target_test_3">>,
-    anonymous => <<"">>,
-    attributes => <<"">>
-  },
-
-  ExistingTargetD = #{'identifier' => <<"target_identifier_4">>,
-    name => <<"target_test_4">>,
-    anonymous => <<"">>,
-    attributes => <<"">>
-  },
-
-  ExistingTargetE = #{'identifier' => <<"target_identifier_5">>,
-    name => <<"target_test_5">>,
-    anonymous => <<"">>,
-    attributes => <<"">>
-  },
-
   NonExistentTarget = #{'identifier' => <<"target_identifier_q2341q41324ad">>,
     name => <<"target_identifier_q2341q41324ad">>,
     anonymous => <<"">>,
@@ -145,6 +127,40 @@ variations_test() ->
                         end),
   ?assertEqual(12456, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA, false)),
 
+  %%-------------------- JSON Variation --------------------
+  %%%%%%%% Flag is off %%%%%%%%
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_JSON_flag">>) -> json_flag_off() end),
+  ?assertEqual(#{<<"serveIt">> => <<"no">>}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA, #{<<"someDefaultValue">> => <<"default!">>})),
+
+  %%%%%%%% Flag is on with a single target %%%%%%%%
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_JSON_flag">>) -> json_flag_only_targets()
+                        end),
+  %% Target found
+  ?assertEqual(#{<<"serveIt">> => <<"no">>}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA, #{<<"someDefaultValue">> => <<"default!">>})),
+  %% Target not found
+  ?assertEqual(#{<<"serveIt">> => <<"yes">>}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, NonExistentTarget, #{<<"someDefaultValue">> => <<"default!">>})),
+
+  %%%%%% Flag is on - no targets - but Groups %%%%%%%%
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_JSON_flag">>) -> json_flag_only_groups()
+                        end),
+  %% Target excluded
+  ?assertEqual(#{<<"serveIt">> => <<"yes">>}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetExcludedFromGroup, #{<<"someDefaultValue">> => <<"default!">>})),
+
+  %% Target Included
+  ?assertEqual(#{<<"serveIt">> => <<"maybe">>}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetIncludedFromGroup, #{<<"someDefaultValue">> => <<"default!">>})),
+
+
+  %%%%%%%% Flag is on - no targets or groups %%%%%%%%
+  %% Default on variation
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"flags/My_JSON_flag">>) -> json_flag_no_targets_or_groups()
+                        end),
+  ?assertEqual(#{<<"serveIt">> => <<"yes">>}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA, #{<<"someDefaultValue">> => <<"default!">>})),
 
   meck:unload(lru).
 
@@ -654,6 +670,125 @@ number_flag_only_groups() ->
       #{identifier => <<"Serve_a_zero_float">>,
         name => <<"Serve a zero float">>, value => <<"0.001">>}],
     version => 3}.
+
+json_flag_off() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_JSON_flag">>,
+    kind => <<"json">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"011331a7-2ea8-4db3-91f7-68729a566e86">>,
+      negate => false,op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 0,
+      ruleId => <<"3f8be42e-c6b5-43ff-9d24-51d0e0027117">>,
+      serve => #{variation => <<"Dont_serve_it">>}}],
+    state => <<"off">>,variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"{    \"serveIt\":\"yes\" }">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it">>,
+        value => <<"{    \"serveIt\":\"no\" }">>}],
+    version => 3}.
+
+json_flag_only_targets() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_JSON_flag">>,
+    kind => <<"json">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules => [],state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_1">>,
+      name => <<"target_test_1">>},
+      #{identifier => <<"target_test_2">>,
+        name => <<"target_test_2">>}],
+      variation => <<"Dont_serve_it">>}],
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"{    \"serveIt\":\"yes\" }">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it">>,
+        value => <<"{    \"serveIt\":\"no\" }">>}],
+    version => 4}.
+
+json_flag_no_targets_or_groups() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_JSON_flag">>,
+    kind => <<"json">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules => [],state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"{    \"serveIt\":\"yes\" }">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it">>,
+        value => <<"{    \"serveIt\":\"no\" }">>}],
+    version => 4}.
+
+json_flag_only_groups() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_JSON_flag">>,
+    kind => <<"json">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"bdaf96d2-1a65-44c3-b367-f0eb610e6e39">>,
+      negate => false,op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 5,
+      ruleId => <<"1676d97b-59e9-44c3-9806-748206d85978">>,
+      serve => #{variation => <<"Maybe_serve_it">>}}]
+    ,state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"{    \"serveIt\":\"yes\" }">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it">>,
+        value => <<"{    \"serveIt\":\"no\" }">>},
+      #{identifier => <<"Maybe_serve_it">>,
+        name => <<"Maybe serve it">>,
+        value => <<"{    \"serveIt\":\"maybe\" }">>}],
+    version => 4}.
+
+json_flag_targets_and_groups() ->
+  #{defaultServe => #{variation => <<"Serve_it">>},
+    environment => <<"dev">>,feature => <<"My_JSON_flag">>,
+    kind => <<"json">>,offVariation => <<"Dont_serve_it">>,
+    prerequisites => [],project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"bdaf96d2-1a65-44c3-b367-f0eb610e6e39">>,
+      negate => false,op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 5,
+      ruleId => <<"1676d97b-59e9-44c3-9806-748206d85978">>,
+      serve => #{variation => <<"Maybe_serve_it">>}}],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_1">>,
+      name => <<"target_test">>},
+      #{identifier => <<"target_test_2">>,
+        name => <<"target_test_2">>}],
+      variation => <<"Dont_serve_it">>}],
+    variations =>
+    [#{identifier => <<"Serve_it">>,name => <<"Serve it">>,
+      value => <<"{    \"serveIt\":\"yes\" }">>},
+      #{identifier => <<"Dont_serve_it">>,
+        name => <<"Don't serve it">>,
+        value => <<"{    \"serveIt\":\"no\" }">>},
+      #{description => <<>>,identifier => <<"Maybe_serve_it">>,
+        name => <<"Maybe serve it">>,
+        value => <<"{    \"serveIt\":\"maybe\" }">>}],
+    version => 8}.
 
 target_group_no_custom_rules() ->
   #{environment => <<"dev">>,
