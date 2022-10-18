@@ -26,7 +26,17 @@ start(ApiKey, Options) ->
 
 -spec bool_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: cfapi_evaluation:cfapi_evaluation()) -> cfapi_evaluation:cfapi_evaluation().
 bool_variation(FlagKey, Target, Default) ->
-  cfclient_evaluator:bool_variation(FlagKey, Target, Default).
+%%  try cfclient_evaluator:bool_variation(FlagKey, Target, Default)
+%%  catch
+%%    error:ba -> binary_to_integer(Variation)
+%%  end.
+  try cfclient_evaluator:bool_variation(FlagKey, Target, Default)
+  catch
+    _:_:Stacktrace ->
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n" , [FlagKey, Target, Stacktrace]),
+      Default
+  end.
+
 
 -spec retrieve_flags() -> ok.
 retrieve_flags() ->
