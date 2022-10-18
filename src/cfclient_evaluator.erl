@@ -26,8 +26,13 @@ evaluate_flag(FlagIdentifier, Target) ->
       %% If flag is turned off we always return default off variation
         State == <<"off">> ->
           OffVariationIdentifier = maps:get(offVariation, Flag),
-          OffVariation = get_variation(maps:get(variations, Flag), OffVariationIdentifier),
-          {ok, maps:get(value, OffVariation)};
+          case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
+            #{} = OffVariation ->
+              {ok, maps:get(value, OffVariation)};
+            not_found ->
+              logger:debug("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+              not_ok
+          end;
 
         true ->
           %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
@@ -46,14 +51,24 @@ evaluate_flag(FlagIdentifier, Target) ->
           %% Return the evaluated variation if one was found.
           if
             RulesVariationOrNotFound /= not_found ->
-              Variation = get_variation(maps:get(variations, Flag), RulesVariationOrNotFound),
-              {ok, maps:get(value, Variation)};
+              case get_variation(maps:get(variations, Flag), RulesVariationOrNotFound) of
+                #{} = Variation ->
+                  {ok, maps:get(value, Variation)};
+                not_found ->
+                  logger:debug("Target or group variation not found: ~p~n ", [RulesVariationOrNotFound]),
+                  not_ok
+              end;
             true ->
               %% Otherwise return the flag's default "on" variation.
               DefaultServe = maps:get(defaultServe, Flag),
               DefaultServeIdentifier = maps:get(variation, DefaultServe),
-              DefaultVariation = get_variation(maps:get(variations, Flag), DefaultServeIdentifier),
-              {ok, maps:get(value, DefaultVariation)}
+              case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
+                #{} = DefaultVariation ->
+                  {ok, maps:get(value, DefaultVariation)};
+                not_found ->
+                  logger:debug("Default variation not found: ~p~n ", [DefaultServeIdentifier]),
+                  not_ok
+              end
           end
       end;
     undefined ->
@@ -197,8 +212,8 @@ json_variation(FlagIdentifier, Target) ->
 
 
 %% TODO - refactor using recursion so can exit upon condition.
--spec get_variation(Variations :: list(), Identifier :: binary()) -> binary().
+-spec get_variation(Variations :: list(), Identifier :: binary()) -> binary() | not_found.
 get_variation(Variations, Identifier) ->
-  hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation)]).
+  hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation, not_found)]).
 
 
