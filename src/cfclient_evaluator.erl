@@ -20,7 +20,7 @@ attributes := #{atom() := any()}
 evaluate_flag(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
-    Flag ->
+    #{} = Flag ->
       State = maps:get(state, Flag),
       if
       %% If flag is turned off we always return default off variation
