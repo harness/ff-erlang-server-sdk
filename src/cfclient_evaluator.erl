@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_evaluator).
 
--export([bool_variation/3, string_variation/3, number_variation/3, json_variation/3]).
+-export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2]).
 
 -type target() ::
 #{identifier := binary(),
@@ -158,16 +158,16 @@ is_target_in_list(Found, TargetIdentifier, [Head | Tail]) when Found /= true ->
 is_target_in_list(_, _, _) -> false;
 is_target_in_list(_, _, []) -> false.
 
--spec bool_variation(Identifier :: binary(), Target :: target(), DefaultValue :: boolean()) -> {ok, boolean()} | not_ok.
-bool_variation(FlagIdentifier, Target, DefaultValue) ->
+-spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
+bool_variation(FlagIdentifier, Target) ->
   case evaluate_flag(FlagIdentifier, Target) of
     {ok, Variation} ->
       {ok, binary_to_list(Variation) == "true"};
     not_ok -> not_ok
   end.
 
--spec string_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> {ok, string()} | not_ok.
-string_variation(FlagIdentifier, Target, DefaultValue) ->
+-spec string_variation(Identifier :: binary(), Target :: target()) -> {ok, string()} | not_ok.
+string_variation(FlagIdentifier, Target) ->
   case evaluate_flag(FlagIdentifier, Target) of
     {ok, Variation} ->
       {ok, binary_to_list(Variation)};
@@ -175,8 +175,8 @@ string_variation(FlagIdentifier, Target, DefaultValue) ->
   end.
 
 
--spec number_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> {ok, number()} | not_ok.
-number_variation(FlagIdentifier, Target, DefaultValue) ->
+-spec number_variation(Identifier :: binary(), Target :: target()) -> {ok, number()} | not_ok.
+number_variation(FlagIdentifier, Target) ->
   case evaluate_flag(FlagIdentifier, Target) of
     {ok, Variation} ->
       try {ok, binary_to_float(Variation)}
@@ -187,8 +187,8 @@ number_variation(FlagIdentifier, Target, DefaultValue) ->
   end.
 
 
--spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: map()) -> {ok, map()} | not_ok.
-json_variation(FlagIdentifier, Target, DefaultValue) ->
+-spec json_variation(Identifier :: binary(), Target :: target()) -> {ok, map()} | not_ok.
+json_variation(FlagIdentifier, Target) ->
   case evaluate_flag(FlagIdentifier, Target) of
     {ok, Variation} ->
       {ok, jsx:decode(Variation, [])};
