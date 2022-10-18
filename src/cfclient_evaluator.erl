@@ -16,7 +16,7 @@ attributes := #{atom() := any()}
 
 %% TODO - At present we don't check the Flag type (boolean, multivariate etc.) matches the Variation Request. For example,
 %% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
--spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> binary() | atom().
+-spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> {ok, binary()} | not_ok.
 evaluate_flag(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
@@ -27,7 +27,7 @@ evaluate_flag(FlagIdentifier, Target) ->
         State == <<"off">> ->
           OffVariationIdentifier = maps:get(offVariation, Flag),
           OffVariation = get_variation(maps:get(variations, Flag), OffVariationIdentifier),
-          maps:get(value, OffVariation);
+          {ok, maps:get(value, OffVariation)};
 
         true ->
           %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
@@ -47,20 +47,19 @@ evaluate_flag(FlagIdentifier, Target) ->
           if
             RulesVariationOrNotFound /= not_found ->
               Variation = get_variation(maps:get(variations, Flag), RulesVariationOrNotFound),
-              maps:get(value, Variation);
+              {ok, maps:get(value, Variation)};
             true ->
               %% Otherwise return the flag's default "on" variation.
               DefaultServe = maps:get(defaultServe, Flag),
               DefaultServeIdentifier = maps:get(variation, DefaultServe),
               DefaultVariation = get_variation(maps:get(variations, Flag), DefaultServeIdentifier),
-              maps:get(value, DefaultVariation)
+              {ok, maps:get(value, DefaultVariation)}
           end
       end;
     undefined ->
-      logger:debug("Requested Flag Identifier not found: ~p~n" , [FlagIdentifier]),
-      flag_not_found
+      logger:debug("Flag not found in cache: ~p~n", [FlagIdentifier]),
+      not_ok
   end.
-
 
 
 %% Check if the supplied target matches a Target rule by evaluating the Variation to Target map.
@@ -159,29 +158,42 @@ is_target_in_list(Found, TargetIdentifier, [Head | Tail]) when Found /= true ->
 is_target_in_list(_, _, _) -> false;
 is_target_in_list(_, _, []) -> false.
 
--spec bool_variation(Identifier :: binary(), Target :: target(), DefaultValue :: boolean()) -> boolean().
+-spec bool_variation(Identifier :: binary(), Target :: target(), DefaultValue :: boolean()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  binary_to_list(Variation) == "true".
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      {ok, binary_to_list(Variation) == "true"};
+    not_ok -> not_ok
+  end.
 
--spec string_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> string().
+-spec string_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> {ok, string()} | not_ok.
 string_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  binary_to_list(Variation).
-
--spec number_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> number().
-number_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  try binary_to_float(Variation)
-  catch
-    error:badarg -> binary_to_integer(Variation)
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      {ok, binary_to_list(Variation)};
+    not_ok -> not_ok
   end.
 
 
--spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: map()) -> map().
+-spec number_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> {ok, number()} | not_ok.
+number_variation(FlagIdentifier, Target, DefaultValue) ->
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      try {ok, binary_to_float(Variation)}
+      catch
+        error:badarg -> {ok, binary_to_integer(Variation)}
+      end;
+    not_ok -> not_ok
+  end.
+
+
+-spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: map()) -> {ok, map()} | not_ok.
 json_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  jsx:decode(Variation, []).
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      {ok, jsx:decode(Variation, [])};
+    not_ok -> not_ok
+  end.
 
 
 %% TODO - refactor using recursion so can exit upon condition.

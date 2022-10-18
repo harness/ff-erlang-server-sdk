@@ -30,7 +30,11 @@ bool_variation(FlagKey, Target, Default) ->
 %%  catch
 %%    error:ba -> binary_to_integer(Variation)
 %%  end.
-  try cfclient_evaluator:bool_variation(FlagKey, Target, Default)
+  try
+    case cfclient_evaluator:bool_variation(FlagKey, Target, Default) of
+      {ok, Variation} -> Variation;
+      not_ok -> Default
+    end
   catch
     _:_:Stacktrace ->
       logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n" , [FlagKey, Target, Stacktrace]),
