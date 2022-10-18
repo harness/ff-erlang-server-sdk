@@ -68,7 +68,7 @@ number_variation(FlagKey, Target, Default) ->
 -spec json_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: map()) -> map().
 json_variation(FlagKey, Target, Default) ->
   try
-    case cfclient_evaluator:string_variation(FlagKey, Target) of
+    case cfclient_evaluator:json_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
       not_ok ->
         logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
