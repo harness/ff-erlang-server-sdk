@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_evaluator).
 
--export([bool_variation/3, string_variation/3, number_variation/3]).
+-export([bool_variation/3, string_variation/3, number_variation/3, json_variation/3]).
 
 -type target() ::
 #{identifier := binary(),
@@ -172,10 +172,10 @@ number_variation(FlagIdentifier, Target, DefaultValue) ->
   end.
 
 
-%% TODO - not implemented
--spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> binary().
+-spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: map()) -> map().
 json_variation(FlagIdentifier, Target, DefaultValue) ->
-  not_implemented.
+  Variation = evaluate_flag(FlagIdentifier, Target),
+  jsx:decode(Variation, []).
 
 
 %% TODO - refactor using recursion so can exit upon condition.
