@@ -25,11 +25,13 @@ bool_variation(FlagKey, Target, Default) ->
   try
     case cfclient_evaluator:bool_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
-      not_ok -> Default
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n" , [FlagKey, Target, Stacktrace]),
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
       Default
   end.
 
@@ -38,11 +40,13 @@ string_variation(FlagKey, Target, Default) ->
   try
     case cfclient_evaluator:string_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
-      not_ok -> Default
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n" , [FlagKey, Target, Stacktrace]),
+      logger:error("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
       Default
   end.
 
@@ -51,11 +55,13 @@ number_variation(FlagKey, Target, Default) ->
   try
     case cfclient_evaluator:number_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
-      not_ok -> Default
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n" , [FlagKey, Target, Stacktrace]),
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
       Default
   end.
 
@@ -64,11 +70,13 @@ json_variation(FlagKey, Target, Default) ->
   try
     case cfclient_evaluator:string_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
-      not_ok -> Default
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n" , [FlagKey, Target, Stacktrace]),
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
       Default
   end.
 
