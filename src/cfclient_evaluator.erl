@@ -50,7 +50,7 @@ evaluate_flag(FlagIdentifier, Target) ->
 
           %% Return the evaluated variation if one was found.
           if
-            RulesVariationOrNotFound /= not_found ->
+            RulesVariationOrNotFound /= excluded, RulesVariationOrNotFound /= not_found ->
               case get_variation(maps:get(variations, Flag), RulesVariationOrNotFound) of
                 #{} = Variation ->
                   {ok, maps:get(value, Variation)};
@@ -134,14 +134,16 @@ evaluate_target_group_rules(TargetVariationOrNotFound, _, _) ->
 evaluate_target_group_rules(TargetVariationOrNotFound, [], _) ->
   TargetVariationOrNotFound.
 
--spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> found | not_found.
+-spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> excluded | binary() | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
-  IsRuleIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
-  if
-    IsRuleIncluded == true ->
+  IsRuleExcludedOrIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
+  case IsRuleExcludedOrIncluded of
+    {excluded, true} ->
+      excluded;
+    {included, true} ->
       Serve = maps:get(serve, Head),
       maps:get(variation, Serve);
-    true -> search_rules_for_inclusion(Tail, Target)
+    _ -> search_rules_for_inclusion(Tail, Target)
   end;
 search_rules_for_inclusion([], _) -> not_found.
 
@@ -155,23 +157,27 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
       Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
       TargetIdentifier = maps:get(identifier, Target),
       %% First check if the target is explicitly excluded.
-      IsTargetExcluded = is_target_in_list(false, TargetIdentifier, maps:get(excluded, Group, [])),
+      IsExcluded = is_target_in_list(TargetIdentifier, maps:get(excluded, Group, [])),
       %% If Target is not excluded, check if it has been explicitly included
-      IsTargetIncluded = is_target_in_list(IsTargetExcluded, TargetIdentifier, maps:get(included, Group, []));
+      if
+        IsExcluded == false ->
+          IsIncluded = is_target_in_list(TargetIdentifier, maps:get(included, Group, [])),
+          {included, IsIncluded};
+        true -> {excluded, IsExcluded}
+      end;
     _ -> is_rule_included_or_excluded(Tail, Target)
   end;
 is_rule_included_or_excluded([], _) -> false.
 
--spec is_target_in_list(Found :: true | false, TargetIdentifier :: binary(), Targets :: list()) -> true | false.
-is_target_in_list(Found, TargetIdentifier, [Head | Tail]) when Found /= true ->
+-spec is_target_in_list(TargetIdentifier :: binary(), Targets :: list()) -> true | false.
+is_target_in_list(TargetIdentifier, [Head | Tail]) ->
   ListTargetIdentifier = maps:get(identifier, Head),
   if
     TargetIdentifier == ListTargetIdentifier ->
       true;
-    true -> is_target_in_list(Found, TargetIdentifier, Tail)
+    true -> is_target_in_list(TargetIdentifier, Tail)
   end;
-is_target_in_list(_, _, _) -> false;
-is_target_in_list(_, _, []) -> false.
+is_target_in_list(_, []) -> false.
 
 -spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->

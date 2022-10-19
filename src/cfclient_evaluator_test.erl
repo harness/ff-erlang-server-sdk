@@ -354,6 +354,18 @@ is_rule_included_or_excluded_test() ->
     attributes => <<"">>
   },
 
+  NotIncludedTargetA = #{'identifier' => <<"haven't_been_included_or_excluded">>,
+    name => <<"">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
+  NotIncludedTargetB = #{'identifier' => <<"another_target_that_hasn't_been_included_or_excluded">>,
+    name => <<"">>,
+    anonymous => <<"">>,
+    attributes => <<"">>
+  },
+
 
   %% Cache data for mocked cache call
   CacheName = cfclient_cache_repository:get_cache_name(),
@@ -379,14 +391,19 @@ is_rule_included_or_excluded_test() ->
 
   %% Excluded %%
   meck:expect(lru, get, fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
-  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTarget)),
-  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTargetB)),
+  ?assertEqual({excluded,true}, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTarget)),
+  ?assertEqual({excluded,true}, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTargetB)),
 
 
-%% Included %%
+  %% Included %%
   meck:expect(lru, get, fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
-  ?assertEqual(true, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetA)),
-  ?assertEqual(true, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetB)),
+  ?assertEqual({included,true}, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetA)),
+  ?assertEqual({included,true}, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetB)),
+
+  %% Not Included %%
+  meck:expect(lru, get, fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
+  ?assertEqual({included,false}, cfclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetA)),
+  ?assertEqual({included,false}, cfclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetB)),
 
   meck:unload(lru).
 
