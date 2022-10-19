@@ -157,13 +157,15 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
       Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
       TargetIdentifier = maps:get(identifier, Target),
       %% First check if the target is explicitly excluded.
-      {excluded, Result} = is_target_in_list(true, {excluded, false},TargetIdentifier, maps:get(excluded, Group, [])),
+      {_, IsExcluded} = is_target_in_list(true, {excluded, false}, TargetIdentifier, maps:get(excluded, Group, [])),
       %% If Target is not excluded, check if it has been explicitly included
-      IsIncluded = is_target_in_list(Result == false, {included, false},TargetIdentifier, maps:get(included, Group, []));
+      {_, IsIncluded} = is_target_in_list(IsExcluded == false, {included, false}, TargetIdentifier, maps:get(included, Group, []));
     _ -> is_rule_included_or_excluded(Tail, Target)
   end;
 is_rule_included_or_excluded([], _) -> false.
 
+%% Helper function that parses Group Rules for different rule types, specifically Included and Excluded rules.
+%% The ShouldSearch variable is used to stop the search from taking place if we've matched on a rule with higher precedence.
 -spec is_target_in_list(ShouldSearch :: boolean(), RulesType :: {atom(), atom()}, TargetIdentifier :: binary(), GroupRules :: list()) -> true | false.
 is_target_in_list(true, {excluded, false}, TargetIdentifier, [Head | Tail]) ->
   ListTargetIdentifier = maps:get(identifier, Head),
@@ -181,7 +183,8 @@ is_target_in_list(true, {included, false}, TargetIdentifier, [Head | Tail]) ->
   end;
 %% Return excluded if we shouldn't search when evaluating included rules, as that means we've matched on an Excluded rule
 is_target_in_list(false, {included, false}, _, _) -> {excluded, true};
-%% Remaining functions here are when the search has finished and didn't find a match on any respective rule types.
+%% Remaining functions here are when the search has finished and didn't find a match on any respective rule types, so return
+%% false for these rules.
 is_target_in_list(true, {excluded, false}, _, []) -> {excluded, false};
 is_target_in_list(true, {included, false}, _, []) -> {included, false}.
 
@@ -222,7 +225,7 @@ json_variation(FlagIdentifier, Target) ->
         {ok, jsx:decode(Variation, [])}
       catch
         error:badarg ->
-          logger:error("Error when decoding Json variation. Not returning variation for: ~p~n" , [Variation]),
+          logger:error("Error when decoding Json variation. Not returning variation for: ~p~n", [Variation]),
           not_ok
       end;
     not_ok -> not_ok
