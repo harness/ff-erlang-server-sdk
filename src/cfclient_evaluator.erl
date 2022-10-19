@@ -160,10 +160,11 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
       IsExcluded = is_target_in_list(TargetIdentifier, maps:get(excluded, Group, [])),
       %% If Target is not excluded, check if it has been explicitly included
       if
-        IsExcluded == false ->
+        IsExcluded == true ->
+          {excluded, true};
+        true ->
           IsIncluded = is_target_in_list(TargetIdentifier, maps:get(included, Group, [])),
-          {included, IsIncluded};
-        true -> {excluded, IsExcluded}
+          {included, IsIncluded}
       end;
     _ -> is_rule_included_or_excluded(Tail, Target)
   end;
