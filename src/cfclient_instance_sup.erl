@@ -46,9 +46,7 @@ init([]) ->
     intensity => MaxRestarts,
     period => MaxSecondsBetweenRestarts},
 
-  CacheSup = {lru,{lru, start_link, ['cfclient_cache_default',[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']},
-
-  {ok, {SupFlags, [CacheSup]}}.
+  {ok, {SupFlags, []}}.
 
 %%%===================================================================
 %%% Internal functions
