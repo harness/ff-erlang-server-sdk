@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_evaluator).
 
--export([bool_variation/3, string_variation/3, number_variation/3, json_variation/3]).
+-export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2]).
 
 -type target() ::
 #{identifier := binary(),
@@ -16,44 +16,64 @@ attributes := #{atom() := any()}
 
 %% TODO - At present we don't check the Flag type (boolean, multivariate etc.) matches the Variation Request. For example,
 %% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
--spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> cfapi_variation:cfapi_variation().
+-spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> {ok, binary()} | not_ok.
 evaluate_flag(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
-  Flag = cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid),
-  State = maps:get(state, Flag),
-  if
-  %% If flag is turned off we always return default off variation
-    State == <<"off">> ->
-      OffVariationIdentifier = maps:get(offVariation, Flag),
-      OffVariation = get_variation(maps:get(variations, Flag), OffVariationIdentifier),
-      maps:get(value, OffVariation);
-
-    true ->
-      %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
-      %% apply, and no further evaluations will take place.
-
-      %% Evaluate for target rules
-      TargetVariationOrNotFound = evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target),
-
-      %% Evaluate for target group rules.
-      %% At present, targets are associated with groups via rules within a Feature Configuration.
-      TargetGroupRules = maps:get(rules, Flag),
-      RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, TargetGroupRules, Target),
-      %% TODO Distribution
-      %% TODO Pre-requisites
-
-      %% Return the evaluated variation if one was found.
+  case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
+    #{} = Flag ->
+      State = maps:get(state, Flag),
       if
-        RulesVariationOrNotFound /= not_found ->
-          Variation = get_variation(maps:get(variations, Flag), RulesVariationOrNotFound),
-          maps:get(value, Variation);
+      %% If flag is turned off we always return default off variation
+        State == <<"off">> ->
+          OffVariationIdentifier = maps:get(offVariation, Flag),
+          case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
+            #{} = OffVariation ->
+              {ok, maps:get(value, OffVariation)};
+            not_found ->
+              logger:debug("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+              not_ok
+          end;
+
         true ->
-          %% Otherwise return the flag's default "on" variation.
-          DefaultServe = maps:get(defaultServe, Flag),
-          DefaultServeIdentifier = maps:get(variation, DefaultServe),
-          DefaultVariation = get_variation(maps:get(variations, Flag), DefaultServeIdentifier),
-          maps:get(value, DefaultVariation)
-      end
+          %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
+          %% apply, and no further evaluations will take place.
+
+          %% Evaluate for target rules
+          TargetVariationOrNotFound = evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target),
+
+          %% Evaluate for target group rules.
+          %% At present, targets are associated with groups via rules within a Feature Configuration.
+          TargetGroupRules = maps:get(rules, Flag),
+          RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, TargetGroupRules, Target),
+          %% TODO Distribution
+          %% TODO Pre-requisites
+
+          %% Return the evaluated variation if one was found.
+          if
+            RulesVariationOrNotFound /= excluded, RulesVariationOrNotFound /= not_found ->
+              case get_variation(maps:get(variations, Flag), RulesVariationOrNotFound) of
+                #{} = Variation ->
+                  {ok, maps:get(value, Variation)};
+                not_found ->
+                  logger:debug("Target or group variation not found: ~p~n ", [RulesVariationOrNotFound]),
+                  not_ok
+              end;
+            true ->
+              %% Otherwise return the flag's default "on" variation.
+              DefaultServe = maps:get(defaultServe, Flag),
+              DefaultServeIdentifier = maps:get(variation, DefaultServe),
+              case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
+                #{} = DefaultVariation ->
+                  {ok, maps:get(value, DefaultVariation)};
+                not_found ->
+                  logger:debug("Default variation not found: ~p~n ", [DefaultServeIdentifier]),
+                  not_ok
+              end
+          end
+      end;
+    undefined ->
+      logger:debug("Flag not found in cache: ~p~n", [FlagIdentifier]),
+      not_ok
   end.
 
 
@@ -114,14 +134,16 @@ evaluate_target_group_rules(TargetVariationOrNotFound, _, _) ->
 evaluate_target_group_rules(TargetVariationOrNotFound, [], _) ->
   TargetVariationOrNotFound.
 
--spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> found | not_found.
+-spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> excluded | binary() | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
-  IsRuleIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
-  if
-    IsRuleIncluded == true ->
+  IsRuleExcludedOrIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
+  case IsRuleExcludedOrIncluded of
+    {excluded, true} ->
+      excluded;
+    {included, true} ->
       Serve = maps:get(serve, Head),
       maps:get(variation, Serve);
-    true -> search_rules_for_inclusion(Tail, Target)
+    _ -> search_rules_for_inclusion(Tail, Target)
   end;
 search_rules_for_inclusion([], _) -> not_found.
 
@@ -135,52 +157,84 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
       Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
       TargetIdentifier = maps:get(identifier, Target),
       %% First check if the target is explicitly excluded.
-      IsTargetExcluded = is_target_in_list(false, TargetIdentifier, maps:get(excluded, Group, [])),
+      {_, IsExcluded} = is_target_in_list(true, {excluded, false}, TargetIdentifier, maps:get(excluded, Group, [])),
       %% If Target is not excluded, check if it has been explicitly included
-      IsTargetIncluded = is_target_in_list(IsTargetExcluded, TargetIdentifier, maps:get(included, Group, []));
+      {_, IsIncluded} = is_target_in_list(IsExcluded == false, {included, false}, TargetIdentifier, maps:get(included, Group, []));
     _ -> is_rule_included_or_excluded(Tail, Target)
   end;
 is_rule_included_or_excluded([], _) -> false.
 
--spec is_target_in_list(Found :: true | false, TargetIdentifier :: binary(), Targets :: list()) -> true | false.
-is_target_in_list(Found, TargetIdentifier, [Head | Tail]) when Found /= true ->
+%% Helper function that parses Group Rules for different rule types, specifically Included and Excluded rules.
+%% The ShouldSearch variable is used to stop the search from taking place if we've matched on a rule with higher precedence.
+-spec is_target_in_list(ShouldSearch :: boolean(), RulesType :: {atom(), atom()}, TargetIdentifier :: binary(), GroupRules :: list()) -> true | false.
+is_target_in_list(true, {excluded, false}, TargetIdentifier, [Head | Tail]) ->
   ListTargetIdentifier = maps:get(identifier, Head),
   if
     TargetIdentifier == ListTargetIdentifier ->
-      true;
-    true -> is_target_in_list(Found, TargetIdentifier, Tail)
+      {excluded, true};
+    true -> is_target_in_list(true, {excluded, false}, TargetIdentifier, Tail)
   end;
-is_target_in_list(_, _, _) -> false;
-is_target_in_list(_, _, []) -> false.
+is_target_in_list(true, {included, false}, TargetIdentifier, [Head | Tail]) ->
+  ListTargetIdentifier = maps:get(identifier, Head),
+  if
+    TargetIdentifier == ListTargetIdentifier ->
+      {included, true};
+    true -> is_target_in_list(true, {included, false}, TargetIdentifier, Tail)
+  end;
+%% Return excluded if we shouldn't search when evaluating included rules, as that means we've matched on an Excluded rule
+is_target_in_list(false, {included, false}, _, _) -> {excluded, true};
+%% Remaining functions here are when the search has finished and didn't find a match on any respective rule types, so return
+%% false for these rules.
+is_target_in_list(true, {excluded, false}, _, []) -> {excluded, false};
+is_target_in_list(true, {included, false}, _, []) -> {included, false}.
 
--spec bool_variation(Identifier :: binary(), Target :: target(), DefaultValue :: boolean()) -> boolean().
-bool_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  binary_to_list(Variation) == "true".
+-spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
+bool_variation(FlagIdentifier, Target) ->
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      {ok, binary_to_list(Variation) == "true"};
+    not_ok -> not_ok
+  end.
 
--spec string_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> string().
-string_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  binary_to_list(Variation).
-
--spec number_variation(Identifier :: binary(), Target :: target(), DefaultValue :: binary()) -> number().
-number_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  try binary_to_float(Variation)
-  catch
-    error:badarg -> binary_to_integer(Variation)
+-spec string_variation(Identifier :: binary(), Target :: target()) -> {ok, string()} | not_ok.
+string_variation(FlagIdentifier, Target) ->
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      {ok, binary_to_list(Variation)};
+    not_ok -> not_ok
   end.
 
 
--spec json_variation(Identifier :: binary(), Target :: target(), DefaultValue :: map()) -> map().
-json_variation(FlagIdentifier, Target, DefaultValue) ->
-  Variation = evaluate_flag(FlagIdentifier, Target),
-  jsx:decode(Variation, []).
+-spec number_variation(Identifier :: binary(), Target :: target()) -> {ok, number()} | not_ok.
+number_variation(FlagIdentifier, Target) ->
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      try {ok, binary_to_float(Variation)}
+      catch
+        error:badarg -> {ok, binary_to_integer(Variation)}
+      end;
+    not_ok -> not_ok
+  end.
+
+
+-spec json_variation(Identifier :: binary(), Target :: target()) -> {ok, map()} | not_ok.
+json_variation(FlagIdentifier, Target) ->
+  case evaluate_flag(FlagIdentifier, Target) of
+    {ok, Variation} ->
+      try
+        {ok, jsx:decode(Variation, [])}
+      catch
+        error:badarg ->
+          logger:error("Error when decoding Json variation. Not returning variation for: ~p~n", [Variation]),
+          not_ok
+      end;
+    not_ok -> not_ok
+  end.
 
 
 %% TODO - refactor using recursion so can exit upon condition.
--spec get_variation(Variations :: list(), Identifier :: binary()) -> cfapi_variation:cfapi_variation().
+-spec get_variation(Variations :: list(), Identifier :: binary()) -> binary() | not_found.
 get_variation(Variations, Identifier) ->
-  hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation)]).
+  hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation, not_found)]).
 
 

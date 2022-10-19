@@ -19,14 +19,7 @@ get_from_cache({Type, Identifier}, CachePID) ->
 
 -spec get(CachePID :: pid(), Identifier :: binary()) -> term().
 get(CachePID, FlagKey) ->
-  Flag = lru:get(CachePID, FlagKey),
-  if
-    Flag /= undefined ->
-      Flag;
-  %% @TODO returning undefined for now - but we need to figure out if this repository should return errors or not - or just let the caller handle it.
-    true ->
-      undefined
-  end.
+  lru:get(CachePID, FlagKey).
 
 %% @doc Places a flag or segment into the cache with the new value
 %% @end

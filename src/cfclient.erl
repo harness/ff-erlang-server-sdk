@@ -6,11 +6,7 @@
 -module(cfclient).
 
 %% API
--export([start/1, start/2]).
--export([bool_variation/3]).
--export([retrieve_flags/0]).
--export([retrieve_segments/0]).
--export([close/0]).
+-export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, close/0, number_variation/3, json_variation/3]).
 
 %% Constants
 
@@ -24,9 +20,66 @@ start(ApiKey) ->
 start(ApiKey, Options) ->
   cfclient_instance:start(ApiKey, Options).
 
--spec bool_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: cfapi_evaluation:cfapi_evaluation()) -> cfapi_evaluation:cfapi_evaluation().
+-spec bool_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
 bool_variation(FlagKey, Target, Default) ->
-  cfclient_evaluator:bool_variation(FlagKey, Target, Default).
+  try
+    case cfclient_evaluator:bool_variation(FlagKey, Target) of
+      {ok, Variation} -> Variation;
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
+    end
+  catch
+    _:_:Stacktrace ->
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
+      Default
+  end.
+
+-spec string_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
+string_variation(FlagKey, Target, Default) ->
+  try
+    case cfclient_evaluator:string_variation(FlagKey, Target) of
+      {ok, Variation} -> Variation;
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
+    end
+  catch
+    _:_:Stacktrace ->
+      logger:error("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
+      Default
+  end.
+
+-spec number_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: number()) -> number().
+number_variation(FlagKey, Target, Default) ->
+  try
+    case cfclient_evaluator:number_variation(FlagKey, Target) of
+      {ok, Variation} -> Variation;
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
+    end
+  catch
+    _:_:Stacktrace ->
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
+      Default
+  end.
+
+-spec json_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: map()) -> map().
+json_variation(FlagKey, Target, Default) ->
+  try
+    case cfclient_evaluator:json_variation(FlagKey, Target) of
+      {ok, Variation} -> Variation;
+      not_ok ->
+        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        Default
+    end
+  catch
+    _:_:Stacktrace ->
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
+      Default
+  end.
+
 
 -spec retrieve_flags() -> ok.
 retrieve_flags() ->
