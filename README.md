@@ -37,7 +37,7 @@ Install the Erlang SDK using [rebar3](https://www.rebar3.org/)
 First add the dependency to your `rebar.config`.
 ```Erlang
 {deps, [
-{cfclient, "0.1.0", {pkg, ff_erlang_server_sdk}}
+{cfclient, {git, "https://github.com/harness/ff-erlang-client-api", {branch, "0.1.0"}}}
 ]}.
 ```
 Then add the dependency to your project's `app.src`.
