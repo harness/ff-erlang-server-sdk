@@ -6,7 +6,7 @@
 -module(cfclient).
 
 %% API
--export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, close/0, number_variation/3, json_variation/3]).
+-export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, stop/0, number_variation/3, json_variation/3]).
 
 %% Constants
 
@@ -97,5 +97,6 @@ retrieve_segments() ->
   ClientConfig = {AuthToken, Environment, ClusterID},
   cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
 
-close() ->
-  cfclient_instance:close().
+-spec stop() -> ok.
+stop() ->
+  cfclient_instance:stop().

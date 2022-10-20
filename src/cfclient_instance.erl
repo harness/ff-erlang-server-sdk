@@ -7,13 +7,10 @@
 -module(cfclient_instance).
 
 %% API
--export([start/1, start/2]).
--export([get_authtoken/0]).
--export([get_project_value/1]).
-
--export([close/0]).
+-export([start/1, start/2, get_authtoken/0, get_project_value/1, stop/0]).
 
 -define(DEFAULT_OPTIONS, #{}).
+-define(PARENTSUP, cfclient_sup).
 
 -spec start(ApiKey :: string()) -> ok.
 start(ApiKey) ->
@@ -26,17 +23,7 @@ start(ApiKey, Options) ->
   cfclient_config:init(ApiKey, Options),
   {ok, AuthToken} = connect(ApiKey),
   parse_project_data(AuthToken),
-
-  %% Start Cache
-  {ok, CachePID} = supervisor:start_child(cfclient_sup, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-  cfclient_cache_repository:set_pid(CachePID),
-  %% Start Poll Processor
-  {ok, PollProcessorPID} = supervisor:start_child(cfclient_sup, {cfclient_poll_processor_default,{cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
-  %% Save the PID for future reference.
-  %% TO-DO: Clean this up, b/c this probably isn't necessary
-  application:set_env(cfclient, pollprocessorpid, PollProcessorPID),
-
-  ok.
+  start_children().
 
 -spec connect(ApiKey :: string()) -> string() | {error, connect_failure, term()}.
 connect(ApiKey) ->
@@ -65,7 +52,35 @@ get_project_value(Key) ->
   Value = maps:get(list_to_binary(Key), Project),
   binary_to_list(Value).
 
+-spec stop() -> ok | {error, not_found, term()}.
+stop() ->
+  logger:debug("Stopping client"),
+  stop_child(cfclient_poll_processor_default),
+  stop_child(lru),
+  unset_env().
 
--spec close() -> ok | {error, not_found, term()}.
-close() ->
-  logger:debug("Stopping client").
+%% Internal functions
+-spec start_children() -> ok.
+start_children() ->
+  %% Start Cache
+  {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+  cfclient_cache_repository:set_pid(CachePID),
+  %% Start Poll Processor
+  {ok, PollProcessorPID} = supervisor:start_child(?PARENTSUP, {cfclient_poll_processor_default,{cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
+  %% Save the PID for future reference.
+  %% TO-DO: Clean this up, b/c this probably isn't necessary
+  application:set_env(cfclient, pollprocessorpid, PollProcessorPID),
+  ok.
+
+-spec stop_child(Child :: map()) -> ok.
+stop_child(ChildId) ->
+  supervisor:terminate_child(?PARENTSUP, ChildId),
+  supervisor:delete_child(?PARENTSUP, ChildId).
+
+-spec unset_env() -> ok.
+unset_env() ->
+  cfclient_config:clear_config(),
+  cfclient_cache_repository:unset_pid(),
+  application:unset_env(cfclient, pollprocessorpid),
+  application:unset_env(cfclient, project),
+  application:unset_env(cfclient, authtoken).
