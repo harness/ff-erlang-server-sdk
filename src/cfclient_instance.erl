@@ -26,19 +26,22 @@ start(ApiKey, Options) ->
   cfclient_config:init(ApiKey, Options),
   {ok, AuthToken} = connect(ApiKey),
   parse_project_data(AuthToken),
-  logger:debug("authtoken ~p~n~n", [get_authtoken()]),
-  {ok, Project} = application:get_env(cfclient, project),
-  logger:debug("cluster ~p~n~n", [get_project_value("clusterIdentifier")]),
-  logger:debug("env ~p~n~n", [get_project_value("environment")]),
-  logger:debug("org ~p~n~n", [get_project_value("organization")]),
+
+  %% Start Cache
   {ok, CachePID} = supervisor:start_child(cfclient_sup, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
   cfclient_cache_repository:set_pid(CachePID),
+  %% Start Poll Processor
+  {ok, PollProcessorPID} = supervisor:start_child(cfclient_sup, {cfclient_poll_processor_default,{cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
+  %% Save the PID for future reference.
+  %% TO-DO: Clean this up, b/c this probably isn't necessary
+  application:set_env(cfclient, pollprocessorpid, PollProcessorPID),
+
   ok.
 
 -spec connect(ApiKey :: string()) -> string() | {error, connect_failure, term()}.
 connect(ApiKey) ->
   Opts = #{ cfg => #{host => cfclient_config:get_value(config_url)}, params => #{ apiKey => list_to_binary(ApiKey) }},
-  {Status, ResponseBody, Headers} = cfapi_client_api:authenticate(ctx:new(), Opts),
+  {_Status, ResponseBody, _Headers} = cfapi_client_api:authenticate(ctx:new(), Opts),
   AuthToken = maps:get('authToken', ResponseBody),
   application:set_env(cfclient, authtoken, AuthToken),
   {ok, AuthToken}.
