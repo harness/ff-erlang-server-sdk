@@ -7,8 +7,7 @@
 -module(cfclient_config).
 
 %% API
--export([init/2]).
--export([get_value/1]).
+-export([init/2, get_value/1, clear_config/0]).
 
 %% Constants
 -define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io"). %% Config endpoint for Prod
@@ -56,4 +55,7 @@ get_value(Key) when is_atom(Key) ->
     {ok, Config} = application:get_env(cfclient, config),
     maps:get(Key, Config).
 
+-spec clear_config() -> ok.
+clear_config() ->
+    application:unset_env(cfclient, config).
 

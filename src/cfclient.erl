@@ -6,7 +6,7 @@
 -module(cfclient).
 
 %% API
--export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, close/0, number_variation/3, json_variation/3]).
+-export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, stop/0, number_variation/3, json_variation/3]).
 
 %% Constants
 
@@ -20,8 +20,10 @@ start(ApiKey) ->
 start(ApiKey, Options) ->
   cfclient_instance:start(ApiKey, Options).
 
--spec bool_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
-bool_variation(FlagKey, Target, Default) ->
+-spec bool_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
+bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
+  bool_variation(list_to_binary(FlagKey), Target, Default);
+bool_variation(FlagKey, Target, Default) when is_binary(FlagKey)->
   try
     case cfclient_evaluator:bool_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
@@ -35,8 +37,10 @@ bool_variation(FlagKey, Target, Default) ->
       Default
   end.
 
--spec string_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
-string_variation(FlagKey, Target, Default) ->
+-spec string_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
+string_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
+  string_variation(list_to_binary(FlagKey), Target, Default);
+string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:string_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
@@ -50,8 +54,10 @@ string_variation(FlagKey, Target, Default) ->
       Default
   end.
 
--spec number_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: number()) -> number().
-number_variation(FlagKey, Target, Default) ->
+-spec number_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: number()) -> number().
+number_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
+  number_variation(list_to_binary(FlagKey), Target, Default);
+number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:number_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
@@ -65,8 +71,10 @@ number_variation(FlagKey, Target, Default) ->
       Default
   end.
 
--spec json_variation(FlagKey :: binary(), Target :: cfclient_evaluator:target(), Default :: map()) -> map().
-json_variation(FlagKey, Target, Default) ->
+-spec json_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: map()) -> map().
+json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
+  json_variation(list_to_binary(FlagKey), Target, Default);
+json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:json_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
@@ -97,5 +105,6 @@ retrieve_segments() ->
   ClientConfig = {AuthToken, Environment, ClusterID},
   cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
 
-close() ->
-  cfclient_instance:close().
+-spec stop() -> ok.
+stop() ->
+  cfclient_instance:stop().
