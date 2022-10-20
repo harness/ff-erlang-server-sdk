@@ -166,7 +166,7 @@ is_rule_included_or_excluded([], _) -> false.
 
 %% Helper function that parses Group Rules for different rule types, specifically Included and Excluded rules.
 %% The ShouldSearch variable is used to stop the search from taking place if we've matched on a rule with higher precedence.
--spec is_target_in_list(ShouldSearch :: boolean(), RulesType :: {atom(), atom()}, TargetIdentifier :: binary(), GroupRules :: list()) -> true | false.
+-spec is_target_in_list(ShouldSearch :: boolean(), RuleMatch :: {atom(), true | false}, TargetIdentifier :: binary(), GroupRules :: list()) -> true | false.
 is_target_in_list(true, {excluded, false}, TargetIdentifier, [Head | Tail]) ->
   ListTargetIdentifier = maps:get(identifier, Head),
   if
@@ -181,7 +181,7 @@ is_target_in_list(true, {included, false}, TargetIdentifier, [Head | Tail]) ->
       {included, true};
     true -> is_target_in_list(true, {included, false}, TargetIdentifier, Tail)
   end;
-%% Return excluded if we shouldn't search when evaluating included rules, as that means we've matched on an Excluded rule
+%% If we shouldn't search when evaluating included rules, that means we matched on an Excluded rule so return excluded to be true
 is_target_in_list(false, {included, false}, _, _) -> {excluded, true};
 %% Remaining functions here are when the search has finished and didn't find a match on any respective rule types, so return
 %% false for these rules.
