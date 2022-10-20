@@ -37,7 +37,7 @@ Install the Erlang SDK using [rebar3](https://www.rebar3.org/)
 First add the dependency to your `rebar.config`.
 ```Erlang
 {deps, [
-{cfclient, "1.0.0", {pkg, ff_erlang_server_sdk}}
+{cfclient, "0.1.0", {pkg, ff_erlang_server_sdk}}
 ]}.
 ```
 Then add the dependency to your project's `app.src`.
@@ -56,21 +56,30 @@ The following is a complete code example that you can use to test the `harnessap
 - Close the SDK.
 
 ```Erlang
-%% Add Sample Code here
+cfclient:start("SDK KEY").
 ```
 
 ### Running the example
 
-```bash
-$ run example
+In the SDK project directory run the following using rebar3.
+```
+$ rebar3 compile
+$ rebar3 shell
+1> cfclient:start("YOUR SDK KEY").
+ok
+2> Target = #{identifier => list_to_binary("Demo"), name => list_to_binary("demo"), anonymous => false, attributes => #{}}.       
+  #{anonymous => false,attributes => #{},
+  identifier => <<"Demo">>,name => <<"demo">>}
+3> cfclient:bool_variation("harnessappdemodarkmode", Target, false). 
+  false
 ```
 
-### Running the example with Docker
-If you don't have the right version of Erlang installed locally, or don't want to install the dependencies you can
-use docker to quickly get started
+## Cleanup
+To avoid potential memory leak, when SDK is no longer needed
+(when the app is closed, for example), a caller should call this method:
 
-```bash
-TBD
+```
+cfclient:stop().
 ```
 
 ### Additional Reading
