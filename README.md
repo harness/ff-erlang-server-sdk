@@ -56,7 +56,7 @@ The following is a complete code example that you can use to test the `harnessap
 - Close the SDK.
 
 ```Erlang
-  case cfclient:start("SDK KEY") of
+  IsOK = case cfclient:start("SDK KEY") of
     ok ->
       logger:info("Erlang SDK Successfuly Started"),
       ok;
