@@ -20,9 +20,6 @@ retrieve_flags(Context, ClientConfig) ->
   CachePID = cfclient_cache_repository:get_pid(),
   {Optional, EnvironmentID} = ClientConfig,
   case cfapi_client_api:get_feature_config(Context, EnvironmentID, Optional) of
-    %% TODO - do we need the headers from the API response for agit puny reason?
-    %% TODO - case statement for `not_ok`. how do we want to handle that? From looking at the Golang SDK, we want to log
-    %%  if a flag is outdated (which we are doing in the cache repository, but we need to figure out exception handling as well.
     {ok, Features, Headers} ->
       [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Feature)}, Feature, CachePID) || Feature <- Features],
       ok;
