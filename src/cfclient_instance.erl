@@ -16,22 +16,35 @@
 start(ApiKey) ->
   start(ApiKey, ?DEFAULT_OPTIONS).
 
--spec start(ApiKey :: string(), Options :: map()) -> ok.
+-spec start(ApiKey :: string(), Options :: map()) -> ok | not_ok.
 start(ApiKey, Options) ->
   logger:info("Starting Client"),
   logger:info("Initializing Config"),
   cfclient_config:init(ApiKey, Options),
-  {ok, AuthToken} = connect(ApiKey),
-  parse_project_data(AuthToken),
-  start_children().
+  case connect(ApiKey) of
+    {ok, AuthToken} ->
+      AuthToken,
+      parse_project_data(AuthToken),
+      start_children();
+    {not_ok, Error} ->
+      {not_ok, Error}
+  end.
+
 
 -spec connect(ApiKey :: string()) -> string() | {error, connect_failure, term()}.
 connect(ApiKey) ->
   Opts = #{ cfg => #{host => cfclient_config:get_value(config_url)}, params => #{ apiKey => list_to_binary(ApiKey) }},
   {_Status, ResponseBody, _Headers} = cfapi_client_api:authenticate(ctx:new(), Opts),
-  AuthToken = maps:get('authToken', ResponseBody),
-  application:set_env(cfclient, authtoken, AuthToken),
-  {ok, AuthToken}.
+  case cfapi_client_api:authenticate(ctx:new(), Opts) of
+    {ok, ResponseBody, _} ->
+      AuthToken = maps:get('authToken', ResponseBody),
+      application:set_env(cfclient, authtoken, AuthToken),
+      {ok, AuthToken};
+    {error, Response, _} ->
+      logger:error("Error when authorising API Key. Error response: ~p~n", [Response]),
+      {not_ok, Response}
+  end.
+
 
 -spec get_authtoken() -> string() | {error, authtoken_not_found, term()}.
 get_authtoken() ->
