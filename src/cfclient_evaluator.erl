@@ -20,6 +20,9 @@ attributes := #{atom() := any()}
 evaluate_flag(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
+    undefined ->
+      logger:debug("Flag not found in cache: ~p~n", [FlagIdentifier]),
+      not_ok;
     #{} = Flag ->
       State = maps:get(state, Flag),
       if
@@ -70,10 +73,7 @@ evaluate_flag(FlagIdentifier, Target) ->
                   not_ok
               end
           end
-      end;
-    undefined ->
-      logger:debug("Flag not found in cache: ~p~n", [FlagIdentifier]),
-      not_ok
+      end
   end.
 
 
