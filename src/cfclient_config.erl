@@ -10,8 +10,8 @@
 -export([init/2, get_value/1, clear_config/0]).
 
 %% Constants
--define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io"). %% Config endpoint for Prod
--define(DEFAULT_EVENTS_URL, "https://events.ff.harness.io"). %% Event endpoint for Prod
+-define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io/api/1.0"). %% Config endpoint for Prod
+-define(DEFAULT_EVENTS_URL, "https://events.ff.harness.io/api/1.0"). %% Event endpoint for Prod
 -define(DEFAULT_CONNECTION_TIMEOUT, 10000). %% timeout in milliseconds
 -define(DEFAULT_READ_TIMEOUT, 30000). %% timeout in milliseconds for reading data from CF Server
 -define(DEFAULT_WRITE_TIMEOUT, 10000). %% timeout in milliseconds for writing data to CF Server
