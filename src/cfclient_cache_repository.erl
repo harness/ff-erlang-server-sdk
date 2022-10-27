@@ -27,16 +27,21 @@ get(CachePID, FlagKey) ->
 set_to_cache({Type, Identifier}, Feature,  CachePID) ->
   IsOutdated = is_outdated({Type, Identifier}, Feature, CachePID),
   FlagKey = format_key({Type, Identifier}),
-  set(CachePID, FlagKey, Feature, IsOutdated).
+  case set(CachePID, FlagKey, Feature, IsOutdated) of
+    ok ->
+      logger:debug("Updated ~p~n Type with ~p~n Identifier:", [Type, Identifier]);
+    not_ok ->
+      logger:error("Did not update cache: requested ~p~n was outdated. Identifier: ~p~n", [Type, Identifier]),
+      not_ok
+  end.
 
 -spec set(CachePID :: pid(), Identifier :: binary(), Value :: cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(),  Outdated :: boolean()) -> atom().
 set(CachePID, Identifier, Value, false) ->
   lru:add(CachePID, Identifier, Value),
-  logger:debug("Updated cache"),
   ok;
-%% Don't place in cache if outdated
+%% Don't place in cache if outdated. Note: if this happens we treat is as an error state as
+%% it should not happen, so log an error to the user.
 set(_, _, _, true) ->
-  logger:debug("The flag is outdated"),
   not_ok.
 
 -spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
