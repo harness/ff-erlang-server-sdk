@@ -21,7 +21,7 @@ evaluate_flag(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
     undefined ->
-      logger:debug("Flag not found in cache: ~p~n", [FlagIdentifier]),
+      logger:error("Flag not found in cache: ~p~n", [FlagIdentifier]),
       not_ok;
     #{} = Flag ->
       State = maps:get(state, Flag),
@@ -33,7 +33,7 @@ evaluate_flag(FlagIdentifier, Target) ->
             #{} = OffVariation ->
               {ok, maps:get(value, OffVariation)};
             not_found ->
-              logger:debug("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+              logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
               not_ok
           end;
 
@@ -58,7 +58,7 @@ evaluate_flag(FlagIdentifier, Target) ->
                 #{} = Variation ->
                   {ok, maps:get(value, Variation)};
                 not_found ->
-                  logger:debug("Target or group variation not found: ~p~n ", [RulesVariationOrNotFound]),
+                  logger:error("Target or group variation not found: ~p~n ", [RulesVariationOrNotFound]),
                   not_ok
               end;
             true ->
@@ -69,7 +69,7 @@ evaluate_flag(FlagIdentifier, Target) ->
                 #{} = DefaultVariation ->
                   {ok, maps:get(value, DefaultVariation)};
                 not_found ->
-                  logger:debug("Default variation not found: ~p~n ", [DefaultServeIdentifier]),
+                  logger:error("Default variation not found: ~p~n ", [DefaultServeIdentifier]),
                   not_ok
               end
           end

@@ -28,7 +28,7 @@ bool_variation(FlagKey, Target, Default) when is_binary(FlagKey)->
     case cfclient_evaluator:bool_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
         Default
     end
   catch
@@ -45,7 +45,7 @@ string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
     case cfclient_evaluator:string_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
         Default
     end
   catch
@@ -62,7 +62,7 @@ number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
     case cfclient_evaluator:number_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
         Default
     end
   catch
@@ -79,7 +79,7 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
     case cfclient_evaluator:json_variation(FlagKey, Target) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:debug("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
         Default
     end
   catch
