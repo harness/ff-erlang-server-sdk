@@ -41,7 +41,7 @@ set(CachePID, Identifier, Value, false) ->
   ok;
 %% Don't place in cache if outdated. Note: if this happens we treat is as an error state as
 %% it should not happen, so log an error to the user.
-set(_, Identifier, _, true) ->
+set(_, _, _, true) ->
   not_ok.
 
 -spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
