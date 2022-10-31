@@ -79,8 +79,9 @@ ok
 2> Target = #{identifier => list_to_binary("Demo"), name => list_to_binary("demo"), anonymous => false, attributes => #{}}.       
   #{anonymous => false,attributes => #{},
   identifier => <<"Demo">>,name => <<"demo">>}
-3> cfclient:bool_variation("harnessappdemodarkmode", Target, false). 
-  false
+3> {ok, Variation} = cfclient:bool_variation("harnessappdemodarkmode", Target, false),
+4> Variation.
+5> false
 ```
 
 ## Cleanup
