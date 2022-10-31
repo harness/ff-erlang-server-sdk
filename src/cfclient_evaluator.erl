@@ -14,66 +14,84 @@ anonymous => boolean(),
 attributes := #{atom() := any()}
 }.
 
-%% TODO - At present we don't check the Flag type (boolean, multivariate etc.) matches the Variation Request. For example,
-%% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
--spec evaluate_flag(FlagIdentifier :: binary(), Target :: target()) -> {ok, binary()} | not_ok.
-evaluate_flag(FlagIdentifier, Target) ->
+-spec evaluate(FlagIdentifier :: binary(), Target :: target(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
+evaluate(FlagIdentifier, Target, start) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
     undefined ->
       logger:error("Flag not found in cache: ~p~n", [FlagIdentifier]),
       not_ok;
     #{} = Flag ->
-      State = maps:get(state, Flag),
-      if
-      %% If flag is turned off we always return default off variation
-        State == <<"off">> ->
-          OffVariationIdentifier = maps:get(offVariation, Flag),
-          case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
-            #{} = OffVariation ->
-              {ok, maps:get(value, OffVariation)};
-            not_found ->
-              logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
-              not_ok
-          end;
+      evaluate_flag(Flag, Target, start).
 
-        true ->
-          %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
-          %% apply, and no further evaluations will take place.
+%% TODO - At present we don't check the Flag type (boolean, multivariate etc.) matches the Variation Request. For example,
+%% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
+-spec evaluate_flag(FlagIdentifier :: binary(), Target :: target(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
+evaluate_flag(FlagIdentifier, Target, start) ->
+  State = maps:get(state, FlagIdentifier),
+  case State of
+    <<"off">> ->
+      OffVariationIdentifier = maps:get(offVariation, FlagIdentifier),
+      evaluate_flag(FlagIdentifier, Target, OffVariationIdentifier)
+  end,
 
-          %% Evaluate for target rules
-          TargetVariationOrNotFound = evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target),
+  %% Evaluate for target rules
+  case evaluate_target_rule(maps:get(variationToTargetMap, FlagIdentifier), Target) of
+    <<>> = TargetVariationIdentfier ->
+      evaluate_flag(FlagIdentifier, Target, TargetVariationIdentfier);
+      not_found ->
+        
+      asd
+  end,
+  %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
+  %% apply, and no further evaluations will take place.
 
-          %% Evaluate for target group rules.
-          %% At present, targets are associated with groups via rules within a Feature Configuration.
-          TargetGroupRules = maps:get(rules, Flag),
-          RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, TargetGroupRules, Target),
-          %% TODO Distribution
-          %% TODO Pre-requisites
+  %% Evaluate for target rules
+  TargetVariationOrNotFound = evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target),
 
-          %% Return the evaluated variation if one was found.
-          if
-            RulesVariationOrNotFound /= excluded, RulesVariationOrNotFound /= not_found ->
-              case get_variation(maps:get(variations, Flag), RulesVariationOrNotFound) of
-                #{} = Variation ->
-                  {ok, maps:get(value, Variation)};
-                not_found ->
-                  logger:error("Target or group variation not found: ~p~n ", [RulesVariationOrNotFound]),
-                  not_ok
-              end;
-            true ->
-              %% Otherwise return the flag's default "on" variation.
-              DefaultServe = maps:get(defaultServe, Flag),
-              DefaultServeIdentifier = maps:get(variation, DefaultServe),
-              case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
-                #{} = DefaultVariation ->
-                  {ok, maps:get(value, DefaultVariation)};
-                not_found ->
-                  logger:error("Default variation not found: ~p~n ", [DefaultServeIdentifier]),
-                  not_ok
-              end
-          end
+  %% Evaluate for target group rules.
+  RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, maps:get(rules, Flag), Target),
+  %% TODO Distribution
+
+
+  %% Return the evaluated variation if one was found.
+  if
+    RulesVariationOrNotFound /= excluded, RulesVariationOrNotFound /= not_found ->
+      case get_variation(maps:get(variations, Flag), RulesVariationOrNotFound) of
+        #{} = Variation ->
+          {ok, maps:get(value, Variation)};
+        not_found ->
+          logger:error("Target or group variation not found: ~p~n ", [RulesVariationOrNotFound]),
+          not_ok
+      end;
+    true ->
+      %% Otherwise return the flag's default "on" variation.
+      DefaultServe = maps:get(defaultServe, Flag),
+      DefaultServeIdentifier = maps:get(variation, DefaultServe),
+      case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
+        #{} = DefaultVariation ->
+          {ok, maps:get(value, DefaultVariation)};
+        not_found ->
+          logger:error("Default variation not found: ~p~n ", [DefaultServeIdentifier]),
+          not_ok
       end
+  end;
+evaluate_flag(FlagConfig, _, flag_off) ->
+  OffVariationIdentifier = maps:get(offVariation, FlagConfig),
+  case get_variation(maps:get(variations, FlagConfig), OffVariationIdentifier) of
+    #{} = OffVariation ->
+      {ok, maps:get(value, OffVariation)};
+    not_found ->
+      logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+      not_ok
+  end;
+evaluate_flag(FlagConfig, _, VariationIdentifier) ->
+  case get_variation(maps:get(variations, FlagConfig), OffVariationIdentifier) of
+    #{} = OffVariation ->
+      {ok, maps:get(value, OffVariation)};
+    not_found ->
+      logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+      not_ok
   end.
 
 
@@ -187,6 +205,9 @@ is_target_in_list(false, {included, false}, _, _) -> {excluded, true};
 %% false for these rules.
 is_target_in_list(true, {excluded, false}, _, []) -> {excluded, false};
 is_target_in_list(true, {included, false}, _, []) -> {included, false}.
+
+evaluation_distribution() ->
+  implement_me.
 
 -spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->

@@ -408,7 +408,22 @@ is_rule_included_or_excluded_test() ->
   meck:unload(lru).
 
 
-
+distribution_test() ->
+  #{rules =>
+  [#{clauses =>
+  [#{attribute => <<>>,
+    id => <<"e974bb15-08be-45aa-a36d-d6431ae1bfe1">>,
+    negate => false, op => <<"segmentMatch">>,
+    values => [<<"target_group_1">>]}],
+    priority => 0,
+    ruleId => <<"637019fc-6f38-4e76-9211-4da166aaa488">>,
+    serve =>
+    #{distribution =>
+    #{bucketBy => <<"identifier">>,
+      variations =>
+      [#{variation => <<"true">>, weight => 50},
+        #{variation => <<"false">>, weight => 50}]}}}]},
+  ok.
 
 boolean_flag_off() ->
   #{defaultServe => #{variation => <<"true">>},
