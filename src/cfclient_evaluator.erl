@@ -22,76 +22,80 @@ evaluate(FlagIdentifier, Target, start) ->
       logger:error("Flag not found in cache: ~p~n", [FlagIdentifier]),
       not_ok;
     #{} = Flag ->
-      evaluate_flag(Flag, Target, start).
+      evaluate_flag(Flag, Target, noop, start)
+  end.
 
-%% TODO - At present we don't check the Flag type (boolean, multivariate etc.) matches the Variation Request. For example,
-%% if a user requests a Bool variation on a multivariate flag. We need to add this check in post-alpha.
--spec evaluate_flag(FlagIdentifier :: binary(), Target :: target(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
-evaluate_flag(FlagIdentifier, Target, start) ->
-  State = maps:get(state, FlagIdentifier),
+-spec evaluate_flag(Flag :: binary(), Target :: target(), VariationIdentifier :: binary(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
+evaluate_flag(Flag, Target, _, start) ->
+  State = maps:get(state, Flag),
+  % Evaluate for off state
   case State of
     <<"off">> ->
-      OffVariationIdentifier = maps:get(offVariation, FlagIdentifier),
-      evaluate_flag(FlagIdentifier, Target, OffVariationIdentifier)
+      logger:debug("Flag ~p~n is turned off. Returning default 'off' variation", [Flag]),
+      OffVariationIdentifier = get_variation_identifier_value(offVariation, Flag),
+      evaluate_flag(Flag, Target, OffVariationIdentifier, flag_off);
+    <<"on">> ->
+      logger:debug("Flag ~p~n is turned on", [Flag])
   end,
 
   %% Evaluate for target rules
-  case evaluate_target_rule(maps:get(variationToTargetMap, FlagIdentifier), Target) of
-    <<>> = TargetVariationIdentfier ->
-      evaluate_flag(FlagIdentifier, Target, TargetVariationIdentfier);
-      not_found ->
-        
-      asd
+  logger:debug("Evaluating Target rules for Flag ~p~n and Target ~p~n", [Flag, Target]),
+  case evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target) of
+    not_found ->
+      logger:debug("No Target rule matched on Flag ~p~n with Target ~p~n", [Flag, Target]);
+    TargetVariationIdentifier ->
+      evaluate_flag(Flag, Target, TargetVariationIdentifier, target_rule)
   end,
-  %% Perform evaluations in order of precedence. If an evaluation finds a match to the Target, then only its variation will
-  %% apply, and no further evaluations will take place.
 
-  %% Evaluate for target rules
-  TargetVariationOrNotFound = evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target),
+  %% Evaluate for target group rules
+  logger:debug("Evaluating Group rules for Flag ~p~n and Target ~p~n", [Flag, Target]),
+  case evaluate_target_group_rules(maps:get(rules, Flag), Target) of
+    not_found ->
+      logger:debug("No Group rule matched on Flag ~p~n with Target ~p~n", [Flag, Target]);
+    GroupVariationIdentifier ->
+      evaluate_flag(Flag, Target, GroupVariationIdentifier, group_rule)
+  end,
 
-  %% Evaluate for target group rules.
-  RulesVariationOrNotFound = evaluate_target_group_rules(TargetVariationOrNotFound, maps:get(rules, Flag), Target),
-  %% TODO Distribution
-
-
-  %% Return the evaluated variation if one was found.
-  if
-    RulesVariationOrNotFound /= excluded, RulesVariationOrNotFound /= not_found ->
-      case get_variation(maps:get(variations, Flag), RulesVariationOrNotFound) of
-        #{} = Variation ->
-          {ok, maps:get(value, Variation)};
-        not_found ->
-          logger:error("Target or group variation not found: ~p~n ", [RulesVariationOrNotFound]),
-          not_ok
-      end;
-    true ->
-      %% Otherwise return the flag's default "on" variation.
-      DefaultServe = maps:get(defaultServe, Flag),
-      DefaultServeIdentifier = maps:get(variation, DefaultServe),
-      case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
-        #{} = DefaultVariation ->
-          {ok, maps:get(value, DefaultVariation)};
-        not_found ->
-          logger:error("Default variation not found: ~p~n ", [DefaultServeIdentifier]),
-          not_ok
-      end
+  %% TODO Distribution case here
+  %% If no previous evaluations matched, return the flag's default "on" variation.
+  logger:debug("Returning default 'on' variation for Flag ~p~n with Target ~p~n", [Flag, Target]),
+  DefaultServe = maps:get(defaultServe, Flag),
+  DefaultServeIdentifier = maps:get(variation, DefaultServe),
+  case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
+    #{} = DefaultVariation ->
+      {ok, maps:get(value, DefaultVariation)};
+    not_found ->
+      logger:error("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [Flag, DefaultServeIdentifier]),
+      not_ok
   end;
-evaluate_flag(FlagConfig, _, flag_off) ->
-  OffVariationIdentifier = maps:get(offVariation, FlagConfig),
-  case get_variation(maps:get(variations, FlagConfig), OffVariationIdentifier) of
+evaluate_flag(Flag, _, OffVariationIdentifier, flag_off) ->
+  case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
     #{} = OffVariation ->
       {ok, maps:get(value, OffVariation)};
     not_found ->
       logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
       not_ok
   end;
-evaluate_flag(FlagConfig, _, VariationIdentifier) ->
-  case get_variation(maps:get(variations, FlagConfig), OffVariationIdentifier) of
-    #{} = OffVariation ->
-      {ok, maps:get(value, OffVariation)};
+evaluate_flag(Flag, _, TargetVariationIdentifier, EvaluationType) when EvaluationType == target_rule; EvaluationType == group_rule ->
+  case get_variation(maps:get(variations, Flag), TargetVariationIdentifier) of
+    #{} = Variation ->
+      {ok, maps:get(value, Variation)};
     not_found ->
-      logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+      logger:error("Variation for ~p~n with Identifier: ~p~n not found ", [EvaluationType, TargetVariationIdentifier]),
       not_ok
+  end.
+
+get_variation_identifier_value(Map, VariationIdentifier) ->
+  try
+    case maps:get(Map, VariationIdentifier) of
+      <<>> ->
+        logger:error("Value for Variation Identifier ~p~n is empty", [VariationIdentifier]);
+      IdentifierValue ->
+        IdentifierValue
+    end
+  catch
+    _:_:Stacktrace ->
+      logger:error("Error when getting Variation Identifier Value for ~p~n . Error: ~p~n", [VariationIdentifier, Stacktrace])
   end.
 
 
@@ -132,9 +136,9 @@ search_targets(TargetIdentifier, [Head | Tail]) ->
   end;
 search_targets(_TargetIdentifier, []) -> not_found.
 
--spec evaluate_target_group_rules(TargetVariationOrNotFound :: target() | not_found, Rules :: list(), Target :: target()) -> binary() | not_found.
+-spec evaluate_target_group_rules(Rules :: list(), Target :: target()) -> binary() | not_found.
 %% We only want to evaluate rules if there was no Target found in the previous stage of evaluations.
-evaluate_target_group_rules(TargetVariationOrNotFound, Rules, Target) when TargetVariationOrNotFound == not_found ->
+evaluate_target_group_rules(Rules, Target) ->
   %% Sort Target Group Rules by priority - 0 is highest.
   PrioritizedRules = lists:sort(
     fun(A, B) ->
@@ -143,14 +147,9 @@ evaluate_target_group_rules(TargetVariationOrNotFound, Rules, Target) when Targe
 
   %% Check if a target is included or excluded from the rules.
   search_rules_for_inclusion(PrioritizedRules, Target);
-
-
-%% Return the Target variation immediately as it takes precedence over target group
-evaluate_target_group_rules(TargetVariationOrNotFound, _, _) ->
-  TargetVariationOrNotFound;
 %% If no rules to evaluate return the Target variation
-evaluate_target_group_rules(TargetVariationOrNotFound, [], _) ->
-  TargetVariationOrNotFound.
+evaluate_target_group_rules([], _) ->
+  not_found.
 
 -spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> excluded | binary() | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
@@ -211,7 +210,7 @@ evaluation_distribution() ->
 
 -spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->
-  case evaluate_flag(FlagIdentifier, Target) of
+  case evaluate(FlagIdentifier, Target, start) of
     {ok, Variation} ->
       {ok, binary_to_list(Variation) == "true"};
     not_ok -> not_ok
@@ -219,7 +218,7 @@ bool_variation(FlagIdentifier, Target) ->
 
 -spec string_variation(Identifier :: binary(), Target :: target()) -> {ok, string()} | not_ok.
 string_variation(FlagIdentifier, Target) ->
-  case evaluate_flag(FlagIdentifier, Target) of
+  case evaluate(FlagIdentifier, Target, start) of
     {ok, Variation} ->
       {ok, binary_to_list(Variation)};
     not_ok -> not_ok
@@ -228,7 +227,7 @@ string_variation(FlagIdentifier, Target) ->
 
 -spec number_variation(Identifier :: binary(), Target :: target()) -> {ok, number()} | not_ok.
 number_variation(FlagIdentifier, Target) ->
-  case evaluate_flag(FlagIdentifier, Target) of
+  case evaluate(FlagIdentifier, Target, start) of
     {ok, Variation} ->
       try {ok, binary_to_float(Variation)}
       catch
@@ -240,7 +239,7 @@ number_variation(FlagIdentifier, Target) ->
 
 -spec json_variation(Identifier :: binary(), Target :: target()) -> {ok, map()} | not_ok.
 json_variation(FlagIdentifier, Target) ->
-  case evaluate_flag(FlagIdentifier, Target) of
+  case evaluate(FlagIdentifier, Target, start) of
     {ok, Variation} ->
       try
         {ok, jsx:decode(Variation, [])}
