@@ -407,8 +407,8 @@ is_rule_included_or_excluded_test() ->
 
   meck:unload(lru).
 
-search_custom_rules_test() ->
-  [#{
+search_group_custom_rule_test() ->
+  Group = [#{
     identifier => <<"target_group_1">>,
     name => <<"target_group_1">>,
     environment => <<"dev">>,
@@ -434,7 +434,23 @@ search_custom_rules_test() ->
           id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
           negate => false, op => <<"equal">>,
         values => [<<"target_test_3">>]}]
-    }].
+    }],
+
+  %% Target sample data
+  IncludedTargetA = #{'identifier' => <<"target_that_has_been_inlcuded">>,
+    name => <<"I'm_included">>,
+    anonymous => <<"">>,
+    attributes => #{location => <<"emea">>}
+  },
+
+  IncludedTargetB = #{'identifier' => <<"another_included_target">>,
+    name => <<"also_included">>,
+    anonymous => <<"">>,
+    attributes => #{}
+  },
+
+  searc_group.
+
 
 distribution_test() ->
   #{rules =>
