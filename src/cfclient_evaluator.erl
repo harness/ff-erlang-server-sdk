@@ -150,9 +150,9 @@ evaluate_target_group_rules([], _) ->
 search_rules_for_inclusion([Head | Tail], Target) ->
   IsRuleExcludedOrIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
   case IsRuleExcludedOrIncluded of
-    {excluded, true} ->
+    excluded ->
       excluded;
-    {included, true} ->
+    included ->
       Serve = maps:get(serve, Head),
       maps:get(variation, Serve);
     _ -> search_rules_for_inclusion(Tail, Target)
@@ -168,37 +168,44 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
       CachePid = cfclient_cache_repository:get_pid(),
       Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
       TargetIdentifier = maps:get(identifier, Target),
-      %% First check if the target is explicitly excluded.
-      {_, IsExcluded} = is_target_in_list(true, {excluded, false}, TargetIdentifier, maps:get(excluded, Group, [])),
-      %% If Target is not excluded, check if it has been explicitly included
-      is_target_in_list(IsExcluded == false, {included, false}, TargetIdentifier, maps:get(included, Group, []));
+      is_target_in_list(excluded, TargetIdentifier, Group);
+%%      %% First check if the target is explicitly excluded.
+%%      {_, IsExcluded} = is_target_in_list(true, {excluded, false}, TargetIdentifier, maps:get(excluded, Group, [])),
+%%      %% If Target is not excluded, check if it has been explicitly included
+%%      is_target_in_list(IsExcluded == false, {included, false}, TargetIdentifier, maps:get(included, Group, []));
     _ -> is_rule_included_or_excluded(Tail, Target)
   end;
 is_rule_included_or_excluded([], _) -> false.
 
 %% Helper function that parses Group Rules for different rule types, specifically Included and Excluded rules.
 %% The ShouldSearch variable is used to stop the search from taking place if we've matched on a rule with higher precedence.
--spec is_target_in_list(ShouldSearch :: boolean(), RuleMatch :: {atom(), true | false}, TargetIdentifier :: binary(), GroupRules :: list()) -> true | false.
-is_target_in_list(true, {excluded, false}, TargetIdentifier, [Head | Tail]) ->
+-spec is_target_in_list(RuleType :: atom(), TargetIdentifier :: binary(), Group :: map()) -> included | excluded | false.
+is_target_in_list(excluded, TargetIdentifier, Group) ->
+  case search_rule_type(TargetIdentifier, maps:get(excluded, Group, [])) of
+    true ->
+      excluded;
+    false ->
+      is_target_in_list(included, TargetIdentifier, Group)
+  end;
+is_target_in_list(included, TargetIdentifier, Group) ->
+  case   search_rule_type(TargetIdentifier, maps:get(included, Group, [])) of
+    true ->
+      included;
+    false ->
+      %% TODO Custom rules clause call goes here
+      %% is_target_in_list(custom_rules, TargetIdentifier, Group)
+      false
+  end.
+
+-spec search_rule_type(TargetIdentifier :: binary(), GroupRules :: list()) -> true | false.
+search_rule_type(TargetIdentifier, [Head | Tail]) ->
   ListTargetIdentifier = maps:get(identifier, Head),
   if
     TargetIdentifier == ListTargetIdentifier ->
-      {excluded, true};
-    true -> is_target_in_list(true, {excluded, false}, TargetIdentifier, Tail)
+      true;
+    true -> search_rule_type(TargetIdentifier, Tail)
   end;
-is_target_in_list(true, {included, false}, TargetIdentifier, [Head | Tail]) ->
-  ListTargetIdentifier = maps:get(identifier, Head),
-  if
-    TargetIdentifier == ListTargetIdentifier ->
-      {included, true};
-    true -> is_target_in_list(true, {included, false}, TargetIdentifier, Tail)
-  end;
-%% If we shouldn't search when evaluating included rules, that means we matched on an Excluded rule so return excluded to be true
-is_target_in_list(false, {included, false}, _, _) -> {excluded, true};
-%% Remaining functions here are when the search has finished and didn't find a match on any respective rule types, so return
-%% false for these rules.
-is_target_in_list(true, {excluded, false}, _, []) -> {excluded, false};
-is_target_in_list(true, {included, false}, _, []) -> {included, false}.
+search_rule_type(_TargetIdentifier, []) -> false.
 
 evaluation_distribution() ->
   implement_me.
