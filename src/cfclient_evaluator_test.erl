@@ -407,6 +407,34 @@ is_rule_included_or_excluded_test() ->
 
   meck:unload(lru).
 
+search_custom_rules_test() ->
+  [#{
+    identifier => <<"target_group_1">>,
+    name => <<"target_group_1">>,
+    environment => <<"dev">>,
+    version => 10,
+    excluded =>
+      [#{account => <<>>, environment => <<>>,
+        identifier => <<"target_identifier">>,
+        name => <<"target_test">>, org => <<>>, project => <<>>}],
+    included =>
+      [#{account => <<>>, environment => <<>>,
+        identifier => <<"target_test_2">>,
+        name => <<"target_test_2">>, org => <<>>, project => <<>>}],
+    rules =>
+      [#{attribute => <<"identifier">>,
+        id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
+        negate => false, op => <<"ends_with">>,
+        values => [<<"1">>]},
+        #{attribute => <<"identifier">>,
+          id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
+          negate => false, op => <<"ends_with">>,
+          values => [<<"2">>]},
+        #{attribute => <<"identifier">>,
+          id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+          negate => false, op => <<"equal">>,
+        values => [<<"target_test_3">>]}]
+    }].
 
 distribution_test() ->
   #{rules =>
