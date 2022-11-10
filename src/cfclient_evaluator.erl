@@ -207,12 +207,13 @@ search_group_custom_rules(Target, [Head | Tail]) ->
   RuleAttribute = maps:get(attribute, Head, <<>>),
   RuleValue = maps:get(values, Head, <<>>),
   %% Get the Target attribute
-  asd;
+  TargetAttribute = get_attribute_value(maps:get(attributes, Target, #{}), RuleAttribute, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
+  is_custom_rule_match(maps:get(op, Head), TargetAttribute, RuleValue);
 search_group_custom_rules(_, []) -> false.
 
 
--spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleAttribute :: binary()) -> true | false.
-is_custom_rule_match(starts_with, Target, RuleAttribute) ->
+-spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleValue :: binary()) -> true | false.
+is_custom_rule_match(starts_with, Target, RuleValue) ->
   asd;
 is_custom_rule_match(_, _, <<>>) ->
   false.
