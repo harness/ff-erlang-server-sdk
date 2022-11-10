@@ -447,9 +447,11 @@ search_group_custom_rule_test() ->
     name => <<"also_included">>,
     anonymous => <<"">>,
     attributes => #{}
-  },
+  }.
 
-  searc_group.
+is_custom_rule_match_test() ->
+  ?assertEqual(equals, cfclient_evaluator:is_custom_rule_match(starts_with, <<"target_identifier_1">>, <<"target_identifier_1">>)).
+
 
 
 distribution_test() ->

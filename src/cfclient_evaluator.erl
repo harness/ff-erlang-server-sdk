@@ -7,6 +7,22 @@
 
 -export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2]).
 
+%% Group Rule Association Operator
+-define(SEGMENT_MATCH_OPERATOR, segmentMatch). %% CamelCase from server
+
+%% Custom Rule Operators
+-define(EQUAL_OPERATOR, equal).
+-define(EQUAL_SENSITIVE_OPERATOR, equal_sensitive).
+-define(STARTS_WITH_OPERATOR, starts_with).
+-define(ENDS_WITH_OPERATOR, ends_with).
+-define(CONTAINS_OPERATOR, contains).
+-define(IN_OPERATOR, in).
+
+
+
+
+
+
 -type target() ::
 #{identifier := binary(),
 name := binary(),
@@ -213,8 +229,8 @@ search_group_custom_rules(_, []) -> false.
 
 
 -spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleValue :: binary()) -> true | false.
-is_custom_rule_match(starts_with, Target, RuleValue) ->
-  asd;
+is_custom_rule_match(equal, TargetAttribute, RuleValue) ->
+  string:equal(TargetAttribute, RuleValue, true);
 is_custom_rule_match(_, _, <<>>) ->
   false.
 
