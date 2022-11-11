@@ -1,4 +1,4 @@
-%% Group Rule Association Operator - in binary format as we use it to match on binary data
+%% Group Rule Association Operator - in binary format as we use it to match on binary data from server (which is also camel case)
 -define(SEGMENT_MATCH_OPERATOR, <<"segmentMatch">>).
 %% Custom Rule Operators
 -define(EQUAL_OPERATOR, equal).
