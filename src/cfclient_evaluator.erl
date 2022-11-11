@@ -40,7 +40,7 @@ evaluate_flag(Flag, Target, off) ->
       %% Start the evaluation.
       evaluate_flag(Flag, Target, target_rules)
   end;
-  %% Evaluate for target rules
+%% Evaluate for target rules
 evaluate_flag(Flag, Target, target_rules) ->
   logger:debug("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
   case evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target) of
@@ -179,7 +179,7 @@ search_group(excluded, Target, Group) ->
   end;
 search_group(included, Target, Group) ->
   TargetIdentifier = maps:get(identifier, Target),
-  case  search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
+  case search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
     true ->
       included;
     false ->
@@ -210,29 +210,36 @@ search_group_custom_rules(Target, [Head | Tail]) ->
   RuleValue = maps:get(values, Head, <<>>),
   %% Get the Target attribute
   TargetAttribute = get_attribute_value(maps:get(attributes, Target, #{}), RuleAttribute, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
-  is_custom_rule_match(maps:get(op, Head), TargetAttribute, RuleValue);
+  case is_custom_rule_match(maps:get(op, Head), TargetAttribute, RuleValue) of
+    true ->
+      true;
+    false ->
+      search_group_custom_rules(Target, Tail)
+  end;
 search_group_custom_rules(_, []) -> false.
 
 
 -spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleValue :: binary()) -> true | false.
+%% No target attribute so don't attempt match
+is_custom_rule_match(_, <<>>, _) ->
+  false;
 %% Equal sensitive
 is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, TargetAttribute, RuleValue) ->
-  string:equal(TargetAttribute, RuleValue, false);
+  string:equal(TargetAttribute, hd(RuleValue), false);
 %% Equal
 is_custom_rule_match(?EQUAL_OPERATOR, TargetAttribute, RuleValue) ->
-  string:equal(TargetAttribute, RuleValue, true);
+  string:equal(TargetAttribute, hd(RuleValue), true);
 %% Starts with
 is_custom_rule_match(?STARTS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
-  string:find(TargetAttribute, RuleValue) =:= TargetAttribute;
+  string:find(TargetAttribute, hd(RuleValue)) =:= TargetAttribute;
 %% Ends with
 is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
-  Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(binary_to_list(RuleValue))}),
+  Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(binary_to_list(hd(RuleValue)))}),
   string:equal(Suffix, RuleValue, false);
 %% Contains
 is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
-  binary:match(TargetAttribute, RuleValue) /= nomatch;
-%% In
-%% TODO - make sure RuleValue can be an array in the caller
+  binary:match(TargetAttribute, hd(RuleValue)) /= nomatch;
+%% In - we don't get the head of RuleValue here as `In` can have multiple values
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(TargetAttribute) ->
   lists:member(TargetAttribute, RuleValue);
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
@@ -247,29 +254,30 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(Targ
         end;
       F([]) -> false
     end,
-  Search(TargetAttribute);
-is_custom_rule_match(_, _, <<>>) ->
-  false.
+  Search(TargetAttribute).
 
--spec get_attribute_value(TargetCustomAttributes :: map(), RuleAttribute :: binary(), TargetIdentifier :: binary(), TargetName ::binary()) -> binary() | false.
+-spec get_attribute_value(TargetCustomAttributes :: map(), RuleAttribute :: binary(), TargetIdentifier :: binary(), TargetName :: binary()) -> binary() | <<>>.
 %% Start with custom attributes if there are any
-get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName) when map_size(TargetCustomAttributes) > 1 ->
-  %% Note: Rule Attributes are always bitstrings, so we need to convert the Target custom attributes to bitstrings.
-  %%  %% If the attribute from the rule isn't found in the target, just return false.
-  case custom_attribute_to_binary(maps:get(RuleAttribute, TargetCustomAttributes, false)) of
-    %% If not found check the Identifier and Name fields
+get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName) when map_size(TargetCustomAttributes) > 0 ->
+  %% Check if the rule attribute matches any of the custom attributes (Rule attribute needs to be converted to atom which is the format
+  %% of custom attribute keys.
+  RuleAttributeAsAtom = binary_to_atom(RuleAttribute),
+  DoesCustomAttrMatch = maps:is_key(RuleAttributeAsAtom, TargetCustomAttributes),
+  case DoesCustomAttrMatch of
+    true ->
+      %% Rule values are always bitstrings, so we need to convert the Target custom attribute values to bitstrings.
+      custom_attribute_to_binary(maps:get(RuleAttributeAsAtom, TargetCustomAttributes));
     false ->
-      get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName);
-    Value ->
-      Value
+      get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
   end;
-%% If no custom attributes or none matched from previous function clause, then the Rule attribute must be Identifier or Name.
+%% If no custom attributes or none matched from previous function clause, then check if the Rule attribute is Identifier or Name so we can attempt to match on those values.
 get_attribute_value(_, RuleAttribute, TargetIdentifier, TargetName) ->
   case RuleAttribute of
     <<"identifier">> ->
       TargetIdentifier;
     <<"name">> ->
-      TargetName
+      TargetName;
+    _ -> <<>>
   end.
 
 %%  Convert custom attributes to binary
@@ -278,15 +286,16 @@ custom_attribute_to_binary(CustomAttribute) when is_binary(CustomAttribute) ->
 custom_attribute_to_binary(CustomAttribute) when is_atom(CustomAttribute) ->
   atom_to_binary(CustomAttribute);
 custom_attribute_to_binary(CustomAttribute) when is_number(CustomAttribute) ->
-    list_to_binary(mochinum:digits(CustomAttribute));
+  list_to_binary(mochinum:digits(CustomAttribute));
 custom_attribute_to_binary(CustomAttribute) when is_list(CustomAttribute) ->
   case io_lib:char_list(CustomAttribute) of
+    %% If user supplies a string/list then log an error as not supported input
     true ->
       logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
       not_ok;
     false ->
       [custom_attribute_list_elem_to_binary(X) || X <- CustomAttribute]
-end.
+  end.
 
 %% Convert custom rule array elements to binary
 custom_attribute_list_elem_to_binary(Element) when is_atom(Element) ->
@@ -295,7 +304,7 @@ custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
   list_to_binary(mochinum:digits(Element));
 custom_attribute_list_elem_to_binary(Element) when is_binary(Element) ->
   Element;
-%% Should be used for char list only
+%% If user supplies a string/list then log an error as not supported input
 custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
   not_ok.
