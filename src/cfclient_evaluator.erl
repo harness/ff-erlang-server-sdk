@@ -236,12 +236,12 @@ is_custom_rule_match(?EQUAL_OPERATOR, TargetAttribute, RuleValue) ->
 is_custom_rule_match(?STARTS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
   string:find(TargetAttribute, RuleValue) =:= TargetAttribute;
 is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
-  Suffix = binary:part(<<"123455678901234">>, {byte_size(<<"123455678901234">>), -length(RuleValue)}),
+  Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(RuleValue)}),
   string:equal(Suffix, RuleValue, false);
 is_custom_rule_match(_, _, <<>>) ->
   false.
 
--spec get_attribute_value(TargetCustomAttributes :: map(), RuleAttribute :: binary(), TargetIdentifier :: binary(), TargetName ::binary()) -> AttributeValue | false.
+-spec get_attribute_value(TargetCustomAttributes :: map(), RuleAttribute :: binary(), TargetIdentifier :: binary(), TargetName ::binary()) -> binary() | false.
 %% Start with custom attributes if there are any
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName) when map_size(TargetCustomAttributes) > 1 ->
   %% Note: Rule Attributes are always bitstrings, so we need to convert the Target custom attributes to bitstrings.
@@ -249,7 +249,7 @@ get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, Tar
   case custom_attribute_to_binary(maps:get(RuleAttribute, TargetCustomAttributes, false)) of
     %% If not found check the Identifier and Name fields
     false ->
-      get_attribute_value(_, RuleAttribute, TargetIdentifier, TargetName);
+      get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName);
     Value ->
       Value
   end;
