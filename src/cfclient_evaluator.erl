@@ -229,14 +229,18 @@ search_group_custom_rules(_, []) -> false.
 
 
 -spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleValue :: binary()) -> true | false.
+%% Equal sensitive
 is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, TargetAttribute, RuleValue) ->
   string:equal(TargetAttribute, RuleValue, false);
+%% Equal
 is_custom_rule_match(?EQUAL_OPERATOR, TargetAttribute, RuleValue) ->
   string:equal(TargetAttribute, RuleValue, true);
+%% Starts with
 is_custom_rule_match(?STARTS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
   string:find(TargetAttribute, RuleValue) =:= TargetAttribute;
+%% Ends with
 is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
-  Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(RuleValue)}),
+  Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(binary_to_list(RuleValue))}),
   string:equal(Suffix, RuleValue, false);
 is_custom_rule_match(_, _, <<>>) ->
   false.
