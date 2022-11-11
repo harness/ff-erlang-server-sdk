@@ -460,6 +460,15 @@ is_custom_rule_match_test() ->
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, <<"focus_group_1">>)),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, <<"FOCUS_GROUP_1">>)),
 
+  %%-------------------- Equals Case Sensitive--------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, <<"focus_group_1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_1">>, <<"FOCUS_GROUP_1">>)),
+
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, <<"FOCUS_GROUP_1">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_2">>, <<"FOCUS_GROUP_1">>)),
+
   %%-------------------- Starts with --------------------
   %% Match
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group_1">>, <<"beta">>)),
