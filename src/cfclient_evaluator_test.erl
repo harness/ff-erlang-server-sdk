@@ -492,7 +492,21 @@ is_custom_rule_match_test() ->
   %% No match
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"2">>)),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"tifier_2">>)),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"target_identifier_2">>)).
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"target_identifier_2">>)),
+
+  %%-------------------- Contains--------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, <<"february">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, <<"january">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, <<"beta">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, <<"beta_">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, <<"premium">>)),
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, <<"alpha_">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, <<"december">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, <<"january">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, <<"march">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, <<"free">>)).
 
 
 distribution_test() ->
