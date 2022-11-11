@@ -450,8 +450,17 @@ search_group_custom_rule_test() ->
   }.
 
 is_custom_rule_match_test() ->
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"1">>)).
 
+  %%-------------------- Ends with--------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"_1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"identifier_1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"target_identifier_1">>)),
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"2">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"tifier_2">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"target_identifier_2">>)).
 
 
 distribution_test() ->
