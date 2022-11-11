@@ -1,7 +1,7 @@
 -module(cfclient_evaluator_test).
 
 -include_lib("eunit/include/eunit.hrl").
-
+-include("cfclient_evaluator_operators.hrl").
 variations_test() ->
   %% Target Sample Data
   ExistingTargetA = #{'identifier' => <<"target_identifier_1">>,
@@ -424,11 +424,11 @@ search_group_custom_rule_test() ->
     rules =>
       [#{attribute => <<"identifier">>,
         id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
-        negate => false, op => <<"ends_with">>,
+        negate => false, op => <<"?ENDS_WITH_OPERATOR">>,
         values => [<<"1">>]},
         #{attribute => <<"identifier">>,
           id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
-          negate => false, op => <<"ends_with">>,
+          negate => false, op => <<"?ENDS_WITH_OPERATOR">>,
           values => [<<"2">>]},
         #{attribute => <<"identifier">>,
           id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
@@ -451,16 +451,27 @@ search_group_custom_rule_test() ->
 
 is_custom_rule_match_test() ->
 
+  %%-------------------- Starts with--------------------
+  %% Match
+%%  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"target_identifier_1">>, <<"1">>)),
+%%  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"target_identifier_1">>, <<"_1">>)),
+%%  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"target_identifier_1">>, <<"identifier_1">>)),
+%%  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"target_identifier_1">>, <<"target_identifier_1">>)),
+%%  %% No match
+%%  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"target_identifier_1">>, <<"2">>)),
+%%  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"target_identifier_1">>, <<"tifier_2">>)),
+%%  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"target_identifier_1">>, <<"target_identifier_2">>)).
+
   %%-------------------- Ends with--------------------
   %% Match
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"1">>)),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"_1">>)),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"identifier_1">>)),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"target_identifier_1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"_1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"identifier_1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"target_identifier_1">>)),
   %% No match
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"2">>)),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"tifier_2">>)),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(ends_with, <<"target_identifier_1">>, <<"target_identifier_2">>)).
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"2">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"tifier_2">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"target_identifier_2">>)).
 
 
 distribution_test() ->

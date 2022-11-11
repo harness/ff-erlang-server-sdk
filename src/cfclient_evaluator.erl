@@ -6,22 +6,7 @@
 -module(cfclient_evaluator).
 
 -export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2]).
-
-%% Group Rule Association Operator
--define(SEGMENT_MATCH_OPERATOR, segmentMatch). %% CamelCase from server
-
-%% Custom Rule Operators
--define(EQUAL_OPERATOR, equal).
--define(EQUAL_SENSITIVE_OPERATOR, equal_sensitive).
--define(STARTS_WITH_OPERATOR, starts_with).
--define(ENDS_WITH_OPERATOR, ends_with).
--define(CONTAINS_OPERATOR, contains).
--define(IN_OPERATOR, in).
-
-
-
-
-
+-include("cfclient_evaluator_operators.hrl").
 
 -type target() ::
 #{identifier := binary(),
@@ -171,7 +156,7 @@ search_rules_for_inclusion([], _) -> not_found.
 -spec is_rule_included_or_excluded(Clauses :: list(), Target :: target()) -> true | false.
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
-    <<"segmentMatch">> ->
+    ?SEGMENT_MATCH_OPERATOR ->
       %% At present there is only ever one element in values, so we get the head.
       GroupName = hd(maps:get(values, Head, false)),
       CachePid = cfclient_cache_repository:get_pid(),
