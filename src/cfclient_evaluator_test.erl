@@ -451,21 +451,30 @@ search_group_custom_rule_test() ->
 
 is_custom_rule_match_test() ->
 
-  %%-------------------- Starts with--------------------
+  %%-------------------- Equals --------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, <<"focus_group_1">>)),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, <<"FOCUS_GROUP_1">>)),
+
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, <<"focus_group_1">>)),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, <<"FOCUS_GROUP_1">>)),
+
+  %%-------------------- Starts with --------------------
   %% Match
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group_1">>, <<"beta">>)),
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"betagroup_2">>, <<"beta">>)),
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group3">>, <<"beta">>)),
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta1">>, <<"beta">>)),
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"???">>, <<"???">>)),
-  
+
   %% No match
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group_1">>, <<"beta">>)),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alphagroup_2">>, <<"beta">>)),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group3">>, <<"beta">>)),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"btea">>, <<"beta">>)),
 
-  %%-------------------- Ends with--------------------
+  %%-------------------- Ends with --------------------
   %% Match
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"1">>)),
   ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, <<"_1">>)),
