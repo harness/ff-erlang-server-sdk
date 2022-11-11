@@ -506,8 +506,83 @@ is_custom_rule_match_test() ->
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, <<"december">>)),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, <<"january">>)),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, <<"march">>)),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, <<"free">>)).
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, <<"free">>)),
 
+  %%-------------------- In --------------------
+  InRule = [<<"7">>, <<"2">>, <<"3">>],
+  %% MATCH %%
+  %% Single attributes
+  Bitstring = cfclient_evaluator:custom_attribute_to_binary(<<"2">>),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, Bitstring, InRule)),
+
+  ListAtomAttribute = cfclient_evaluator:custom_attribute_to_binary('3'),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttribute, InRule)),
+
+  %% List attribute
+  ListSingleBitstringAttribute = cfclient_evaluator:custom_attribute_to_binary([<<"2">>]),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttribute, InRule)),
+
+  ListMultipleBitsringAttributes = cfclient_evaluator:custom_attribute_to_binary([<<"1000">>, <<"2">>]),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributes, InRule)),
+
+  ListMultipleAtomAttribute = cfclient_evaluator:custom_attribute_to_binary(['50', '2']),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttribute, InRule)),
+
+  %% NO MATCH %%
+  BitstringNoMatch = cfclient_evaluator:custom_attribute_to_binary(<<"34">>),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, BitstringNoMatch, InRule)),
+
+  ListAtomAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary('22'),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttributeNoMatch, InRule)),
+
+  ListSingleBitstringAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary([<<"111111">>]),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttributeNoMatch, InRule)),
+
+  ListMultipleBitsringAttributesNoMatch = cfclient_evaluator:custom_attribute_to_binary([<<"1212">>, <<"44">>]),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributesNoMatch, InRule)),
+
+  ListMultipleAtomAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary(['2323', '2222']),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttributeNoMatch, InRule)).
+
+
+
+custom_attribute_to_binary_test() ->
+  %% Binary
+  Binary = <<"Sample">>,
+  ?assertEqual(<<"Sample">>, cfclient_evaluator:custom_attribute_to_binary(Binary)),
+
+  %% Atom
+  Atom = sample,
+  ?assertEqual(<<"sample">>, cfclient_evaluator:custom_attribute_to_binary(Atom)),
+
+  %% Integer
+  Integer = 2,
+  ?assertEqual(<<"2">>, cfclient_evaluator:custom_attribute_to_binary(Integer)),
+
+  %% Float
+  Float = 2.2,
+  ?assertEqual(<<"2.2">>, cfclient_evaluator:custom_attribute_to_binary(Float)),
+
+  %% List of Bit Strings
+  ListBitStrings = [<<"Sample 1">>, <<"Sample2">>],
+  ?assertEqual([<<"Sample 1">>, <<"Sample2">>], cfclient_evaluator:custom_attribute_to_binary(ListBitStrings)),
+
+  %% List of atoms
+  AtomsList = [sample2, sample3],
+  ?assertEqual([<<"sample2">>, <<"sample3">>], cfclient_evaluator:custom_attribute_to_binary(AtomsList)),
+
+  %% Mixed lis3
+  MixedList = [sample2, <<"3">>],
+  ?assertEqual([<<"sample2">>, <<"3">>], cfclient_evaluator:custom_attribute_to_binary(MixedList)),
+
+  %%---------- Unsupported Inputs  --------------
+  %% String
+  String = "Sample",
+  ?assertEqual(not_ok, cfclient_evaluator:custom_attribute_to_binary(String)),
+
+  %% List of Strings
+  ListStrings = ["Sample 1", "Sample2"],
+  ?assertEqual([not_ok, not_ok], cfclient_evaluator:custom_attribute_to_binary(ListStrings)).
 
 distribution_test() ->
   #{rules =>

@@ -127,6 +127,9 @@ search_targets(TargetIdentifier, [Head | Tail]) ->
 search_targets(_TargetIdentifier, []) -> not_found.
 
 -spec evaluate_target_group_rules(Rules :: list(), Target :: target()) -> binary() | not_found.
+%% If no rules to evaluate return the Target variation
+evaluate_target_group_rules([], _) ->
+  not_found;
 evaluate_target_group_rules(Rules, Target) ->
   %% Sort Target Group Rules by priority - 0 is highest.
   PrioritizedRules = lists:sort(
@@ -135,10 +138,8 @@ evaluate_target_group_rules(Rules, Target) ->
     end, Rules),
 
   %% Check if a target is included or excluded from the rules.
-  search_rules_for_inclusion(PrioritizedRules, Target);
-%% If no rules to evaluate return the Target variation
-evaluate_target_group_rules([], _) ->
-  not_found.
+  search_rules_for_inclusion(PrioritizedRules, Target).
+
 
 -spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> excluded | binary() | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
@@ -230,6 +231,23 @@ is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
 %% Contains
 is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
   binary:match(TargetAttribute, RuleValue) /= nomatch;
+%% In
+%% TODO - make sure RuleValue can be an array in the caller
+is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(TargetAttribute) ->
+  lists:member(TargetAttribute, RuleValue);
+is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
+  Search =
+    fun
+      F([Head | Tail]) ->
+        case lists:member(Head, RuleValue) of
+          true ->
+            true;
+          false ->
+            F(Tail)
+        end;
+      F([]) -> false
+    end,
+  Search(TargetAttribute);
 is_custom_rule_match(_, _, <<>>) ->
   false.
 
@@ -254,23 +272,33 @@ get_attribute_value(_, RuleAttribute, TargetIdentifier, TargetName) ->
       TargetName
   end.
 
+%%  Convert custom attributes to binary
 custom_attribute_to_binary(CustomAttribute) when is_binary(CustomAttribute) ->
   CustomAttribute;
 custom_attribute_to_binary(CustomAttribute) when is_atom(CustomAttribute) ->
   atom_to_binary(CustomAttribute);
 custom_attribute_to_binary(CustomAttribute) when is_number(CustomAttribute) ->
-  try float_to_binary(CustomAttribute)
-  catch
-    error:badarg -> {ok, integer_to_binary(CustomAttribute)}
-  end;
+    list_to_binary(mochinum:digits(CustomAttribute));
 custom_attribute_to_binary(CustomAttribute) when is_list(CustomAttribute) ->
-  try
-    %% If a list of numbers, then we want them to be a bitstring with no commas.
-    AsString = string:join([integer_to_list(X) || X <- CustomAttribute], ""),
-    list_to_binary(AsString)
-  catch
-    error:badarg -> list_to_binary(CustomAttribute)
-  end.
+  case io_lib:char_list(CustomAttribute) of
+    true ->
+      logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
+      not_ok;
+    false ->
+      [custom_attribute_list_elem_to_binary(X) || X <- CustomAttribute]
+end.
+
+%% Convert custom rule array elements to binary
+custom_attribute_list_elem_to_binary(Element) when is_atom(Element) ->
+  atom_to_binary(Element);
+custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
+  list_to_binary(mochinum:digits(Element));
+custom_attribute_list_elem_to_binary(Element) when is_binary(Element) ->
+  Element;
+%% Should be used for char list only
+custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
+  logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
+  not_ok.
 
 evaluation_distribution() ->
   implement_me.
