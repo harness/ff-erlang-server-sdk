@@ -544,8 +544,6 @@ is_custom_rule_match_test() ->
   ListMultipleAtomAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary(['2323', '2222']),
   ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttributeNoMatch, InRule)).
 
-
-
 custom_attribute_to_binary_test() ->
   %% Binary
   Binary = <<"Sample">>,
