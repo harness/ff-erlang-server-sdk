@@ -59,11 +59,12 @@ evaluate_flag(Flag, Target, group_rules) ->
     not_found ->
       logger:debug("Group rules did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
       evaluate_flag(Flag, Target, default_on);
-    GroupVariationIdentifier when GroupVariationIdentifier =:= excluded ->
+    excluded ->
       logger:debug("Target ~p~n has been excluded via group rule for Flag ~p~n", [Target, maps:get(feature, Flag)]),
       evaluate_flag(Flag, Target, default_on);
     GroupVariationIdentifier ->
       logger:debug("Group rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      %% TODO Percentage rollout goes here - I think.
       get_target_or_group_variation(Flag, GroupVariationIdentifier)
   end;
 %% Default "on" variation
@@ -93,7 +94,7 @@ get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
     #{} = Variation ->
       {ok, maps:get(value, Variation)};
     not_found ->
-      logger:error("Target matched on Group Rule for Flag ~p~n but Variation with Identifier: ~p~n not found ", [maps:get(feature, Flag), TargetVariationIdentifier]),
+      logger:error("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ", [maps:get(feature, Flag), TargetVariationIdentifier]),
       not_ok
   end.
 
@@ -126,7 +127,7 @@ search_targets(TargetIdentifier, [Head | Tail]) ->
   end;
 search_targets(_TargetIdentifier, []) -> not_found.
 
--spec evaluate_target_group_rules(Rules :: list(), Target :: target()) -> binary() | not_found.
+-spec evaluate_target_group_rules(Rules :: list(), Target :: target()) -> binary() | excluded | not_found.
 %% If no rules to evaluate return the Target variation
 evaluate_target_group_rules([], _) ->
   not_found;
@@ -140,16 +141,24 @@ evaluate_target_group_rules(Rules, Target) ->
   %% Check if a target is included or excluded from the rules.
   search_rules_for_inclusion(PrioritizedRules, Target).
 
-
--spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> excluded | binary() | not_found.
+-spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> binary() | excluded | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
-  IsRuleExcludedOrIncluded = is_rule_included_or_excluded(maps:get(clauses, Head), Target),
-  case IsRuleExcludedOrIncluded of
+  case is_rule_included_or_excluded(maps:get(clauses, Head), Target) of
     excluded ->
       excluded;
     included ->
-      Serve = maps:get(serve, Head),
-      maps:get(variation, Serve);
+      %% Check if percentage rollout applies to this rule
+      case maps:get(distribution,  maps:get(serve, Head), false) of
+        %% If not then return the rule's variation
+        false ->
+          maps:get(variation, maps:get(serve, Head));
+        %% Apply the percentage rollout calculation for the rule
+        Distribution ->
+          BucketBy = maps:get(bucketBy, Distribution),
+          TargetAttributeValue = get_attribute_value(maps:get(attributes, Target, #{}), BucketBy, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
+          apply_percentage_rollout(maps:get(variations, Distribution), BucketBy, TargetAttributeValue, 0)
+
+      end;
     _ -> search_rules_for_inclusion(Tail, Target)
   end;
 search_rules_for_inclusion([], _) -> not_found.
@@ -262,8 +271,7 @@ get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, Tar
   %% Check if the rule attribute matches any of the custom attributes (Rule attribute needs to be converted to atom which is the format
   %% of custom attribute keys.
   RuleAttributeAsAtom = binary_to_atom(RuleAttribute),
-  DoesCustomAttrMatch = maps:is_key(RuleAttributeAsAtom, TargetCustomAttributes),
-  case DoesCustomAttrMatch of
+  case maps:is_key(RuleAttributeAsAtom, TargetCustomAttributes) of
     true ->
       %% Rule values are always bitstrings, so we need to convert the Target custom attribute values to bitstrings.
       custom_attribute_to_binary(maps:get(RuleAttributeAsAtom, TargetCustomAttributes));
@@ -309,8 +317,24 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
   not_ok.
 
-evaluation_distribution() ->
-  implement_me.
+-spec apply_percentage_rollout(Variations :: list(), BucketBy :: binary(), TargetValue :: binary(), AccumulatorIn :: integer()) -> binary() | percentage_rollout_excluded.
+apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, AccumulatorIn) ->
+  Percentage = AccumulatorIn + maps:get(weight, Head),
+%%  Variation = maps:get(variation, Head),
+  case should_rollout(BucketBy, TargetValue, Percentage) of
+    true ->
+      maps:get(variation, Head);
+    false ->
+      apply_percentage_rollout(Tail, BucketBy, TargetValue, Percentage)
+  end;
+apply_percentage_rollout([], _, _, _) -> percentage_rollout_excluded.
+
+-spec should_rollout(BucketBy :: binary(), TargetValue ::binary(), integer()) -> boolean().
+should_rollout(BucketBy, TargetValue, Percentage) ->
+  %%TODO hash the joining of buketby and identifier with a ':' separator
+  Hash = erlang_murmurhash:murmurhash3_32(<<TargetValue/binary,":",BucketBy/binary>>),
+  BucketID = (Hash rem 100) +1,
+  (Percentage > 0) andalso (BucketID =< Percentage).
 
 -spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->
