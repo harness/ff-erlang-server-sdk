@@ -742,7 +742,7 @@ custom_attribute_to_binary_test() ->
   ListStrings = ["Sample 1", "Sample2"],
   ?assertEqual([not_ok, not_ok], cfclient_evaluator:custom_attribute_to_binary(ListStrings)).
 
-distribution_test() ->
+percentage_rollout_test() ->
   #{rules =>
   [#{clauses =>
   [#{attribute => <<>>,
@@ -757,6 +757,59 @@ distribution_test() ->
       variations =>
       [#{variation => <<"true">>, weight => 50},
         #{variation => <<"false">>, weight => 50}]}}}]},
+
+  #{defaultServe =>
+  #{variation =>
+  <<"true">>},
+    environment => <<"dev">>,
+    feature => <<"test">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute =>
+    <<>>,
+      id =>
+      <<"3cd6a8c7-79d6-4697-b007-b8486f0568ba">>,
+      negate =>
+      false,
+      op =>
+      <<"segmentMatch">>,
+      values =>
+      [<<"group1">>]}],
+      priority => 0,
+      ruleId =>
+      <<"12410622-e1d1-46c9-acb3-e177c9dd4575">>,
+      serve =>
+      #{distribution =>
+      #{bucketBy =>
+      <<"identifier">>,
+        variations =>
+        [#{variation =>
+        <<"true">>,
+          weight =>
+          10},
+          #{variation =>
+          <<"false">>,
+            weight =>
+            90}]}}}],
+    state => <<"on">>,
+    variationToTargetMap =>
+    null,
+    variations =>
+    [#{identifier =>
+    <<"true">>,
+      name => <<"True">>,
+      value => <<"true">>},
+      #{identifier =>
+      <<"false">>,
+        name => <<"False">>,
+        value =>
+        <<"false">>}],
+    version => 4},
   ok.
 
 boolean_flag_off() ->
