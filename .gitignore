@@ -9,7 +9,7 @@ out/
 *.o
 *.beam
 *.plt
-erl_crash.dump
+*dump
 .concrete/DEV_MODE
 
 # rebar 2.x

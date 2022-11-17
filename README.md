@@ -83,6 +83,32 @@ ok
   false
 ```
 
+### Targets with custom attributes
+If you have a [Group Rule](https://docs.harness.io/article/5qz1qrugyk-add-target-groups) which uses custom attributes (currently these rules can only be created using a Client SDK, not through the Harness UI)
+you can use the `attributes` map within a `Target`. 
+
+Note: `attribute` keys must be `atoms` and the values must either be `bitstrings` or `atoms`, or if using
+a `list` then each element must be either `bitstrings` or `atoms`
+
+```Erlang
+  TargetBetaGroup = #{'identifier' => <<"my_target">>,
+    name => <<"my_target_name">>,
+    anonymous => <<"">>,
+    attributes => #{beta => <<"beta_group_1">>}
+    },
+  TargetBetaGroups = #{'identifier' => <<"my_other_target">>,
+    name => <<"my_other_target_name">>,
+    anonymous => <<"">>,
+    attributes => #{beta => [<<"beta_group_1">>, 'beta_group_2'}]}
+    },
+  TargetAlphaGroup = #{'identifier' => <<"my_alpha_target">>,
+    name => <<"my_alpha_target_name">>,
+    anonymous => <<"">>,
+    attributes => #{alpha => 'alpha_group_1'}
+    },
+```
+
+
 ## Cleanup
 To avoid potential memory leak, when SDK is no longer needed
 (when the app is closed, for example), a caller should call this method:

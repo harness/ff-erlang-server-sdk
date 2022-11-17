@@ -54,7 +54,7 @@ get_authtoken() ->
 -spec parse_project_data(JwtToken :: string()) -> ok.
 parse_project_data(JwtToken) ->
   JwtString = lists:nth(2, string:split(JwtToken, ".", all)),
-  DecodedJwt = base64:mime_decode(JwtString),
+  DecodedJwt = base64url:decode(JwtString),
   UnicodeJwt = unicode:characters_to_binary(DecodedJwt, utf8),
   Project = jsx:decode(string:trim(UnicodeJwt)),
   application:set_env(cfclient, project, Project).

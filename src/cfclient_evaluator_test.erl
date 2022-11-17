@@ -1,7 +1,7 @@
 -module(cfclient_evaluator_test).
 
 -include_lib("eunit/include/eunit.hrl").
-
+-include("cfclient_evaluator_operators.hrl").
 variations_test() ->
   %% Target Sample Data
   ExistingTargetA = #{'identifier' => <<"target_identifier_1">>,
@@ -20,6 +20,43 @@ variations_test() ->
     name => <<"target_test_1">>,
     anonymous => <<"">>,
     attributes => <<"">>
+  },
+
+  CustomRulesStartsWith = #{'identifier' => <<"target_324235">>,
+    name => <<"target_name_2345">>,
+    anonymous => <<"">>,
+    attributes => #{ab_testing => <<"focus_group_three">>}
+  },
+  CustomRulesEndsWith = #{'identifier' => <<"target_324232">>,
+    name => <<"target_name_2345552">>,
+    anonymous => <<"">>,
+    attributes => #{ab_testing => <<"45s">>}
+  },
+  CustomRulesIn = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{beta => <<"target_1000">>}
+  },
+  CustomRulesEqual = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{ab_testing => <<"new_users">>}
+  },
+  CustomRulesEqualSensitive = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{ab_testing => <<"GREAT_GROUP">>}
+  },
+
+  CustomRulesNotIncludedA = #{'identifier' => <<"target_324235">>,
+    name => <<"target_name_2345">>,
+    anonymous => <<"">>,
+    attributes => #{ab_testing => <<"first_detached_group">>}
+  },
+  CustomRulesNotIncludedB = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{beta => <<"target_5000">>}
   },
 
   NonExistentTarget = #{'identifier' => <<"target_identifier_q2341q41324ad">>,
@@ -46,7 +83,7 @@ variations_test() ->
 
   %%%%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_boolean_flag">>) -> boolean_flag_group_only()
                         end),
 
@@ -56,10 +93,20 @@ variations_test() ->
   %% Target included
   ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
 
+  %% Target included by custom rules
+  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesIn)),
+  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEndsWith)),
+
+
+
+
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_boolean_flag">>) -> boolean_flag_no_targets_or_groups()
                         end),
   ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
@@ -72,7 +119,7 @@ variations_test() ->
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_string_flag">>) -> string_flag_target_and_groups()
                         end),  %% Target found
   ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
@@ -86,10 +133,18 @@ variations_test() ->
   %% Target included
   ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetIncludedFromGroup)),
 
+  %% Target included by custom rules
+  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEndsWith)),
+
+
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_string_flag">>) -> string_flag_no_targets_or_groups()
                         end),
   ?assertEqual({ok, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
@@ -101,7 +156,7 @@ variations_test() ->
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_cool_number_flag">>) -> number_flag_only_targets()
                         end),
   %% Target found
@@ -111,7 +166,7 @@ variations_test() ->
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_cool_number_flag">>) -> number_flag_only_groups()
                         end),
   %% Target excluded
@@ -120,10 +175,17 @@ variations_test() ->
   %% Target Included
   ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetIncludedFromGroup)),
 
+  %% Target included by custom rules
+  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEndsWith)),
+
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_cool_number_flag">>) -> number_flag_no_targets_or_groups()
                         end),
   ?assertEqual({ok, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
@@ -135,7 +197,7 @@ variations_test() ->
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_JSON_flag">>) -> json_flag_only_targets()
                         end),
   %% Target found
@@ -145,7 +207,7 @@ variations_test() ->
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_JSON_flag">>) -> json_flag_only_groups()
                         end),
   %% Target excluded
@@ -154,11 +216,17 @@ variations_test() ->
   %% Target Included
   ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetIncludedFromGroup)),
 
+  %% Target Included by custom rules
+  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEndsWith)),
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> target_group_no_custom_rules();
+                          (CacheName, <<"segments/target_group_1">>) -> target_group();
                           (CacheName, <<"flags/My_JSON_flag">>) -> json_flag_no_targets_or_groups()
                         end),
   ?assertEqual({ok, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
@@ -333,41 +401,63 @@ is_rule_included_or_excluded_test() ->
   ExcludedTarget = #{'identifier' => <<"target_that_has_been_excluded">>,
     name => <<"I'm_excluded">>,
     anonymous => <<"">>,
-    attributes => <<"">>
+    attributes => #{}
   },
 
   ExcludedTargetB = #{'identifier' => <<"another_excluded_target">>,
     name => <<"also_excluded">>,
     anonymous => <<"">>,
-    attributes => <<"">>
+    attributes => #{}
   },
 
   IncludedTargetA = #{'identifier' => <<"target_that_has_been_inlcuded">>,
     name => <<"I'm_included">>,
     anonymous => <<"">>,
-    attributes => <<"">>
+    attributes => #{}
   },
 
   IncludedTargetB = #{'identifier' => <<"another_included_target">>,
     name => <<"also_included">>,
     anonymous => <<"">>,
-    attributes => <<"">>
+    attributes => #{}
   },
 
   NotIncludedTargetA = #{'identifier' => <<"haven't_been_included_or_excluded">>,
     name => <<"">>,
     anonymous => <<"">>,
-    attributes => <<"">>
+    attributes => #{}
   },
 
   NotIncludedTargetB = #{'identifier' => <<"another_target_that_hasn't_been_included_or_excluded">>,
     name => <<"">>,
     anonymous => <<"">>,
-    attributes => <<"">>
+    attributes => #{}
   },
 
+  CustomRulesTargetA = #{'identifier' => <<"target_324235">>,
+    name => <<"target_name_2345">>,
+    anonymous => <<"">>,
+    attributes => #{ab_testing => <<"first_focus_group">>}
+  },
+  CustomRulesTargetB = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{beta => <<"target_1000">>}
+  },
+
+  CustomRulesNotIncludedA = #{'identifier' => <<"target_324235">>,
+    name => <<"target_name_2345">>,
+    anonymous => <<"">>,
+    attributes => #{ab_testing => <<"first_detached_group">>}
+  },
+  CustomRulesNotIncludedB = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{beta => <<"target_5000">>}
+  },
 
   %% Cache data for mocked cache call
+  cfclient_cache_repository:set_pid(self()),
   CacheName = cfclient_cache_repository:get_cache_name(),
   CachedGroup = #{environment => <<"dev">>, identifier => <<"target_group_1">>,
     excluded =>
@@ -384,7 +474,25 @@ is_rule_included_or_excluded_test() ->
       #{account => <<>>, environment => <<>>,
         identifier => <<"another_included_target">>,
         name => <<"also_included">>, org => <<>>, project => <<>>}],
-    name => <<"target_group_1">>, version => 3},
+    name => <<"target_group_1">>, version => 3,
+    rules =>
+    [#{attribute => <<"location">>,
+      id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
+      negate => false,op => <<"ends_with">>,
+      values => [<<"1">>]},
+      #{attribute => <<"identifier">>,
+        id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
+        negate => false,op => <<"ends_with">>,
+        values => [<<"2">>]},
+      #{attribute => <<"ab_testing">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"ends_with">>,
+        values => [<<"focus_group">>]},
+      #{attribute => <<"beta">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"in">>,
+        values => [<<"target_999">>, <<"target_1000">>]}],
+    version => 10},
 
   %% Mock LRU Cache
   meck:new(lru),
@@ -396,17 +504,243 @@ is_rule_included_or_excluded_test() ->
 
 
   %% Included %%
-  meck:expect(lru, get, fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
   ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetA)),
   ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetB)),
 
   %% Not Included %%
-  meck:expect(lru, get, fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
   ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetA)),
   ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetB)),
 
+  %% Included by custom rules %%
+  ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesTargetA)),
+  ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesTargetB)),
+
+  %% No match custom rules %%
+  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesNotIncludedA)),
+  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesNotIncludedB)),
+
   meck:unload(lru).
 
+search_group_custom_rule_test() ->
+  Rules =
+    [#{attribute => <<"identifier">>,
+      id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
+      negate => false,op => <<"equal">>,
+      values => [<<"target_1">>]},
+      #{attribute => <<"preference">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"equal">>,
+        values => [<<"marketing">>]},
+      #{attribute => <<"identifier">>,
+        id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
+        negate => false,op => <<"ends_with">>,
+        values => [<<"2">>]},
+      #{attribute => <<"name">>,
+        id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
+        negate => false,op => <<"equal">>,
+        values => [<<"target_name_1">>]},
+      #{attribute => <<"location">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"equal">>,
+        values => [<<"emea">>]}],
+
+  %%-------------------- Match --------------------
+  %% Target no custom attributes
+  TargetNoAttributes1 = #{'identifier' => <<"target_1">>,
+    name => <<"target_test_3">>,
+    anonymous => <<"">>
+  },
+  TargetNoAttributes2 = #{'identifier' => <<"target_test_3">>,
+    name => <<"target_name_1">>,
+    anonymous => <<"">>
+  },
+  TargetNoAttributes3 = #{'identifier' => <<"target_t2323">>,
+    name => <<"target_name_1">>,
+    anonymous => <<"">>
+  },
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes1, Rules)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes2, Rules)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes3, Rules)),
+
+  %% Target with custom attributes
+  TargetWithAttributes1 = #{'identifier' => <<"target_324235">>,
+    name => <<"target_name_2345">>,
+    anonymous => <<"">>,
+    attributes => #{location => <<"emea">>}
+  },
+  TargetWithAttributes2 = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{preference => <<"marketing">>}
+  },
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetWithAttributes1, Rules)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetWithAttributes2, Rules)),
+
+  %%-------------------- No Match --------------------
+  %% Target no custom attributes
+  NoMatch1 = #{'identifier' => <<"target_asdasd">>,
+    name => <<"target_test_3">>,
+    anonymous => <<"">>
+  },
+  NoMatch2 = #{'identifier' => <<"target_$$$">>,
+    name => <<"target_name_2323424">>,
+    anonymous => <<"">>
+  },
+  NoMatch3 = #{'identifier' => <<"target_12234">>,
+    name => <<"target_name_2222">>,
+    anonymous => <<"">>
+  },
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch1, Rules)),
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch2, Rules)),
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch3, Rules)),
+
+  %% Target with custom attributes
+  NoMatch4 = #{'identifier' => <<"target_324235">>,
+    name => <<"target_name_2345">>,
+    anonymous => <<"">>,
+    attributes => #{location => <<"us">>}
+  },
+  NoMatch5 = #{'identifier' => <<"target_3333">>,
+    name => <<"target_name_1444">>,
+    anonymous => <<"">>,
+    attributes => #{preference => <<"no_marketing">>}
+  },
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch4, Rules)),
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch5, Rules)).
+
+
+is_custom_rule_match_test() ->
+
+  %%-------------------- Equals --------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, [<<"focus_group_1">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, [<<"FOCUS_GROUP_1">>])),
+
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, [<<"focus_group_1">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, [<<"FOCUS_GROUP_1">>])),
+
+  %%-------------------- Equals Case Sensitive--------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, [<<"focus_group_1">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_1">>, [<<"FOCUS_GROUP_1">>])),
+
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, [<<"FOCUS_GROUP_1">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_2">>, [<<"FOCUS_GROUP_1">>])),
+
+  %%-------------------- Starts with --------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group_1">>, [<<"beta">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"betagroup_2">>, [<<"beta">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group3">>, [<<"beta">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta1">>, [<<"beta">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"???">>, [<<"???">>])),
+
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group_1">>, [<<"beta">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alphagroup_2">>, [<<"beta">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group3">>, [<<"beta">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"btea">>, [<<"beta">>])),
+
+  %%-------------------- Ends with --------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"1">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"_1">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"identifier_1">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"target_identifier_1">>])),
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"2">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"tifier_2">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"target_identifier_2">>])),
+
+  %%-------------------- Contains--------------------
+  %% Match
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, [<<"february">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, [<<"january">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"beta">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"beta_">>])),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, [<<"premium">>])),
+  %% No match
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, [<<"alpha_">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, [<<"december">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"january">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"march">>])),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, [<<"free">>])),
+
+  %%-------------------- In --------------------
+  InRule = [<<"7">>, <<"2">>, <<"3">>],
+  %% MATCH %%
+  %% Single attributes
+  Bitstring = cfclient_evaluator:custom_attribute_to_binary(<<"2">>),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, Bitstring, InRule)),
+
+  ListAtomAttribute = cfclient_evaluator:custom_attribute_to_binary('3'),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttribute, InRule)),
+
+  %% List attribute
+  ListSingleBitstringAttribute = cfclient_evaluator:custom_attribute_to_binary([<<"2">>]),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttribute, InRule)),
+
+  ListMultipleBitsringAttributes = cfclient_evaluator:custom_attribute_to_binary([<<"1000">>, <<"2">>]),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributes, InRule)),
+
+  ListMultipleAtomAttribute = cfclient_evaluator:custom_attribute_to_binary(['50', '2']),
+  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttribute, InRule)),
+
+  %% NO MATCH %%
+  BitstringNoMatch = cfclient_evaluator:custom_attribute_to_binary(<<"34">>),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, BitstringNoMatch, InRule)),
+
+  ListAtomAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary('22'),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttributeNoMatch, InRule)),
+
+  ListSingleBitstringAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary([<<"111111">>]),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttributeNoMatch, InRule)),
+
+  ListMultipleBitsringAttributesNoMatch = cfclient_evaluator:custom_attribute_to_binary([<<"1212">>, <<"44">>]),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributesNoMatch, InRule)),
+
+  ListMultipleAtomAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary(['2323', '2222']),
+  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttributeNoMatch, InRule)).
+
+custom_attribute_to_binary_test() ->
+  %% Binary
+  Binary = <<"Sample">>,
+  ?assertEqual(<<"Sample">>, cfclient_evaluator:custom_attribute_to_binary(Binary)),
+
+  %% Atom
+  Atom = sample,
+  ?assertEqual(<<"sample">>, cfclient_evaluator:custom_attribute_to_binary(Atom)),
+
+  %% Integer
+  Integer = 2,
+  ?assertEqual(<<"2">>, cfclient_evaluator:custom_attribute_to_binary(Integer)),
+
+  %% Float
+  Float = 2.2,
+  ?assertEqual(<<"2.2">>, cfclient_evaluator:custom_attribute_to_binary(Float)),
+
+  %% List of Bit Strings
+  ListBitStrings = [<<"Sample 1">>, <<"Sample2">>],
+  ?assertEqual([<<"Sample 1">>, <<"Sample2">>], cfclient_evaluator:custom_attribute_to_binary(ListBitStrings)),
+
+  %% List of atoms
+  AtomsList = [sample2, sample3],
+  ?assertEqual([<<"sample2">>, <<"sample3">>], cfclient_evaluator:custom_attribute_to_binary(AtomsList)),
+
+  %% Mixed lis3
+  MixedList = [sample2, <<"3">>],
+  ?assertEqual([<<"sample2">>, <<"3">>], cfclient_evaluator:custom_attribute_to_binary(MixedList)),
+
+  %%---------- Unsupported Inputs  --------------
+  %% String
+  String = "Sample",
+  ?assertEqual(not_ok, cfclient_evaluator:custom_attribute_to_binary(String)),
+
+  %% List of Strings
+  ListStrings = ["Sample 1", "Sample2"],
+  ?assertEqual([not_ok, not_ok], cfclient_evaluator:custom_attribute_to_binary(ListStrings)).
 
 distribution_test() ->
   #{rules =>
@@ -823,7 +1157,7 @@ json_flag_targets_and_groups() ->
         value => <<"{    \"serveIt\":\"maybe\" }">>}],
     version => 8}.
 
-target_group_no_custom_rules() ->
+target_group() ->
   #{environment => <<"dev">>,
     excluded =>
     [#{account => <<>>, environment => <<>>,
@@ -834,4 +1168,30 @@ target_group_no_custom_rules() ->
     [#{account => <<>>, environment => <<>>,
       identifier => <<"target_that_has_been_inlcuded">>,
       name => <<"target_test">>, org => <<>>, project => <<>>}],
-    name => <<"target_group_1">>, version => 19}.
+    name => <<"target_group_1">>,
+    rules =>
+    [#{attribute => <<"location">>,
+      id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
+      negate => false,op => <<"ends_with">>,
+      values => [<<"1">>]},
+      #{attribute => <<"identifier">>,
+        id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
+        negate => false,op => <<"ends_with">>,
+        values => [<<"2">>]},
+      #{attribute => <<"ab_testing">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"starts_with">>,
+        values => [<<"focus_group">>]},
+      #{attribute => <<"ab_testing">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"equal">>,
+        values => [<<"new_users">>]},
+      #{attribute => <<"ab_testing">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"equal_sensitive">>,
+        values => [<<"GREAT_GROUP">>]},
+      #{attribute => <<"beta">>,
+        id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
+        negate => false,op => <<"in">>,
+        values => [<<"target_999">>, <<"target_1000">>]}],
+    version => 19}.

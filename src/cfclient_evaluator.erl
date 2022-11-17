@@ -6,6 +6,7 @@
 -module(cfclient_evaluator).
 
 -export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2]).
+-include("cfclient_evaluator_operators.hrl").
 
 -type target() ::
 #{identifier := binary(),
@@ -36,10 +37,10 @@ evaluate_flag(Flag, Target, off) ->
       get_default_off_variation(Flag, OffVariationIdentifier);
     <<"on">> ->
       logger:debug("Flag ~p~n is turned on", [maps:get(feature, Flag)]),
-      %% Check target rules
+      %% Start the evaluation.
       evaluate_flag(Flag, Target, target_rules)
   end;
-  %% Evaluate for target rules
+%% Evaluate for target rules
 evaluate_flag(Flag, Target, target_rules) ->
   logger:debug("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
   case evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target) of
@@ -126,6 +127,9 @@ search_targets(TargetIdentifier, [Head | Tail]) ->
 search_targets(_TargetIdentifier, []) -> not_found.
 
 -spec evaluate_target_group_rules(Rules :: list(), Target :: target()) -> binary() | not_found.
+%% If no rules to evaluate return the Target variation
+evaluate_target_group_rules([], _) ->
+  not_found;
 evaluate_target_group_rules(Rules, Target) ->
   %% Sort Target Group Rules by priority - 0 is highest.
   PrioritizedRules = lists:sort(
@@ -134,9 +138,8 @@ evaluate_target_group_rules(Rules, Target) ->
     end, Rules),
 
   %% Check if a target is included or excluded from the rules.
-  search_rules_for_inclusion(PrioritizedRules, Target);
-evaluate_target_group_rules([], _) ->
-  not_found.
+  search_rules_for_inclusion(PrioritizedRules, Target).
+
 
 -spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> excluded | binary() | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
@@ -154,37 +157,43 @@ search_rules_for_inclusion([], _) -> not_found.
 -spec is_rule_included_or_excluded(Clauses :: list(), Target :: target()) -> true | false.
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
-    <<"segmentMatch">> ->
+    ?SEGMENT_MATCH_OPERATOR ->
       %% At present there is only ever one element in values, so we get the head.
       GroupName = hd(maps:get(values, Head, false)),
       CachePid = cfclient_cache_repository:get_pid(),
       Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
-      TargetIdentifier = maps:get(identifier, Target),
-      search_group(excluded, TargetIdentifier, Group);
+      search_group(excluded, Target, Group);
     _ -> is_rule_included_or_excluded(Tail, Target)
   end;
 is_rule_included_or_excluded([], _) -> false.
 
 %% Parses Group Rules for the different rule types.
--spec search_group(RuleType :: atom(), TargetIdentifier :: binary(), Group :: map()) -> included | excluded | false.
-search_group(excluded, TargetIdentifier, Group) ->
+-spec search_group(RuleType :: atom(), Target :: binary(), Group :: map()) -> included | excluded | false.
+search_group(excluded, Target, Group) ->
+  TargetIdentifier = maps:get(identifier, Target),
   case search_group_rules(TargetIdentifier, maps:get(excluded, Group, [])) of
     true ->
       excluded;
     false ->
-      search_group(included, TargetIdentifier, Group)
+      search_group(included, Target, Group)
   end;
-search_group(included, TargetIdentifier, Group) ->
-  case   search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
+search_group(included, Target, Group) ->
+  TargetIdentifier = maps:get(identifier, Target),
+  case search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
     true ->
       included;
     false ->
-      %% TODO Custom rules clause call goes here
-      %% search_group(custom_rules, TargetIdentifier, Group)
+      search_group(custom_rules, Target, Group)
+  end;
+search_group(custom_rules, Target, Group) ->
+  case search_group_custom_rules(Target, maps:get(rules, Group, [])) of
+    true ->
+      included;
+    false ->
       false
   end.
 
--spec search_group_rules(TargetIdentifier :: binary(), GroupRules :: list()) -> true | false.
+-spec search_group_rules(Target :: binary(), GroupRules :: list()) -> true | false.
 search_group_rules(TargetIdentifier, [Head | Tail]) ->
   ListTargetIdentifier = maps:get(identifier, Head),
   if
@@ -192,7 +201,113 @@ search_group_rules(TargetIdentifier, [Head | Tail]) ->
       true;
     true -> search_group_rules(TargetIdentifier, Tail)
   end;
-search_group_rules(_TargetIdentifier, []) -> false.
+search_group_rules(_, []) -> false.
+
+-spec search_group_custom_rules(Target :: binary(), CustomRules :: list()) -> true | false.
+search_group_custom_rules(Target, [Head | Tail]) ->
+  %% Get necessary fields from rule
+  RuleAttribute = maps:get(attribute, Head, <<>>),
+  RuleValue = maps:get(values, Head, <<>>),
+  %% Get the Target attribute
+  TargetAttribute = get_attribute_value(maps:get(attributes, Target, #{}), RuleAttribute, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
+  case is_custom_rule_match(maps:get(op, Head), TargetAttribute, RuleValue) of
+    true ->
+      true;
+    false ->
+      search_group_custom_rules(Target, Tail)
+  end;
+search_group_custom_rules(_, []) -> false.
+
+
+-spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleValue :: binary()) -> true | false.
+%% No target attribute so don't attempt match
+is_custom_rule_match(_, <<>>, _) ->
+  false;
+%% Equal sensitive
+is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, TargetAttribute, RuleValue) ->
+  string:equal(TargetAttribute, hd(RuleValue), false);
+%% Equal
+is_custom_rule_match(?EQUAL_OPERATOR, TargetAttribute, RuleValue) ->
+  string:equal(TargetAttribute, hd(RuleValue), true);
+%% Starts with
+is_custom_rule_match(?STARTS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
+  string:find(TargetAttribute, hd(RuleValue)) =:= TargetAttribute;
+%% Ends with
+is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
+  Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(binary_to_list(hd(RuleValue)))}),
+  string:equal(Suffix, RuleValue, false);
+%% Contains
+is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
+  binary:match(TargetAttribute, hd(RuleValue)) /= nomatch;
+%% In - we don't get the head of RuleValue here as `In` can have multiple values
+is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(TargetAttribute) ->
+  lists:member(TargetAttribute, RuleValue);
+is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
+  Search =
+    fun
+      F([Head | Tail]) ->
+        case lists:member(Head, RuleValue) of
+          true ->
+            true;
+          false ->
+            F(Tail)
+        end;
+      F([]) -> false
+    end,
+  Search(TargetAttribute).
+
+-spec get_attribute_value(TargetCustomAttributes :: map(), RuleAttribute :: binary(), TargetIdentifier :: binary(), TargetName :: binary()) -> binary() | <<>>.
+%% Start with custom attributes if there are any
+get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName) when map_size(TargetCustomAttributes) > 0 ->
+  %% Check if the rule attribute matches any of the custom attributes (Rule attribute needs to be converted to atom which is the format
+  %% of custom attribute keys.
+  RuleAttributeAsAtom = binary_to_atom(RuleAttribute),
+  DoesCustomAttrMatch = maps:is_key(RuleAttributeAsAtom, TargetCustomAttributes),
+  case DoesCustomAttrMatch of
+    true ->
+      %% Rule values are always bitstrings, so we need to convert the Target custom attribute values to bitstrings.
+      custom_attribute_to_binary(maps:get(RuleAttributeAsAtom, TargetCustomAttributes));
+    false ->
+      get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
+  end;
+%% If no custom attributes or none matched from previous function clause, then check if the Rule attribute is Identifier or Name so we can attempt to match on those values.
+get_attribute_value(_, RuleAttribute, TargetIdentifier, TargetName) ->
+  case RuleAttribute of
+    <<"identifier">> ->
+      TargetIdentifier;
+    <<"name">> ->
+      TargetName;
+    _ -> <<>>
+  end.
+
+%%  Convert custom attributes to binary
+custom_attribute_to_binary(CustomAttribute) when is_binary(CustomAttribute) ->
+  CustomAttribute;
+custom_attribute_to_binary(CustomAttribute) when is_atom(CustomAttribute) ->
+  atom_to_binary(CustomAttribute);
+custom_attribute_to_binary(CustomAttribute) when is_number(CustomAttribute) ->
+  list_to_binary(mochinum:digits(CustomAttribute));
+custom_attribute_to_binary(CustomAttribute) when is_list(CustomAttribute) ->
+  case io_lib:char_list(CustomAttribute) of
+    %% If user supplies a string/list then log an error as not supported input
+    true ->
+      logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
+      not_ok;
+    false ->
+      [custom_attribute_list_elem_to_binary(X) || X <- CustomAttribute]
+  end.
+
+%% Convert custom rule array elements to binary
+custom_attribute_list_elem_to_binary(Element) when is_atom(Element) ->
+  atom_to_binary(Element);
+custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
+  list_to_binary(mochinum:digits(Element));
+custom_attribute_list_elem_to_binary(Element) when is_binary(Element) ->
+  Element;
+%% If user supplies a string/list then log an error as not supported input
+custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
+  logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
+  not_ok.
 
 evaluation_distribution() ->
   implement_me.
