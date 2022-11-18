@@ -608,6 +608,32 @@ percentage_rollout_boolean_100_true() ->
         value => <<"false">>}],
     version => 4}.
 
+percentage_rollout_boolean_100_false() ->
+  #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"My_boolean_flag">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [], project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
+      negate => false, op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 0,
+      ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
+      serve => #{distribution =>
+      #{bucketBy => <<"identifier">>,
+        variations =>
+        [#{variation => <<"true">>, weight => 0},
+          #{variation => <<"false">>, weight => 100}]}}}],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4}.
 
 %%  #{defaultServe =>
 %%  #{variation =>
