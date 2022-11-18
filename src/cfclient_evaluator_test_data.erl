@@ -2,7 +2,7 @@
 -author("erowlands").
 
 %% API
--export([json_flag_only_groups/0, target_group_for_percentage_rollout/0, target_group/0, json_flag_targets_and_groups/0, json_flag_no_targets_or_groups/0, json_flag_only_targets/0, json_flag_off/0, number_flag_only_groups/0, number_flag_no_targets_or_groups/0, number_flag_only_targets/0, number_flag_off/0, string_flag_target_and_groups/0, string_flag_no_targets_or_groups/0, string_flag_off/0, boolean_flag_single_target/0, boolean_flag_group_only/0, boolean_flag_no_targets_or_groups/0, boolean_flag_off/0, percentage_rollout_boolean_50_50/0]).
+-export([json_flag_only_groups/0, target_group_for_percentage_rollout/0, target_group/0, json_flag_targets_and_groups/0, json_flag_no_targets_or_groups/0, json_flag_only_targets/0, json_flag_off/0, number_flag_only_groups/0, number_flag_no_targets_or_groups/0, number_flag_only_targets/0, number_flag_off/0, string_flag_target_and_groups/0, string_flag_no_targets_or_groups/0, string_flag_off/0, boolean_flag_single_target/0, boolean_flag_group_only/0, boolean_flag_no_targets_or_groups/0, boolean_flag_off/0, percentage_rollout_boolean_50_50/0, percentage_rollout_boolean_100_true/0]).
 
 boolean_flag_off() ->
   #{defaultServe => #{variation => <<"true">>},
@@ -581,7 +581,32 @@ percentage_rollout_boolean_50_50() ->
         value => <<"false">>}],
     version => 4}.
 
-
+percentage_rollout_boolean_100_true() ->
+  #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"My_boolean_flag">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [], project => <<"erlangsdktest">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute => <<>>,
+      id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
+      negate => false, op => <<"segmentMatch">>,
+      values => [<<"target_group_1">>]}],
+      priority => 0,
+      ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
+      serve => #{distribution =>
+      #{bucketBy => <<"identifier">>,
+        variations =>
+        [#{variation => <<"true">>, weight => 100},
+          #{variation => <<"false">>, weight => 0}]}}}],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4}.
 
 
 %%  #{defaultServe =>
