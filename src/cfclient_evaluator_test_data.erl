@@ -2,7 +2,12 @@
 -author("erowlands").
 
 %% API
--export([json_flag_only_groups/0, target_group_for_percentage_rollout/0, target_group/0, json_flag_targets_and_groups/0, json_flag_no_targets_or_groups/0, json_flag_only_targets/0, json_flag_off/0, number_flag_only_groups/0, number_flag_no_targets_or_groups/0, number_flag_only_targets/0, number_flag_off/0, string_flag_target_and_groups/0, string_flag_no_targets_or_groups/0, string_flag_off/0, boolean_flag_single_target/0, boolean_flag_group_only/0, boolean_flag_no_targets_or_groups/0, boolean_flag_off/0, percentage_rollout_boolean_50_50/0, percentage_rollout_boolean_100_true/0]).
+-export([json_flag_only_groups/0, target_group_for_percentage_rollout/0, target_group/0, json_flag_targets_and_groups/0,
+  json_flag_no_targets_or_groups/0, json_flag_only_targets/0, json_flag_off/0, number_flag_only_groups/0,
+  number_flag_no_targets_or_groups/0, number_flag_only_targets/0, number_flag_off/0, string_flag_target_and_groups/0,
+  string_flag_no_targets_or_groups/0, string_flag_off/0, boolean_flag_single_target/0, boolean_flag_group_only/0,
+  boolean_flag_no_targets_or_groups/0, boolean_flag_off/0, percentage_rollout_boolean_50_50/0, percentage_rollout_boolean_100_true/0,
+  percentage_rollout_boolean_100_false/0]).
 
 boolean_flag_off() ->
   #{defaultServe => #{variation => <<"true">>},
@@ -634,56 +639,3 @@ percentage_rollout_boolean_100_false() ->
       #{identifier => <<"false">>, name => <<"False">>,
         value => <<"false">>}],
     version => 4}.
-
-%%  #{defaultServe =>
-%%  #{variation =>
-%%  <<"true">>},
-%%    environment => <<"dev">>,
-%%    feature => <<"test">>,
-%%    kind => <<"boolean">>,
-%%    offVariation => <<"false">>,
-%%    prerequisites => [],
-%%    project =>
-%%    <<"erlangcustomrules">>,
-%%    rules =>
-%%    [#{clauses =>
-%%    [#{attribute =>
-%%    <<>>,
-%%      id =>
-%%      <<"3cd6a8c7-79d6-4697-b007-b8486f0568ba">>,
-%%      negate =>
-%%      false,
-%%      op =>
-%%      <<"segmentMatch">>,
-%%      values =>
-%%      [<<"group1">>]}],
-%%      priority => 0,
-%%      ruleId =>
-%%      <<"12410622-e1d1-46c9-acb3-e177c9dd4575">>,
-%%      serve =>
-%%      #{distribution =>
-%%      #{bucketBy =>
-%%      <<"identifier">>,
-%%        variations =>
-%%        [#{variation =>
-%%        <<"true">>,
-%%          weight =>
-%%          50},
-%%          #{variation =>
-%%          <<"false">>,
-%%            weight =>
-%%            50}]}}}],
-%%    state => <<"on">>,
-%%    variationToTargetMap =>
-%%    null,
-%%    variations =>
-%%    [#{identifier =>
-%%    <<"true">>,
-%%      name => <<"True">>,
-%%      value => <<"true">>},
-%%      #{identifier =>
-%%      <<"false">>,
-%%        name => <<"False">>,
-%%        value =>
-%%        <<"false">>}],
-%%    version => 4}.
