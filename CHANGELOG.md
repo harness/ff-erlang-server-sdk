@@ -4,11 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased] - yyyy-mm-dd
+## [0.2.0] - 2022-11-18
 
-### Changed
+### Features
+Additional Evaluation Rules supported:
+- Custom Rules with support for Target Custom Attributes and Target Identifier/Name
+- Percentage Rollout
 
-### Fixed
+### Enhancements
+- Refactoring of Evaluation logic to be more readable/maintainable.
+- Added to internal Evaluation testing tool for vastly increased test coverage across a wide range of Evaluation scenarios.
+
+
+### Known Issues
+- Metrics Processing not yet complete.
+- Event stream not yet complete.
+- Evaluation Rules not yet complete:
+  - Pre-requisites
+
 
 ## [0.1.0] - Alpha Release 2022-10-20
 
