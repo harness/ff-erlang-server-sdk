@@ -749,9 +749,9 @@ percentage_rollout_test() ->
                           (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
                         end),
 
-  DoVariation50Times =
+  DoVariation10Times =
     fun
-      F({TrueCounter, FalseCounter}, 50) -> {TrueCounter, FalseCounter};
+      F({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
         F({TrueCounter, FalseCounter}, AccuIn) ->
         Counter = AccuIn + 1,
         TargetIdentifierNumber = integer_to_binary(Counter),
@@ -766,11 +766,12 @@ percentage_rollout_test() ->
             F({TrueCounter + 0, FalseCounter + 1}, Counter)
         end
     end,
-  DoVariation50Times({0, 0}, 0),
+  ?assertEqual({12, 8}, DoVariation10Times({0, 0}, 0)).
 
-%%  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
-
-  asd.
+%%  logger:error("True Counter: ~p~n \n False Counter ~p~n: ", [TrueCounter, FalseCounter]),
+%%%%  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
+%%
+%%  asd.
 
 
 
