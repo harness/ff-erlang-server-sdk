@@ -64,7 +64,6 @@ evaluate_flag(Flag, Target, group_rules) ->
       evaluate_flag(Flag, Target, default_on);
     GroupVariationIdentifier ->
       logger:debug("Group rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
-      %% TODO Percentage rollout goes here - I think.
       get_target_or_group_variation(Flag, GroupVariationIdentifier)
   end;
 %% Default "on" variation
@@ -320,7 +319,6 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
 -spec apply_percentage_rollout(Variations :: list(), BucketBy :: binary(), TargetValue :: binary(), AccumulatorIn :: integer()) -> binary() | percentage_rollout_excluded.
 apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, AccumulatorIn) ->
   Percentage = AccumulatorIn + maps:get(weight, Head),
-%%  Variation = maps:get(variation, Head),
   case should_rollout(BucketBy, TargetValue, Percentage) of
     true ->
       maps:get(variation, Head);
@@ -331,7 +329,6 @@ apply_percentage_rollout([], _, _, _) -> percentage_rollout_excluded.
 
 -spec should_rollout(BucketBy :: binary(), TargetValue ::binary(), integer()) -> boolean().
 should_rollout(BucketBy, TargetValue, Percentage) ->
-  %%TODO hash the joining of buketby and identifier with a ':' separator
   Hash = erlang_murmurhash:murmurhash3_32(<<TargetValue/binary,":",BucketBy/binary>>),
   BucketID = (Hash rem 100) +1,
   (Percentage > 0) andalso (BucketID =< Percentage).
