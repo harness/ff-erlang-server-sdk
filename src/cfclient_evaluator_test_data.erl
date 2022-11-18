@@ -459,81 +459,81 @@ target_group_for_percentage_rollout() ->
         identifier => <<"target2">>,
         name => <<"target_2">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target3">>,
         name => <<"target_3">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target4">>,
         name => <<"target_4">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target5">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target6">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target7">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target8">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}      #{account => <<>>, environment => <<>>,
+        project => <<>>},      #{account => <<>>, environment => <<>>,
         identifier => <<"target9">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target10">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target11">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target12">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target13">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target14">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target15">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target16">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target17">>,
         name => <<"target_test">>,
         org => <<>>,
-        project => <<>>}
+        project => <<>>},
       #{account => <<>>, environment => <<>>,
         identifier => <<"target18">>,
         name => <<"target_test">>,
@@ -555,7 +555,6 @@ target_group_for_percentage_rollout() ->
     version => 19}.
 
 percentage_rollout_boolean_50_50() ->
-
   #{defaultServe => #{variation => <<"true">>},
     environment => <<"dev">>, feature => <<"My_boolean_flag">>,
     kind => <<"boolean">>, offVariation => <<"false">>,
