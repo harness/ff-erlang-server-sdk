@@ -743,58 +743,31 @@ custom_attribute_to_binary_test() ->
   ?assertEqual([not_ok, not_ok], cfclient_evaluator:custom_attribute_to_binary(ListStrings)).
 
 percentage_rollout_test() ->
-  %%-------------------- 50/50 --------------------
+  %%-------------------- 50/50 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group_for_percentage_rollout();
                           (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
                         end),
 
-  DoVariation10Times =
-    fun
-      F({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
-        F({TrueCounter, FalseCounter}, AccuIn) ->
-        Counter = AccuIn + 1,
-        TargetIdentifierNumber = integer_to_binary(Counter),
-        DynamicTarget = #{'identifier' => <<"target",TargetIdentifierNumber/binary>>,
-          name => <<"targetname",TargetIdentifierNumber/binary>>,
-          anonymous => <<"">>
-        },
-        case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget) of
-          {ok,true} ->
-            F({TrueCounter + 1, FalseCounter + 0}, Counter);
-          {ok,false} ->
-            F({TrueCounter + 0, FalseCounter + 1}, Counter)
-        end
-    end,
   %% For low target counts, in this case 20, a split like this is expected.
-  ?assertEqual({12, 8}, DoVariation10Times({0, 0}, 0)),
+  ?assertEqual({12, 8}, do_variation_10_times({0, 0}, 0)),
 
-  %%-------------------- 100/0 True --------------------
+  %%-------------------- 100/0 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group_for_percentage_rollout();
                           (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
                         end),
+  ?assertEqual({20,0}, do_variation_10_times({0, 0}, 0)),
 
-  DoVariation10Times =
-    fun
-      F({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
-      F({TrueCounter, FalseCounter}, AccuIn) ->
-        Counter = AccuIn + 1,
-        TargetIdentifierNumber = integer_to_binary(Counter),
-        DynamicTarget = #{'identifier' => <<"target",TargetIdentifierNumber/binary>>,
-          name => <<"targetname",TargetIdentifierNumber/binary>>,
-          anonymous => <<"">>
-        },
-        case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget) of
-          {ok,true} ->
-            F({TrueCounter + 1, FalseCounter + 0}, Counter);
-          {ok,false} ->
-            F({TrueCounter + 0, FalseCounter + 1}, Counter)
-        end
-    end,
-  ?assertEqual({100,0}, DoVariation10Times({0, 0}, 0)).
+%%-------------------- 0/100 ------------------------------------------------------------
+  cfclient_cache_repository:set_pid(self()),
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+                          (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
+                        end),
+  ?assertEqual({0,20}, do_variation_10_times({0, 0}, 0)).
 
 
 do_variation_10_times({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
