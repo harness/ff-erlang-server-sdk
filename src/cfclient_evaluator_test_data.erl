@@ -7,7 +7,7 @@
   number_flag_no_targets_or_groups/0, number_flag_only_targets/0, number_flag_off/0, string_flag_target_and_groups/0,
   string_flag_no_targets_or_groups/0, string_flag_off/0, boolean_flag_single_target/0, boolean_flag_group_only/0,
   boolean_flag_no_targets_or_groups/0, boolean_flag_off/0, percentage_rollout_boolean_50_50/0, percentage_rollout_boolean_100_true/0,
-  percentage_rollout_boolean_100_false/0, flag_with_three_prerequisites/0, flag_with_one_prerequisite/0]).
+  percentage_rollout_boolean_100_false/0, flag_with_three_prerequisites/0, prerequisite_matches_flag_1/0, prerequisite_matches_flag_2/0, prerequisite_matches_flag_3/0]).
 
 boolean_flag_off() ->
   #{defaultServe => #{variation => <<"true">>},
@@ -50,6 +50,39 @@ boolean_flag_no_targets_or_groups() ->
       #{identifier => <<"false">>, name => <<"False">>,
         value => <<"false">>}],
     version => 4}.
+
+boolean_flag_no_targets_or_groups_with_prerequisites() ->
+  #{defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>, feature => <<"My_boolean_flag">>,
+    kind => <<"boolean">>, offVariation => <<"false">>,
+    prerequisites => [#{'ParentFeature' =>
+    <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
+      feature =>
+      <<"myprereqflag2">>,
+      variations =>
+      [<<"Football is cool">>]},
+      #{'ParentFeature' =>
+      <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
+        feature =>
+        <<"myprereqflag">>,
+        variations =>
+        [<<"Surfing is fun">>]},
+      #{'ParentFeature' =>
+      <<"asdfr3q4-asda34-4713-9530-1asdafd3459">>,
+        feature =>
+        <<"myprereqflag3">>,
+        variations =>
+        [<<"A cool string variation identifier3">>]}], project => <<"erlangsdktest">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations =>
+    [#{identifier => <<"true">>, name => <<"True">>,
+      value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>,
+        value => <<"false">>}],
+    version => 4}.
+
 
 boolean_flag_group_only() ->
   #{defaultServe => #{variation => <<"true">>},
@@ -641,7 +674,6 @@ percentage_rollout_boolean_100_false() ->
     version => 4}.
 
 flag_with_three_prerequisites() ->
-
   TwoPreReqs = #{defaultServe =>
   #{variation =>
   <<"true">>},
@@ -740,65 +772,95 @@ flag_with_three_prerequisites() ->
         <<"false">>}],
     version => 13}.
 
+prerequisite_matches_flag_1() ->
+  #{defaultServe =>
+  #{variation =>
+  <<"Surfing is boring">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"Surfing is fun">>}],
+    variations =>
+    [#{identifier =>
+    <<"Surfing is boring">>,
+      name => <<"Surfing boring">>,
+      value => <<"boring!">>},
+      #{identifier =>
+      <<"Surfing is fun">>,
+        name => <<"Surfing fun">>,
+        value =>
+        <<"fun!">>}],
+    version => 2}.
 
+prerequisite_matches_flag_2() ->
+  #{defaultServe =>
+  #{variation =>
+  <<"Football is boring">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag2">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"Football is cool">>}],
+    variations =>
+    [#{identifier =>
+    <<"Football is cool">>,
+      name => <<"Football cool">>,
+      value => <<"cool!!">>},
+      #{identifier =>
+      <<"Football is boring">>,
+        name => <<"Football boring">>,
+        value =>
+        <<"boring!">>}],
+    version => 2}.
 
-flag_with_one_prerequisite() ->
-  OnePreReq =
-    #{defaultServe =>
-    #{variation =>
-    <<"true">>},
-      environment => <<"dev">>,
-      feature =>
-      <<"myprereqflag2">>,
-      kind => <<"boolean">>,
-      offVariation => <<"false">>,
-      prerequisites =>
-      [#{'ParentFeature' =>
-      <<"1bab7f57-195c-4a3a-8157-1ede2d422130">>,
-        feature =>
-        <<"myprereqflag">>,
-        variations =>
-        [<<"true">>]}],
-      project =>
-      <<"erlangcustomrules">>,
-      rules => [],
-      state => <<"on">>,
-      variationToTargetMap =>
-      null,
-      variations =>
-      [#{identifier =>
-      <<"true">>,
-        name => <<"True">>,
-        value => <<"true">>},
-        #{identifier =>
-        <<"false">>,
-          name => <<"False">>,
-          value =>
-          <<"false">>}],
-      version => 2}.
-%%  Flag = #{defaultServe =>
-%%  #{variation =>
-%%  <<"true">>},
-%%    environment => <<"dev">>,
-%%    feature =>
-%%    <<"myprereqflag">>,
-%%    kind => <<"boolean">>,
-%%    offVariation => <<"false">>,
-%%    prerequisites => [],
-%%    project =>
-%%    <<"erlangcustomrules">>,
-%%    rules => [],
-%%    state => <<"on">>,
-%%    variationToTargetMap =>
-%%    null,
-%%    variations =>
-%%    [#{identifier =>
-%%    <<"true">>,
-%%      name => <<"True">>,
-%%      value => <<"true">>},
-%%      #{identifier =>
-%%      <<"false">>,
-%%        name => <<"False">>,
-%%        value =>
-%%        <<"false">>}],
-%%    version => 2}.
+prerequisite_matches_flag_3() ->
+  #{defaultServe =>
+  #{variation =>
+  <<"Some other boring variation identfier3">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag3">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"A cool string variation identifier3">>}],
+    variations =>
+    [#{identifier =>
+    <<"A cool string variation identifier3">>,
+      name => <<"A cool string variation name">>,
+      value => <<"very cool!!">>},
+      #{identifier =>
+      <<"Some other boring variation identfier3">>,
+        name => <<"very boring">>,
+        value =>
+        <<"very boring!!!!">>}],
+    version => 2}.

@@ -113,6 +113,12 @@ variations_test() ->
                         end),
   ?assertEqual({ok, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
+  %%%%%%%% Prerequisites match %%%%%%%%
+  meck:expect(lru, get, fun
+                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"flags/My_boolean_flag">>) ->
+                            cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
+                        end),
 
   %%-------------------- String Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
@@ -822,95 +828,11 @@ search_prerequisites_test() ->
         variations =>
         [<<"A cool string variation identifier3">>]}],
 
-  PrerequisiteMatchesFlag1 = #{defaultServe =>
-  #{variation =>
-  <<"Surfing is boring">>},
-    environment => <<"dev">>,
-    feature =>
-    <<"myprereqflag">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
-    prerequisites => [],
-    project =>
-    <<"erlangcustomrules">>,
-    rules => [],
-    state => <<"on">>,
-    variationToTargetMap =>
-    [#{targets =>
-    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
-      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
-      variation => <<"Surfing is fun">>}],
-    variations =>
-    [#{identifier =>
-    <<"Surfing is boring">>,
-      name => <<"Surfing boring">>,
-      value => <<"boring!">>},
-      #{identifier =>
-      <<"Surfing is fun">>,
-        name => <<"Surfing fun">>,
-        value =>
-        <<"fun!">>}],
-    version => 2},
+  PrerequisiteMatchesFlag1 = cfclient_evaluator_test_data:prerequisite_matches_flag_1(),
 
-  PrerequisiteMatchesFlag2 = #{defaultServe =>
-  #{variation =>
-  <<"Football is boring">>},
-    environment => <<"dev">>,
-    feature =>
-    <<"myprereqflag2">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
-    prerequisites => [],
-    project =>
-    <<"erlangcustomrules">>,
-    rules => [],
-    state => <<"on">>,
-    variationToTargetMap =>
-    [#{targets =>
-    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
-      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
-      variation => <<"Football is cool">>}],
-    variations =>
-    [#{identifier =>
-    <<"Football is cool">>,
-      name => <<"Football cool">>,
-      value => <<"cool!!">>},
-      #{identifier =>
-      <<"Football is boring">>,
-        name => <<"Football boring">>,
-        value =>
-        <<"boring!">>}],
-    version => 2},
+  PrerequisiteMatchesFlag2 = cfclient_evaluator_test_data:prerequisite_matches_flag_2(),
 
-  PrerequisiteMatchesFlag3 = #{defaultServe =>
-  #{variation =>
-  <<"Some other boring variation identfier3">>},
-    environment => <<"dev">>,
-    feature =>
-    <<"myprereqflag3">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
-    prerequisites => [],
-    project =>
-    <<"erlangcustomrules">>,
-    rules => [],
-    state => <<"on">>,
-    variationToTargetMap =>
-    [#{targets =>
-    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
-      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
-      variation => <<"A cool string variation identifier3">>}],
-    variations =>
-    [#{identifier =>
-    <<"A cool string variation identifier3">>,
-      name => <<"A cool string variation name">>,
-      value => <<"very cool!!">>},
-      #{identifier =>
-      <<"Some other boring variation identfier3">>,
-        name => <<"very boring">>,
-        value =>
-        <<"very boring!!!!">>}],
-    version => 2},
+  PrerequisiteMatchesFlag3 = cfclient_evaluator_test_data:prerequisite_matches_flag_3(),
 
   %% Mock calls to the cache to return the above three Prerequisite flags
   cfclient_cache_repository:set_pid(self()),
