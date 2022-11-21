@@ -7,7 +7,7 @@
   number_flag_no_targets_or_groups/0, number_flag_only_targets/0, number_flag_off/0, string_flag_target_and_groups/0,
   string_flag_no_targets_or_groups/0, string_flag_off/0, boolean_flag_single_target/0, boolean_flag_group_only/0,
   boolean_flag_no_targets_or_groups/0, boolean_flag_off/0, percentage_rollout_boolean_50_50/0, percentage_rollout_boolean_100_true/0,
-  percentage_rollout_boolean_100_false/0, flag_with_two_prerequisites/0, flag_with_one_prerequisite/0]).
+  percentage_rollout_boolean_100_false/0, flag_with_three_prerequisites/0, flag_with_one_prerequisite/0]).
 
 boolean_flag_off() ->
   #{defaultServe => #{variation => <<"true">>},
@@ -640,7 +640,7 @@ percentage_rollout_boolean_100_false() ->
         value => <<"false">>}],
     version => 4}.
 
-flag_with_two_prerequisites() ->
+flag_with_three_prerequisites() ->
 
   TwoPreReqs = #{defaultServe =>
   #{variation =>
@@ -655,13 +655,19 @@ flag_with_two_prerequisites() ->
       feature =>
       <<"myprereqflag2">>,
       variations =>
-      [<<"true">>]},
+      [<<"Football is cool">>]},
       #{'ParentFeature' =>
       <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
         feature =>
         <<"myprereqflag">>,
         variations =>
-        [<<"true">>]}],
+        [<<"Surfing is fun">>]},
+      #{'ParentFeature' =>
+      <<"asdfr3q4-asda34-4713-9530-1asdafd3459">>,
+        feature =>
+        <<"myprereqflag3">>,
+        variations =>
+        [<<"A cool string variation identifier3">>]}],
     project =>
     <<"erlangcustomrules">>,
     rules =>

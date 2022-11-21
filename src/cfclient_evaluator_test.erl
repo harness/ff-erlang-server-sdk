@@ -800,6 +800,204 @@ do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
       do_variation_20_times({TrueCounter + 0, FalseCounter + 1}, Counter)
   end.
 
+search_prerequisites_test() ->
+
+  Prerequisites =
+    [#{'ParentFeature' =>
+    <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
+      feature =>
+      <<"myprereqflag">>,
+      variations =>
+      [<<"Surfing is fun">>]},
+      #{'ParentFeature' =>
+      <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
+        feature =>
+        <<"myprereqflag2">>,
+        variations =>
+        [<<"Football is cool">>]},
+      #{'ParentFeature' =>
+      <<"asdfr3q4-asda34-4713-9530-1asdafd3459">>,
+        feature =>
+        <<"myprereqflag3">>,
+        variations =>
+        [<<"A cool string variation identifier3">>]}],
+
+  PrerequisiteMatchesFlag1 = #{defaultServe =>
+  #{variation =>
+  <<"Surfing is boring">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"Surfing is fun">>}],
+    variations =>
+    [#{identifier =>
+    <<"Surfing is boring">>,
+      name => <<"Surfing boring">>,
+      value => <<"boring!">>},
+      #{identifier =>
+      <<"Surfing is fun">>,
+        name => <<"Surfing fun">>,
+        value =>
+        <<"fun!">>}],
+    version => 2},
+
+  PrerequisiteMatchesFlag2 = #{defaultServe =>
+  #{variation =>
+  <<"Football is boring">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag2">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"Football is cool">>}],
+    variations =>
+    [#{identifier =>
+    <<"Football is cool">>,
+      name => <<"Football cool">>,
+      value => <<"cool!!">>},
+      #{identifier =>
+      <<"Football is boring">>,
+        name => <<"Football boring">>,
+        value =>
+        <<"boring!">>}],
+    version => 2},
+
+  PrerequisiteMatchesFlag3 = #{defaultServe =>
+  #{variation =>
+  <<"Some other boring variation identfier3">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag3">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"A cool string variation identifier3">>}],
+    variations =>
+    [#{identifier =>
+    <<"A cool string variation identifier3">>,
+      name => <<"A cool string variation name">>,
+      value => <<"very cool!!">>},
+      #{identifier =>
+      <<"Some other boring variation identfier3">>,
+        name => <<"very boring">>,
+        value =>
+        <<"very boring!!!!">>}],
+    version => 2},
+
+  %% Mock calls to the cache to return the above three Prerequisite flags
+  cfclient_cache_repository:set_pid(self()),
+  meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag3]),
+
+  %%-------------------- All Prerequisites Match ------------------------------------------------------------
+  Target1 = #{'identifier' => <<"target_identifier_1">>,
+    name => <<"target_1">>,
+    anonymous => <<"">>
+  },
+  ?assertEqual(true, cfclient_evaluator:search_prerequisites(Prerequisites, Target1)),
+
+  %%-------------------- Two out of three Prerequisites Match ------------------------------------------------------------
+  %% Same flag data but with a target rule that doesn't include our sample Target1
+  PrerequisiteMatchesFlag4 = #{defaultServe =>
+  #{variation =>
+  <<"Some other boring variation identfier3">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag3">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_99999999">>, name => <<"target_99999999">>},
+      #{identifier => <<"target_identifier_685678578578">>, name => <<"target_56754676547">>}],
+      variation => <<"A cool string variation identifier3">>}],
+    variations =>
+    [#{identifier =>
+    <<"A cool string variation identifier3">>,
+      name => <<"A cool string variation name">>,
+      value => <<"very cool!!">>},
+      #{identifier =>
+      <<"Some other boring variation identfier3">>,
+        name => <<"very boring">>,
+        value =>
+        <<"very boring!!!!">>}],
+    version => 2},
+  meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag4]),
+  ?assertEqual(false, cfclient_evaluator:search_prerequisites(Prerequisites, Target1)),
+
+  %%-------------------- One out of three Prerequisites Match ------------------------------------------------------------
+  PrerequisiteMatchesFlag5 = #{defaultServe =>
+  #{variation =>
+  <<"Some other boring variation identfier3">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag2">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_000000">>, name => <<"00000">>},
+      #{identifier => <<"1111111">>, name => <<"111111111">>}],
+      variation => <<"A cool string variation identifier3">>}],
+    variations =>
+    [#{identifier =>
+    <<"A cool string variation identifier3">>,
+      name => <<"A cool string variation name">>,
+      value => <<"very cool!!">>},
+      #{identifier =>
+      <<"Some other boring variation identfier3">>,
+        name => <<"very boring">>,
+        value =>
+        <<"very boring!!!!">>}],
+    version => 2},
+  meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag5, PrerequisiteMatchesFlag4]),
+  ?assertEqual(false, cfclient_evaluator:search_prerequisites(Prerequisites, Target1)),
+
+  %%-------------------- No Prerequisites Match ------------------------------------------------------------
+  Target2 = #{'identifier' => <<"I_don't_exist_anywhere">>,
+    name => <<"123">>,
+    anonymous => <<"">>
+  },
+  meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag3]),
+  ?assertEqual(false, cfclient_evaluator:search_prerequisites(Prerequisites, Target2)),
+  meck:unload().
 
 check_prerequisite_test() ->
   PrerequisiteFlag = #{defaultServe =>
