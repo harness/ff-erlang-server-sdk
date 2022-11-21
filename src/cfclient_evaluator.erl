@@ -377,8 +377,8 @@ search_prerequisites([Head | Tail], Target) ->
 search_prerequisites([], _) -> true.
 
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
-  %% Start the evaluation at target rules
-  case evaluate_flag(PrerequisiteFlag, Target, target_rules) of
+  %% Start the evaluation
+  case evaluate_flag(PrerequisiteFlag, Target, off) of
     {ok, VariationIdentifier, _VariationValue} ->
       logger:debug("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteFlagIdentifier, VariationIdentifier, Target]),
       PrerequisiteVariations = maps:get(variations, Prerequisite),

@@ -807,7 +807,6 @@ do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
   end.
 
 search_prerequisites_test() ->
-
   Prerequisites =
     [#{'ParentFeature' =>
     <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
