@@ -52,10 +52,8 @@ evaluate_flag(Flag, Target, prerequisites) ->
         %% Prerequisites not met so return off variation
         false ->
           get_default_off_variation(Flag, maps:get(offVariation, Flag))
-      end,
-      asd
-  end,
-  asd;
+      end
+  end;
 %% Evaluate for target rules
 evaluate_flag(Flag, Target, target_rules) ->
   logger:debug("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
