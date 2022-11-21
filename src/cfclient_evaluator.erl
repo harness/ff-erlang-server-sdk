@@ -12,7 +12,7 @@
 #{identifier := binary(),
 name := binary(),
 anonymous => boolean(),
-attributes := #{atom() := any()}
+attributes := #{atom() := binary() | atom() | list()}
 }.
 
 -spec evaluate(FlagIdentifier :: binary(), Target :: target()) -> {ok, binary()} | not_ok.
