@@ -71,56 +71,60 @@ variations_test() ->
 
   %%-------------------- Bool Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
-  meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off() end),
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) ->
+    cfclient_evaluator_test_data:boolean_flag_off() end),
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
-  meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_single_target() end),
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) ->
+    cfclient_evaluator_test_data:boolean_flag_single_target() end),
   %% Target found
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
 
   %%%%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_group_only()
+                          (CacheName, <<"flags/My_boolean_flag">>) ->
+                            cfclient_evaluator_test_data:boolean_flag_group_only()
                         end),
 
   %% Target excluded
-  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
   %% Target included
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
 
   %% Target included by custom rules
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesIn)),
-  ?assertEqual({ok,false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEndsWith)),
-
-
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEndsWith)),
 
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
+                          (CacheName, <<"flags/My_boolean_flag">>) ->
+                            cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
 
   %%-------------------- String Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
-  meck:expect(lru, get, fun(CacheName, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_off() end),
-  ?assertEqual({ok,"don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_string_flag">>) ->
+    cfclient_evaluator_test_data:string_flag_off() end),
+  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_target_and_groups()
+                          (CacheName, <<"flags/My_string_flag">>) ->
+                            cfclient_evaluator_test_data:string_flag_target_and_groups()
                         end),  %% Target found
   ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
   %% Target not found
@@ -145,19 +149,22 @@ variations_test() ->
   %% Default on variation
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_no_targets_or_groups()
+                          (CacheName, <<"flags/My_string_flag">>) ->
+                            cfclient_evaluator_test_data:string_flag_no_targets_or_groups()
                         end),
   ?assertEqual({ok, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
 
   %%-------------------- Number Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
-  meck:expect(lru, get, fun(CacheName, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_off() end),
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_cool_number_flag">>) ->
+    cfclient_evaluator_test_data:number_flag_off() end),
   ?assertEqual({ok, 0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_only_targets()
+                          (CacheName, <<"flags/My_cool_number_flag">>) ->
+                            cfclient_evaluator_test_data:number_flag_only_targets()
                         end),
   %% Target found
   ?assertEqual({ok, 0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
@@ -167,7 +174,8 @@ variations_test() ->
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_only_groups()
+                          (CacheName, <<"flags/My_cool_number_flag">>) ->
+                            cfclient_evaluator_test_data:number_flag_only_groups()
                         end),
   %% Target excluded
   ?assertEqual({ok, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetExcludedFromGroup)),
@@ -186,7 +194,8 @@ variations_test() ->
   %% Default on variation
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_no_targets_or_groups()
+                          (CacheName, <<"flags/My_cool_number_flag">>) ->
+                            cfclient_evaluator_test_data:number_flag_no_targets_or_groups()
                         end),
   ?assertEqual({ok, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
 
@@ -227,7 +236,8 @@ variations_test() ->
   %% Default on variation
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_no_targets_or_groups()
+                          (CacheName, <<"flags/My_JSON_flag">>) ->
+                            cfclient_evaluator_test_data:json_flag_no_targets_or_groups()
                         end),
   ?assertEqual({ok, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
 
@@ -478,19 +488,19 @@ is_rule_included_or_excluded_test() ->
     rules =>
     [#{attribute => <<"location">>,
       id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
-      negate => false,op => <<"ends_with">>,
+      negate => false, op => <<"ends_with">>,
       values => [<<"1">>]},
       #{attribute => <<"identifier">>,
         id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
-        negate => false,op => <<"ends_with">>,
+        negate => false, op => <<"ends_with">>,
         values => [<<"2">>]},
       #{attribute => <<"ab_testing">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false,op => <<"ends_with">>,
+        negate => false, op => <<"ends_with">>,
         values => [<<"focus_group">>]},
       #{attribute => <<"beta">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false,op => <<"in">>,
+        negate => false, op => <<"in">>,
         values => [<<"target_999">>, <<"target_1000">>]}],
     version => 10},
 
@@ -525,23 +535,23 @@ search_group_custom_rule_test() ->
   Rules =
     [#{attribute => <<"identifier">>,
       id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
-      negate => false,op => <<"equal">>,
+      negate => false, op => <<"equal">>,
       values => [<<"target_1">>]},
       #{attribute => <<"preference">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false,op => <<"equal">>,
+        negate => false, op => <<"equal">>,
         values => [<<"marketing">>]},
       #{attribute => <<"identifier">>,
         id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
-        negate => false,op => <<"ends_with">>,
+        negate => false, op => <<"ends_with">>,
         values => [<<"2">>]},
       #{attribute => <<"name">>,
         id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
-        negate => false,op => <<"equal">>,
+        negate => false, op => <<"equal">>,
         values => [<<"target_name_1">>]},
       #{attribute => <<"location">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false,op => <<"equal">>,
+        negate => false, op => <<"equal">>,
         values => [<<"emea">>]}],
 
   %%-------------------- Match --------------------
@@ -746,8 +756,10 @@ percentage_rollout_test() ->
   %%-------------------- 50/50 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group_for_percentage_rollout();
-                          (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
+                          (CacheName, <<"segments/target_group_1">>) ->
+                            cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+                          (CacheName, <<"flags/My_boolean_flag">>) ->
+                            cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
                         end),
 
   %% For low target counts, in this case 20, a split like this is expected.
@@ -756,37 +768,40 @@ percentage_rollout_test() ->
   %%-------------------- 100/0 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group_for_percentage_rollout();
-                          (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
+                          (CacheName, <<"segments/target_group_1">>) ->
+                            cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+                          (CacheName, <<"flags/My_boolean_flag">>) ->
+                            cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
                         end),
-  ?assertEqual({20,0}, do_variation_20_times({0, 0}, 0)),
+  ?assertEqual({20, 0}, do_variation_20_times({0, 0}, 0)),
 
 %%-------------------- 0/100 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group_for_percentage_rollout();
-                          (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
+                          (CacheName, <<"segments/target_group_1">>) ->
+                            cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+                          (CacheName, <<"flags/My_boolean_flag">>) ->
+                            cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
                         end),
-  ?assertEqual({0,20}, do_variation_20_times({0, 0}, 0)).
+  ?assertEqual({0, 20}, do_variation_20_times({0, 0}, 0)).
 
 do_variation_20_times({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
 do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
   Counter = AccuIn + 1,
   TargetIdentifierNumber = integer_to_binary(Counter),
-  DynamicTarget = #{'identifier' => <<"target",TargetIdentifierNumber/binary>>,
-    name => <<"targetname",TargetIdentifierNumber/binary>>,
+  DynamicTarget = #{'identifier' => <<"target", TargetIdentifierNumber/binary>>,
+    name => <<"targetname", TargetIdentifierNumber/binary>>,
     anonymous => <<"">>
   },
   case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget) of
-    {ok,true} ->
+    {ok, true} ->
       do_variation_20_times({TrueCounter + 1, FalseCounter + 0}, Counter);
-    {ok,false} ->
+    {ok, false} ->
       do_variation_20_times({TrueCounter + 0, FalseCounter + 1}, Counter)
   end.
 
 
 check_prerequisite_test() ->
-
   PrerequisiteFlag = #{defaultServe =>
   #{variation =>
   <<"true">>},
@@ -804,17 +819,17 @@ check_prerequisite_test() ->
     [#{targets =>
     [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
       #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
-      variation => <<"false">>}],
+      variation => <<"A cool string identifier">>}],
     variations =>
     [#{identifier =>
     <<"true">>,
       name => <<"True">>,
       value => <<"true">>},
       #{identifier =>
-      <<"false">>,
+      <<"A cool string identifier">>,
         name => <<"False">>,
         value =>
-        <<"false">>}],
+        <<"A cool string value">>}],
     version => 2},
 
   PrerequisiteFlagIdentifier = maps:get(feature, PrerequisiteFlag),
@@ -823,14 +838,19 @@ check_prerequisite_test() ->
     feature =>
     <<"myprereqflag">>,
     variations =>
-    [<<"false">>]},
+    [<<"A cool string identifier">>]},
 
 
+  %% Prerequisite matched
   Target1 = #{'identifier' => <<"target_identifier_1">>,
     name => <<"target_1">>,
     anonymous => <<"">>
   },
+  ?assertEqual(true, cfclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target1)),
 
-
-
-  ?assertEqual(true, cfclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target1 )).
+  %% Prerequisite did not match
+  Target2 = #{'identifier' => <<"target_identifier_3">>,
+    name => <<"target_3">>,
+    anonymous => <<"">>
+  },
+  ?assertEqual(false, cfclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target2)).

@@ -24,7 +24,7 @@ evaluate(FlagIdentifier, Target) ->
       not_ok;
     Flag ->
       case evaluate_flag(Flag, Target, off) of
-        {ok, VariationIdentifier, VariationValue} ->
+        {ok, _VariationIdentifier, VariationValue} ->
           {ok, VariationValue};
         not_ok ->
           not_ok
