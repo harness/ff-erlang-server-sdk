@@ -769,6 +769,8 @@ percentage_rollout_test() ->
                         end),
   ?assertEqual({0,20}, do_variation_20_times({0, 0}, 0)).
 
+evaluate_prerequisites_test() ->
+  asd.
 
 do_variation_20_times({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
 do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->

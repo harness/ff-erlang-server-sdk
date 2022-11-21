@@ -33,13 +33,29 @@ evaluate_flag(Flag, Target, off) ->
   case State of
     <<"off">> ->
       logger:debug("Flag ~p~n is turned off. Returning default 'off' variation", [maps:get(feature, Flag)]),
-      OffVariationIdentifier = maps:get(offVariation, Flag),
-      get_default_off_variation(Flag, OffVariationIdentifier);
+      get_default_off_variation(Flag, maps:get(offVariation, Flag));
     <<"on">> ->
       logger:debug("Flag ~p~n is turned on", [maps:get(feature, Flag)]),
       %% Start the evaluation.
-      evaluate_flag(Flag, Target, target_rules)
+      evaluate_flag(Flag, Target, prerequisites)
   end;
+evaluate_flag(Flag, Target, prerequisites) ->
+  case maps:get(prerequisites, Flag, []) of
+    %% If no prerequisites to evaluate, go straight to target rules
+    [] ->
+      evaluate_flag(Flag, Target, target_rules);
+    Prerequisites ->
+      case search_prerequisites(Prerequisites, Target) of
+        %% Prerequisites met so we can continue evaluating
+        true ->
+          asd;
+        %% Prerequisites not met so return off variation
+        false ->
+          get_default_off_variation(Flag, maps:get(offVariation, Flag))
+      end,
+      asd
+  end,
+  asd;
 %% Evaluate for target rules
 evaluate_flag(Flag, Target, target_rules) ->
   logger:debug("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
@@ -332,6 +348,47 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
   Hash = erlang_murmurhash:murmurhash3_32(<<TargetValue/binary,":",BucketBy/binary>>),
   BucketID = (Hash rem 100) +1,
   (Percentage > 0) andalso (BucketID =< Percentage).
+
+-spec search_prerequisites(Prerequisites :: list(), Target :: binary()) -> boolean().
+search_prerequisites([Head | Tail], Target) ->
+  %% 1. Iterate over prerequisites
+  %% 2. Get flag for current prereq from cache
+  %% 3. Evaluate flag passing the prereq in as the flag argument
+  %% 4. Once evaluated, check if variation matches the Flag's prerequisite variation
+  %% 5. If it does, then call function with tail to continue iterating, if not return off variation.
+  %% 6. Only continue evaluating to target rules if all prerequisites are met.
+  PrerequisiteIdentifier = maps:get(feature, Head),
+  CachePid = cfclient_cache_repository:get_pid(),
+  %% Get the prerequisite flag from the cache so we can evaluate it
+  case cfclient_cache_repository:get_from_cache({flag, PrerequisiteIdentifier}, CachePid) of
+    undefined ->
+      logger:error("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [PrerequisiteIdentifier]),
+      false;
+    PrerequisiteFlag ->
+      case check_prerequisite(PrerequisiteFlag, Target, PrerequisiteIdentifier, Head) of
+        %% A prerequisite has been met, so continue to check any others
+        true ->
+          search_prerequisites(Tail, Target);
+        %% We return false if prerequisites are not met
+        false ->
+          false
+      end
+  end;
+%% This function is only called with a non-empty list, so we can safely return true as if we've gotten here
+%% it means all previous prerequisites have been true.
+search_prerequisites([], _) -> true.
+
+check_prerequisite(PrerequisiteFlag, Target, PrerequisiteIdentifier, Head) ->
+  %% Start the evaluation at target rules
+  case evaluate_flag(PrerequisiteFlag, Target, target_rules) of
+    {ok, Variation} ->
+      logger:debug("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteIdentifier, Variation, Target]),
+      PrerequisiteVariations = maps:get(variations, Head),
+      logger:debug("Prerequisite Flag ~p~n should have the variations ~p~n", [PrerequisiteIdentifier, PrerequisiteVariations]),
+      lists:member(Variation, PrerequisiteVariations);
+    not_ok ->
+      logger:error("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n", [PrerequisiteIdentifier])
+  end.
 
 -spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->

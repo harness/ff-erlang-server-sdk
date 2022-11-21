@@ -7,7 +7,7 @@
   number_flag_no_targets_or_groups/0, number_flag_only_targets/0, number_flag_off/0, string_flag_target_and_groups/0,
   string_flag_no_targets_or_groups/0, string_flag_off/0, boolean_flag_single_target/0, boolean_flag_group_only/0,
   boolean_flag_no_targets_or_groups/0, boolean_flag_off/0, percentage_rollout_boolean_50_50/0, percentage_rollout_boolean_100_true/0,
-  percentage_rollout_boolean_100_false/0]).
+  percentage_rollout_boolean_100_false/0, flag_with_two_prerequisites/0]).
 
 boolean_flag_off() ->
   #{defaultServe => #{variation => <<"true">>},
@@ -639,3 +639,160 @@ percentage_rollout_boolean_100_false() ->
       #{identifier => <<"false">>, name => <<"False">>,
         value => <<"false">>}],
     version => 4}.
+
+flag_with_two_prerequisites() ->
+
+  TwoPreReqs = #{defaultServe =>
+  #{variation =>
+  <<"true">>},
+    environment => <<"dev">>,
+    feature => <<"test">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites =>
+    [#{'ParentFeature' =>
+    <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
+      feature =>
+      <<"myprereqflag2">>,
+      variations =>
+      [<<"true">>]},
+      #{'ParentFeature' =>
+      <<"5bf20b0d-2dfe-4713-9530-1fb345c3efb9">>,
+        feature =>
+        <<"myprereqflag">>,
+        variations =>
+        [<<"true">>]}],
+    project =>
+    <<"erlangcustomrules">>,
+    rules =>
+    [#{clauses =>
+    [#{attribute =>
+    <<>>,
+      id =>
+      <<"ab366b87-e194-44f3-8790-97c2058193db">>,
+      negate =>
+      false,
+      op =>
+      <<"segmentMatch">>,
+      values =>
+      [<<"group1">>]}],
+      priority => 0,
+      ruleId =>
+      <<"12410622-e1d1-46c9-acb3-e177c9dd4575">>,
+      serve =>
+      #{distribution =>
+      #{bucketBy =>
+      <<"identifier">>,
+        variations =>
+        [#{variation =>
+        <<"true">>,
+          weight =>
+          50},
+          #{variation =>
+          <<"false">>,
+            weight =>
+            50}]}}},
+      #{clauses =>
+      [#{attribute =>
+      <<>>,
+        id =>
+        <<"c693c5ef-69eb-4309-91b2-9c0c10d69cae">>,
+        negate =>
+        false,
+        op =>
+        <<"segmentMatch">>,
+        values =>
+        [<<"group2">>]}],
+        priority => 2,
+        ruleId =>
+        <<"c70ac397-081e-4774-adef-570573b5c350">>,
+        serve =>
+        #{distribution =>
+        #{bucketBy =>
+        <<"identifier">>,
+          variations =>
+          [#{variation =>
+          <<"true">>,
+            weight =>
+            1},
+            #{variation =>
+            <<"false">>,
+              weight =>
+              99}]}}}],
+    state => <<"on">>,
+    variationToTargetMap =>
+    null,
+    variations =>
+    [#{identifier =>
+    <<"true">>,
+      name => <<"True">>,
+      value => <<"true">>},
+      #{identifier =>
+      <<"false">>,
+        name => <<"False">>,
+        value =>
+        <<"false">>}],
+    version => 13}.
+
+
+
+flag_with_one_prerequisite() ->
+  OnePreReq =
+    #{defaultServe =>
+    #{variation =>
+    <<"true">>},
+      environment => <<"dev">>,
+      feature =>
+      <<"myprereqflag2">>,
+      kind => <<"boolean">>,
+      offVariation => <<"false">>,
+      prerequisites =>
+      [#{'ParentFeature' =>
+      <<"1bab7f57-195c-4a3a-8157-1ede2d422130">>,
+        feature =>
+        <<"myprereqflag">>,
+        variations =>
+        [<<"true">>]}],
+      project =>
+      <<"erlangcustomrules">>,
+      rules => [],
+      state => <<"on">>,
+      variationToTargetMap =>
+      null,
+      variations =>
+      [#{identifier =>
+      <<"true">>,
+        name => <<"True">>,
+        value => <<"true">>},
+        #{identifier =>
+        <<"false">>,
+          name => <<"False">>,
+          value =>
+          <<"false">>}],
+      version => 2}.
+%%  Flag = #{defaultServe =>
+%%  #{variation =>
+%%  <<"true">>},
+%%    environment => <<"dev">>,
+%%    feature =>
+%%    <<"myprereqflag">>,
+%%    kind => <<"boolean">>,
+%%    offVariation => <<"false">>,
+%%    prerequisites => [],
+%%    project =>
+%%    <<"erlangcustomrules">>,
+%%    rules => [],
+%%    state => <<"on">>,
+%%    variationToTargetMap =>
+%%    null,
+%%    variations =>
+%%    [#{identifier =>
+%%    <<"true">>,
+%%      name => <<"True">>,
+%%      value => <<"true">>},
+%%      #{identifier =>
+%%      <<"false">>,
+%%        name => <<"False">>,
+%%        value =>
+%%        <<"false">>}],
+%%    version => 2}.
