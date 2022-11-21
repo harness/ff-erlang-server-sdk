@@ -769,9 +769,6 @@ percentage_rollout_test() ->
                         end),
   ?assertEqual({0,20}, do_variation_20_times({0, 0}, 0)).
 
-evaluate_prerequisites_test() ->
-  asd.
-
 do_variation_20_times({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
 do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
   Counter = AccuIn + 1,
@@ -788,3 +785,52 @@ do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
   end.
 
 
+check_prerequisite_test() ->
+
+  PrerequisiteFlag = #{defaultServe =>
+  #{variation =>
+  <<"true">>},
+    environment => <<"dev">>,
+    feature =>
+    <<"myprereqflag">>,
+    kind => <<"boolean">>,
+    offVariation => <<"false">>,
+    prerequisites => [],
+    project =>
+    <<"erlangcustomrules">>,
+    rules => [],
+    state => <<"on">>,
+    variationToTargetMap =>
+    [#{targets =>
+    [#{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+      #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}],
+      variation => <<"false">>}],
+    variations =>
+    [#{identifier =>
+    <<"true">>,
+      name => <<"True">>,
+      value => <<"true">>},
+      #{identifier =>
+      <<"false">>,
+        name => <<"False">>,
+        value =>
+        <<"false">>}],
+    version => 2},
+
+  PrerequisiteFlagIdentifier = maps:get(feature, PrerequisiteFlag),
+  Prerequisite = #{'ParentFeature' =>
+  <<"1bab7f57-195c-4a3a-8157-1ede2d422130">>,
+    feature =>
+    <<"myprereqflag">>,
+    variations =>
+    [<<"false">>]},
+
+
+  Target1 = #{'identifier' => <<"target_identifier_1">>,
+    name => <<"target_1">>,
+    anonymous => <<"">>
+  },
+
+
+
+  ?assertEqual(true, cfclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target1 )).

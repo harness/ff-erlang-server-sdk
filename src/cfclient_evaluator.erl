@@ -349,21 +349,15 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
 
 -spec search_prerequisites(Prerequisites :: list(), Target :: binary()) -> boolean().
 search_prerequisites([Head | Tail], Target) ->
-  %% 1. Iterate over prerequisites
-  %% 2. Get flag for current prereq from cache
-  %% 3. Evaluate flag passing the prereq in as the flag argument
-  %% 4. Once evaluated, check if variation matches the Flag's prerequisite variation
-  %% 5. If it does, then call function with tail to continue iterating, if not return off variation.
-  %% 6. Only continue evaluating to target rules if all prerequisites are met.
-  PrerequisiteIdentifier = maps:get(feature, Head),
+  PrerequisiteFlagIdentifier = maps:get(feature, Head),
   CachePid = cfclient_cache_repository:get_pid(),
   %% Get the prerequisite flag from the cache so we can evaluate it
-  case cfclient_cache_repository:get_from_cache({flag, PrerequisiteIdentifier}, CachePid) of
+  case cfclient_cache_repository:get_from_cache({flag, PrerequisiteFlagIdentifier}, CachePid) of
     undefined ->
-      logger:error("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [PrerequisiteIdentifier]),
+      logger:error("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [PrerequisiteFlagIdentifier]),
       false;
     PrerequisiteFlag ->
-      case check_prerequisite(PrerequisiteFlag, Target, PrerequisiteIdentifier, Head) of
+      case check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Head, Target) of
         %% A prerequisite has been met, so continue to check any others
         true ->
           search_prerequisites(Tail, Target);
@@ -376,16 +370,16 @@ search_prerequisites([Head | Tail], Target) ->
 %% it means all previous prerequisites have been true.
 search_prerequisites([], _) -> true.
 
-check_prerequisite(PrerequisiteFlag, Target, PrerequisiteIdentifier, Head) ->
+check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   %% Start the evaluation at target rules
   case evaluate_flag(PrerequisiteFlag, Target, target_rules) of
     {ok, Variation} ->
-      logger:debug("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteIdentifier, Variation, Target]),
-      PrerequisiteVariations = maps:get(variations, Head),
-      logger:debug("Prerequisite Flag ~p~n should have the variations ~p~n", [PrerequisiteIdentifier, PrerequisiteVariations]),
+      logger:debug("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteFlagIdentifier, Variation, Target]),
+      PrerequisiteVariations = maps:get(variations, Prerequisite),
+      logger:debug("Prerequisite Flag ~p~n should have the variations ~p~n", [PrerequisiteFlagIdentifier, PrerequisiteVariations]),
       lists:member(Variation, PrerequisiteVariations);
     not_ok ->
-      logger:error("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n", [PrerequisiteIdentifier])
+      logger:error("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n", [PrerequisiteFlagIdentifier])
   end.
 
 -spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
