@@ -23,7 +23,12 @@ evaluate(FlagIdentifier, Target) ->
       logger:error("Flag not found in cache: ~p~n", [FlagIdentifier]),
       not_ok;
     Flag ->
-      evaluate_flag(Flag, Target, off)
+      case evaluate_flag(Flag, Target, off) of
+        {ok, VariationIdentifier, VariationValue} ->
+          {ok, VariationValue};
+        not_ok ->
+          not_ok
+      end
   end.
 
 -spec evaluate_flag(Flag :: binary(), Target :: target(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
@@ -64,6 +69,7 @@ evaluate_flag(Flag, Target, target_rules) ->
       evaluate_flag(Flag, Target, group_rules);
     TargetVariationIdentifier ->
       logger:debug("Target rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      %% Return both variation identifier and not just the value, because prerequisites compares on variation identifier
       get_target_or_group_variation(Flag, TargetVariationIdentifier)
   end;
 %% Evaluate for group rules
@@ -87,7 +93,7 @@ evaluate_flag(Flag, Target, default_on) ->
   DefaultServeIdentifier = maps:get(variation, DefaultServe),
   case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
     #{} = DefaultVariation ->
-      {ok, maps:get(value, DefaultVariation)};
+      {ok, DefaultServeIdentifier, maps:get(value, DefaultVariation)};
     not_found ->
       logger:error("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [maps:get(feature, Flag), DefaultServeIdentifier]),
       not_ok
@@ -96,7 +102,7 @@ evaluate_flag(Flag, Target, default_on) ->
 get_default_off_variation(Flag, OffVariationIdentifier) ->
   case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
     #{} = OffVariation ->
-      {ok, maps:get(value, OffVariation)};
+      {ok, OffVariationIdentifier, maps:get(value, OffVariation)};
     not_found ->
       logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
       not_ok
@@ -105,7 +111,7 @@ get_default_off_variation(Flag, OffVariationIdentifier) ->
 get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
   case get_variation(maps:get(variations, Flag), TargetVariationIdentifier) of
     #{} = Variation ->
-      {ok, maps:get(value, Variation)};
+      {ok, TargetVariationIdentifier, maps:get(value, Variation)};
     not_found ->
       logger:error("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ", [maps:get(feature, Flag), TargetVariationIdentifier]),
       not_ok
@@ -373,11 +379,11 @@ search_prerequisites([], _) -> true.
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   %% Start the evaluation at target rules
   case evaluate_flag(PrerequisiteFlag, Target, target_rules) of
-    {ok, Variation} ->
-      logger:debug("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteFlagIdentifier, Variation, Target]),
+    {ok, VariationIdentifier, _VariationValue} ->
+      logger:debug("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteFlagIdentifier, VariationIdentifier, Target]),
       PrerequisiteVariations = maps:get(variations, Prerequisite),
       logger:debug("Prerequisite Flag ~p~n should have the variations ~p~n", [PrerequisiteFlagIdentifier, PrerequisiteVariations]),
-      lists:member(Variation, PrerequisiteVariations);
+      lists:member(VariationIdentifier, PrerequisiteVariations);
     not_ok ->
       logger:error("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n", [PrerequisiteFlagIdentifier])
   end.
