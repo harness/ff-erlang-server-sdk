@@ -81,7 +81,7 @@ variations_test() ->
   %% Target found
   ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
+  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
 
   %%%%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
@@ -91,7 +91,7 @@ variations_test() ->
                         end),
 
   %% Target excluded
-  ?assertEqual({ok, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
   %% Target included
   ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
@@ -111,14 +111,7 @@ variations_test() ->
                           (CacheName, <<"flags/My_boolean_flag">>) ->
                             cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
-
-  %%%%%%%% Prerequisites match %%%%%%%%
-  meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_boolean_flag">>) ->
-                            cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
-                        end),
+  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
   %%-------------------- String Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
@@ -410,7 +403,7 @@ search_targets_test() ->
 is_rule_included_or_excluded_test() ->
   Clauses = [#{attribute => <<>>,
     id => <<"48b71de2-bf37-472a-ad53-b6f3cad8094e">>,
-    negate => false, op => <<"segmentMatch">>,
+    negate => false,op => <<"segmentMatch">>,
     values => [<<"target_group_1">>]}],
 
   %% Target Sample Data
@@ -494,19 +487,19 @@ is_rule_included_or_excluded_test() ->
     rules =>
     [#{attribute => <<"location">>,
       id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
-      negate => false, op => <<"ends_with">>,
+      negate => false,op => <<"ends_with">>,
       values => [<<"1">>]},
       #{attribute => <<"identifier">>,
         id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
-        negate => false, op => <<"ends_with">>,
+        negate => false,op => <<"ends_with">>,
         values => [<<"2">>]},
       #{attribute => <<"ab_testing">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false, op => <<"ends_with">>,
+        negate => false,op => <<"ends_with">>,
         values => [<<"focus_group">>]},
       #{attribute => <<"beta">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false, op => <<"in">>,
+        negate => false,op => <<"in">>,
         values => [<<"target_999">>, <<"target_1000">>]}],
     version => 10},
 
@@ -541,23 +534,23 @@ search_group_custom_rule_test() ->
   Rules =
     [#{attribute => <<"identifier">>,
       id => <<"493945ee-b37b-466d-900e-846a24c93bec">>,
-      negate => false, op => <<"equal">>,
+      negate => false,op => <<"equal">>,
       values => [<<"target_1">>]},
       #{attribute => <<"preference">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false, op => <<"equal">>,
+        negate => false,op => <<"equal">>,
         values => [<<"marketing">>]},
       #{attribute => <<"identifier">>,
         id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
-        negate => false, op => <<"ends_with">>,
+        negate => false,op => <<"ends_with">>,
         values => [<<"2">>]},
       #{attribute => <<"name">>,
         id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
-        negate => false, op => <<"equal">>,
+        negate => false,op => <<"equal">>,
         values => [<<"target_name_1">>]},
       #{attribute => <<"location">>,
         id => <<"06bcb37b-111b-41c2-805a-d232e5e3dd11">>,
-        negate => false, op => <<"equal">>,
+        negate => false,op => <<"equal">>,
         values => [<<"emea">>]}],
 
   %%-------------------- Match --------------------
@@ -800,7 +793,7 @@ do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
     anonymous => <<"">>
   },
   case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget) of
-    {ok, true} ->
+    {ok,true} ->
       do_variation_20_times({TrueCounter + 1, FalseCounter + 0}, Counter);
     {ok, false} ->
       do_variation_20_times({TrueCounter + 0, FalseCounter + 1}, Counter)
