@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.3.0] - 2022-11-22
+
+### Features
+Additional Evaluation Rules supported:
+- Prerequisites
+
+### Known Issues
+- Metrics Processing not yet complete.
+- Event stream not yet complete.
+
 ## [0.2.0] - 2022-11-18
 
 ### Features
