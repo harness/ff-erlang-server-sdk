@@ -57,10 +57,12 @@ The following is a complete code example that you can use to test the `harnessap
 
 ```Erlang
 -module(getting_started).
+%% API
 -export([start/0]).
 
 start() ->
-  case cfclient:start("SDK KEY") of
+  logger:set_primary_config(level, info),
+  case cfclient:start("YOUR_SDK_KEY") of
     ok ->
       logger:info("Erlang SDK Successfuly Started"),
       get_flag_loop();
@@ -77,7 +79,7 @@ get_flag_loop() ->
   },
   FlagIdentifier = "harnessappdemodarkmode",
   Result = cfclient:bool_variation(FlagIdentifier, Target, false),
-  io:format("Varaion for Flag ~p witih Target ~p is: ~p", [FlagIdentifier, maps:get(identifier, Target), Result]),
+  logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
   timer:sleep(10000),
   get_flag_loop().
 ```
