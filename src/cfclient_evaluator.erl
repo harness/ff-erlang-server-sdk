@@ -53,6 +53,7 @@ evaluate_flag(Flag, Target, prerequisites) ->
       case search_prerequisites(Prerequisites, Target) of
         %% Prerequisites met so we can continue evaluating
         true ->
+          logger:debug("All prerequisites met for Flag ~p~n with Target ~p~n", [Flag, Target]),
           evaluate_flag(Flag, Target, target_rules);
         %% Prerequisites not met so return off variation
         false ->
