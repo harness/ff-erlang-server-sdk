@@ -60,9 +60,9 @@ The following is a complete code example that you can use to test the `harnessap
 %% API
 -export([start/0]).
 
-start() ->
+start(SDKKey) ->
   logger:set_primary_config(level, info),
-  case cfclient:start("YOUR_SDK_KEY") of
+  case cfclient:start(SDKKey) of
     ok ->
       logger:info("Erlang SDK Successfuly Started"),
       get_flag_loop();
@@ -88,15 +88,10 @@ get_flag_loop() ->
 
 In the SDK project directory run the following using rebar3.
 ```
-$ rebar3 compile
 $ rebar3 shell
-1> cfclient:start("YOUR SDK KEY").
-ok
-2> Target = #{identifier => list_to_binary("Demo"), name => list_to_binary("demo"), anonymous => false, attributes => #{}}.       
-  #{anonymous => false,attributes => #{},
-  identifier => <<"Demo">>,name => <<"demo">>}
-3> cfclient:bool_variation("harnessappdemodarkmode", Target, false). 
-  false
+1> getting_started:start("YOUR SDK KEY").
+Erlang SDK Successfuly Started
+Varaion for Flag "harnessappdemodarkmode" witih Target "Harness_Target_1" is: true
 ```
 
 ### Targets with custom attributes
