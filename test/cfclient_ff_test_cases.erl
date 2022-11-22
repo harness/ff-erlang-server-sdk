@@ -12,4 +12,11 @@
 -include_lib("eunit/include/eunit.hrl").
 
 simple_test() ->
-  ?assert(true).
+  {ok, Data} = file:read_file("temp.json"),
+  Json = jsx:decode(Data, [return_maps, {labels, atom}]),
+  ?assert(true),
+  Json.
+
+
+read_json(File) ->
+  Data = file:read_file(File).
