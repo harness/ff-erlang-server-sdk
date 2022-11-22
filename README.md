@@ -56,16 +56,30 @@ The following is a complete code example that you can use to test the `harnessap
 - Close the SDK.
 
 ```Erlang
-  IsOK = case cfclient:start("SDK KEY") of
+-module(getting_started).
+-export([start/0]).
+
+start() ->
+  case cfclient:start("SDK KEY") of
     ok ->
       logger:info("Erlang SDK Successfuly Started"),
-      ok;
+      get_flag_loop();
     {not_ok, Error} ->
       logger:error("Error when starting Erlang SDK: ~p~n", [Error]),
       not_ok
-  end,
-  %% Your application
-  ...
+  end.
+
+get_flag_loop() ->
+  Target = #{identifier => "Harness_Target_1",
+    name => "HT_1",
+    %% Attribute keys must be atoms. Values must be either bitstrings or atoms.
+    attributes => #{email => <<"demo@harness.io">>}
+  },
+  FlagIdentifier = "harnessappdemodarkmode",
+  Result = cfclient:bool_variation(FlagIdentifier, Target, false),
+  io:format("Varaion for Flag ~p witih Target ~p is: ~p", [FlagIdentifier, maps:get(identifier, Target), Result]),
+  timer:sleep(10000),
+  get_flag_loop().
 ```
 
 ### Running the example
