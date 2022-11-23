@@ -14,7 +14,7 @@
 evaluations_test() ->
   %% Loop through list returned by load_test files
   %% Load
-  TestFiles = load_test_files(?TESTS_PATH),
+  {ok, TestFiles} = load_test_files(?TESTS_PATH),
   evaluate_test_files(TestFiles),
   ?assert(true),
   asd.
@@ -31,67 +31,73 @@ evaluate_test_files([Head | Tail]) ->
 
 evaluate_tests([Head | Tail], Targets, CachePID) ->
   %% Get correct Target for test case
-  GetTarget =
-    fun
-      F([H | T]) ->
-        Target = maps:get(target, Head),
-        case string:equal(maps:get(target, Head), Target, false) of
-          true ->
-            Target;
-          false ->
-            F(T)
-        end;
-      F([]) -> logger:error("Target for test case not found")
+  Target =
+    case maps:is_key(target, Head) of
+      true ->
+        GetTarget =
+          fun
+            F([H | T]) ->
+              Target = maps:get(target, Head),
+              case string:equal(maps:get(target, Head), Target, false) of
+                true ->
+                  Target;
+                false ->
+                  F(T)
+              end;
+            F([]) -> logger:error("Target for test case not found")
+          end, GetTarget(Head);
+      %% If no Target for test case then just return an empty map
+      false ->
+        #{}
     end,
 
-  Target = GetTarget(Targets),
   Flag = cfclient_cache_repository:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
   Kind = maps:get(kind, Flag),
 
-  case Kind of
-    <<"boolean">> ->
-      Result = cfclient:bool_variation(Feature, Target, false),
-      FormattedResult = if
-                          Result ->
-                            <<"true">>;
-                          true ->
-                            <<"false">>
-                        end,
-      #{
-        'identifier' => TargetIdentifier,
-        value => FormattedResult,
-        flag => Feature,
-        kind => Kind
-      };
-    <<"string">> ->
-      Result = cfclient:string_variation(Feature, Target, "DEFAULT VALUE"),
-      FormattedResult = list_to_binary(Result),
-      #{
-        'identifier' => TargetIdentifier,
-        value => FormattedResult,
-        flag => Feature,
-        kind => Kind
-      };
-    <<"int">> ->
-      Result = cfclient:number_variation(Feature, Target, -1),
-      ResultAsList = list_to_binary(mochinum:digits(Result)),
-      FormattedResult = <<"", ResultAsList/binary>>,
-      #{
-        'identifier' => TargetIdentifier,
-        value => FormattedResult,
-        flag => Feature,
-        kind => Kind
-      };
-    <<"json">> ->
-      Result = cfclient:json_variation(Feature, Target, #{default => "default_value"}),
-      FormattedResult = jsx:encode(Result),
-      #{
-        'identifier' => TargetIdentifier,
-        value => FormattedResult,
-        flag => Feature,
-        kind => Kind
-      }
-  end,
+%%  case Kind of
+%%    <<"boolean">> ->
+%%      Result = cfclient:bool_variation(Feature, Target, false),
+%%      FormattedResult = if
+%%                          Result ->
+%%                            <<"true">>;
+%%                          true ->
+%%                            <<"false">>
+%%                        end,
+%%      #{
+%%        'identifier' => TargetIdentifier,
+%%        value => FormattedResult,
+%%        flag => Feature,
+%%        kind => Kind
+%%      };
+%%    <<"string">> ->
+%%      Result = cfclient:string_variation(Feature, Target, "DEFAULT VALUE"),
+%%      FormattedResult = list_to_binary(Result),
+%%      #{
+%%        'identifier' => TargetIdentifier,
+%%        value => FormattedResult,
+%%        flag => Feature,
+%%        kind => Kind
+%%      };
+%%    <<"int">> ->
+%%      Result = cfclient:number_variation(Feature, Target, -1),
+%%      ResultAsList = list_to_binary(mochinum:digits(Result)),
+%%      FormattedResult = <<"", ResultAsList/binary>>,
+%%      #{
+%%        'identifier' => TargetIdentifier,
+%%        value => FormattedResult,
+%%        flag => Feature,
+%%        kind => Kind
+%%      };
+%%    <<"json">> ->
+%%      Result = cfclient:json_variation(Feature, Target, #{default => "default_value"}),
+%%      FormattedResult = jsx:encode(Result),
+%%      #{
+%%        'identifier' => TargetIdentifier,
+%%        value => FormattedResult,
+%%        flag => Feature,
+%%        kind => Kind
+%%      }
+%%  end,
 
   asd.
 
@@ -105,7 +111,7 @@ start_lru_cache() ->
   lru:start_link({local, CacheName},[{max_size, Size}]).
 
 test_file_json_to_map(Json) ->
-  {ok, Data} = file:read_file(?TESTS_PATH),
+  {ok, Data} = file:read_file(Json),
   %% Same shape as Client API
   jsx:decode(Data, [return_maps, {labels, atom}]).
 
