@@ -173,7 +173,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
         false ->
           maps:get(variation, maps:get(serve, Head));
         %% Apply the percentage rollout calculation for the rule
-        Distribution ->
+        Distribution when Distribution /= null ->
           BucketBy = maps:get(bucketBy, Distribution),
           TargetAttributeValue = get_attribute_value(maps:get(attributes, Target, #{}), BucketBy, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
           apply_percentage_rollout(maps:get(variations, Distribution), BucketBy, TargetAttributeValue, 0)
