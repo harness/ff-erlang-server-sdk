@@ -153,6 +153,8 @@ search_targets(_TargetIdentifier, []) -> not_found.
 %% If no rules to evaluate return the Target variation
 evaluate_target_group_rules([], _) ->
   not_found;
+evaluate_target_group_rules(null, _) ->
+  not_found;
 evaluate_target_group_rules(Rules, Target) ->
   %% Sort Target Group Rules by priority - 0 is highest.
   PrioritizedRules = lists:sort(

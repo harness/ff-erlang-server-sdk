@@ -64,14 +64,7 @@ evaluate_tests([Head | Tail], Targets, CachePID) ->
     <<"json">> ->
       jsx:encode(cfclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
   end,
-%%  try
-%%    ?assertEqual(maps:get(expected, Head), Result)
-%%    catch
-%%      _:_:Stacktrace  ->
-%%        logger:error("Assertion error for test ~pn", [Head]),
-%%        logger:error(Stacktrace)
-%%  end,
-  ?assertEqual(maps:get(expected, Head), Result),
+  ?_assertEqual(maps:get(expected, Head), Result),
   evaluate_tests(Tail, Targets, CachePID);
 evaluate_tests([], _, _) -> ok.
 
