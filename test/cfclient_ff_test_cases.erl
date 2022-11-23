@@ -25,11 +25,11 @@ evaluate_test_files([Head | Tail]) ->
   %% Create new LRU cache and load Flags and Groups into it
   {ok, CachePID} = start_lru_cache(),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
-  evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap)),
+  evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID),
 
   asd.
 
-evaluate_tests([Head | Tail], Targets) ->
+evaluate_tests([Head | Tail], Targets, CachePID) ->
   %% Get correct Target for test case
   GetTarget =
     fun
@@ -43,7 +43,56 @@ evaluate_tests([Head | Tail], Targets) ->
         end;
       F([]) -> logger:error("Target for test case not found")
     end,
-  GetTarget(Targets),
+
+  Target = GetTarget(Targets),
+  Flag = cfclient_cache_repository:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
+  Kind = maps:get(kind, Flag),
+
+  case Kind of
+    <<"boolean">> ->
+      Result = cfclient:bool_variation(Feature, Target, false),
+      FormattedResult = if
+                          Result ->
+                            <<"true">>;
+                          true ->
+                            <<"false">>
+                        end,
+      #{
+        'identifier' => TargetIdentifier,
+        value => FormattedResult,
+        flag => Feature,
+        kind => Kind
+      };
+    <<"string">> ->
+      Result = cfclient:string_variation(Feature, Target, "DEFAULT VALUE"),
+      FormattedResult = list_to_binary(Result),
+      #{
+        'identifier' => TargetIdentifier,
+        value => FormattedResult,
+        flag => Feature,
+        kind => Kind
+      };
+    <<"int">> ->
+      Result = cfclient:number_variation(Feature, Target, -1),
+      ResultAsList = list_to_binary(mochinum:digits(Result)),
+      FormattedResult = <<"", ResultAsList/binary>>,
+      #{
+        'identifier' => TargetIdentifier,
+        value => FormattedResult,
+        flag => Feature,
+        kind => Kind
+      };
+    <<"json">> ->
+      Result = cfclient:json_variation(Feature, Target, #{default => "default_value"}),
+      FormattedResult = jsx:encode(Result),
+      #{
+        'identifier' => TargetIdentifier,
+        value => FormattedResult,
+        flag => Feature,
+        kind => Kind
+      }
+  end,
+
   asd.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
