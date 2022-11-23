@@ -66,7 +66,7 @@ evaluate_tests([Head | Tail], Targets, CachePID) ->
       cfclient:json_variation(FlagIdentifier, Target, #{})
   end,
 
-  asd.
+  ?assertEqual(maps:get(expected, Head), Result).
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
   [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID) || Flag <- Flags],
