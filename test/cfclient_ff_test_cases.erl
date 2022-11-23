@@ -15,9 +15,7 @@ evaluations_test() ->
   %% Loop through list returned by load_test files
   %% Load
   {ok, TestFiles} = load_test_files(?TESTS_PATH),
-  evaluate_test_files(TestFiles),
-  ?assert(true),
-  asd.
+  evaluate_test_files(TestFiles).
 
 evaluate_test_files([Head | Tail]) ->
   %% Parse each file into a map - e.g. we can get The Flags, Targets, Tests
@@ -27,8 +25,9 @@ evaluate_test_files([Head | Tail]) ->
   cfclient_cache_repository:set_pid(CachePID),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
   evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID),
-
-  asd.
+  lru:stop(CachePID),
+  evaluate_test_files(Tail);
+evaluate_test_files([]) -> ok.
 
 evaluate_tests([Head | Tail], Targets, CachePID) ->
   %% Get correct Target for test case
@@ -38,15 +37,14 @@ evaluate_tests([Head | Tail], Targets, CachePID) ->
         GetTarget =
           fun
             F([H | T]) ->
-              Target = maps:get(target, Head),
-              case string:equal(maps:get(target, Head), Target, false) of
+              case string:equal(maps:get(identifier, H), maps:get(target, Head), false) of
                 true ->
-                  Target;
+                  H;
                 false ->
                   F(T)
               end;
             F([]) -> logger:error("Target for test case not found")
-          end, GetTarget(Head);
+          end, GetTarget(Targets);
       %% If no Target for test case then just return an empty map
       false ->
         #{}
@@ -66,8 +64,15 @@ evaluate_tests([Head | Tail], Targets, CachePID) ->
     <<"json">> ->
       cfclient:json_variation(FlagIdentifier, Target, #{})
   end,
-
-  ?assertEqual(maps:get(expected, Head), Result).
+  try
+    ?assertEqual(maps:get(expected, Head), Result)
+    catch
+      _:_:Stacktrace  ->
+        logger:error("Assertion error for test ~pn", [Head]),
+        logger:error(Stacktrace)
+  end,
+  evaluate_tests(Tail, Targets, CachePID);
+evaluate_tests([], _, _) -> ok.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
   [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID) || Flag <- Flags],
