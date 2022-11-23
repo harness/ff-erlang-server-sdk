@@ -11,23 +11,39 @@
 -define(TESTS_PATH, "test/ff-test-cases/tests").
 
 
-simple_test() ->
-  load_test_files(),
-  ?assert(true).
+evaluations_test() ->
+  %% Loop through list returned by load_test files
+  %% Load
+  TestFiles = load_test_files(?TESTS_PATH),
+  evaluate_test_files(TestFiles),
+  ?assert(true),
+  asd.
 
+evaluate_test_files([Head | Tail]) ->
+  %% Parse each file into a map - e.g. we can get The Flags, Targets, Tests
+  TestAsMap = test_file_json_to_map(Head),
+  %% Create new LRU cache and load Targets and Flags into it
+  {ok, CachePID} = start_lru_cache(),
+  cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
+  asd.
 
+cache_flags_and_groups(CachePID, Flags, Groups) ->
+  [cfclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Groups],
+  asd.
 
-load_test_files() ->
+start_lru_cache() ->
+  Size = 32000000,
+  CacheName = cfclient_cache_default,
+  lru:start_link({local, CacheName},[{max_size, Size}]).
+
+test_file_json_to_map(Json) ->
   {ok, Data} = file:read_file(?TESTS_PATH),
   %% Same shape as Client API
   jsx:decode(Data, [return_maps, {labels, atom}]).
 
-call_func() ->
-  Res = load_test_files(?TESTS_PATH),
-  asd.
 
 load_test_files(Dir) ->
-  load_test_files(Dir, false). % default value of FilesOnly is false
+  load_test_files(Dir, false).
 
 load_test_files(Dir, FilesOnly) ->
   case filelib:is_file(Dir) of
