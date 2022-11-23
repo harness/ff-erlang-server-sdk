@@ -12,7 +12,6 @@
 
 
 evaluations_test() ->
-  %% Loop through list returned by load_test files
   {ok, TestFiles} = load_test_files(?TESTS_PATH),
   evaluate_test_files(TestFiles).
 
