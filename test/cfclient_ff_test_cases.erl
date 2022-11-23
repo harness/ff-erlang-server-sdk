@@ -54,50 +54,17 @@ evaluate_tests([Head | Tail], Targets, CachePID) ->
   Flag = cfclient_cache_repository:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
   Kind = maps:get(kind, Flag),
 
-%%  case Kind of
-%%    <<"boolean">> ->
-%%      Result = cfclient:bool_variation(Feature, Target, false),
-%%      FormattedResult = if
-%%                          Result ->
-%%                            <<"true">>;
-%%                          true ->
-%%                            <<"false">>
-%%                        end,
-%%      #{
-%%        'identifier' => TargetIdentifier,
-%%        value => FormattedResult,
-%%        flag => Feature,
-%%        kind => Kind
-%%      };
-%%    <<"string">> ->
-%%      Result = cfclient:string_variation(Feature, Target, "DEFAULT VALUE"),
-%%      FormattedResult = list_to_binary(Result),
-%%      #{
-%%        'identifier' => TargetIdentifier,
-%%        value => FormattedResult,
-%%        flag => Feature,
-%%        kind => Kind
-%%      };
-%%    <<"int">> ->
-%%      Result = cfclient:number_variation(Feature, Target, -1),
-%%      ResultAsList = list_to_binary(mochinum:digits(Result)),
-%%      FormattedResult = <<"", ResultAsList/binary>>,
-%%      #{
-%%        'identifier' => TargetIdentifier,
-%%        value => FormattedResult,
-%%        flag => Feature,
-%%        kind => Kind
-%%      };
-%%    <<"json">> ->
-%%      Result = cfclient:json_variation(Feature, Target, #{default => "default_value"}),
-%%      FormattedResult = jsx:encode(Result),
-%%      #{
-%%        'identifier' => TargetIdentifier,
-%%        value => FormattedResult,
-%%        flag => Feature,
-%%        kind => Kind
-%%      }
-%%  end,
+  FlagIdentifier = maps:get(flag, Head),
+  Result = case Kind of
+    <<"boolean">> ->
+      cfclient:bool_variation(maps:get(flag, Head), Target, false);
+    <<"string">> ->
+      cfclient:string_variation(FlagIdentifier, Target, "blue");
+    <<"int">> ->
+      cfclient:number_variation(FlagIdentifier, Target, 100);
+    <<"json">> ->
+      cfclient:json_variation(FlagIdentifier, Target, #{})
+  end,
 
   asd.
 
