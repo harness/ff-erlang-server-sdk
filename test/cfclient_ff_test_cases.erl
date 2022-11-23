@@ -24,6 +24,7 @@ evaluate_test_files([Head | Tail]) ->
   TestAsMap = test_file_json_to_map(Head),
   %% Create new LRU cache and load Flags and Groups into it
   {ok, CachePID} = start_lru_cache(),
+  cfclient_cache_repository:set_pid(CachePID),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
   evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID),
 
