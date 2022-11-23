@@ -120,7 +120,7 @@ get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
 
 -spec evaluate_target_rule(VariationMap :: cfapi_variation_map:cfapi_variation_map(), Target :: target()) -> binary() | not_found.
 evaluate_target_rule(VariationMap, Target) when VariationMap /= null, Target /= null ->
-  TargetIdentifier = maps:get(identifier, Target),
+  TargetIdentifier = maps:get(identifier, Target, <<>>),
   search_variation_map(TargetIdentifier, VariationMap);
 
 evaluate_target_rule(_, _) ->
@@ -139,7 +139,7 @@ search_variation_map(_TargetIdentifier, []) -> not_found.
 
 -spec search_targets(TargetIdentifier :: binary(), Targets :: list()) -> found | not_found.
 search_targets(TargetIdentifier, [Head | Tail]) ->
-  SearchResult = maps:get(identifier, Head),
+  SearchResult = maps:get(identifier, Head, <<>>),
   if
     SearchResult == TargetIdentifier ->
       found;
@@ -199,7 +199,7 @@ is_rule_included_or_excluded([], _) -> false.
 %% Parses Group Rules for the different rule types.
 -spec search_group(RuleType :: atom(), Target :: binary(), Group :: map()) -> included | excluded | false.
 search_group(excluded, Target, Group) ->
-  TargetIdentifier = maps:get(identifier, Target),
+  TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(excluded, Group, [])) of
     true ->
       excluded;
@@ -207,7 +207,7 @@ search_group(excluded, Target, Group) ->
       search_group(included, Target, Group)
   end;
 search_group(included, Target, Group) ->
-  TargetIdentifier = maps:get(identifier, Target),
+  TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
     true ->
       included;
@@ -224,7 +224,7 @@ search_group(custom_rules, Target, Group) ->
 
 -spec search_group_rules(Target :: binary(), GroupRules :: list()) -> true | false.
 search_group_rules(TargetIdentifier, [Head | Tail]) ->
-  ListTargetIdentifier = maps:get(identifier, Head),
+  ListTargetIdentifier = maps:get(identifier, Head, <<>>),
   if
     TargetIdentifier == ListTargetIdentifier ->
       true;
