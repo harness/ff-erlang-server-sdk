@@ -49,6 +49,8 @@ evaluate_flag(Flag, Target, prerequisites) ->
     %% If no prerequisites to evaluate, go straight to target rules
     [] ->
       evaluate_flag(Flag, Target, target_rules);
+    null ->
+      evaluate_flag(Flag, Target, target_rules);
     Prerequisites ->
       case search_prerequisites(Prerequisites, Target) of
         %% Prerequisites met so we can continue evaluating
@@ -222,7 +224,8 @@ search_group(custom_rules, Target, Group) ->
       false
   end.
 
--spec search_group_rules(Target :: binary(), GroupRules :: list()) -> true | false.
+-spec search_group_rules(Target :: binary(), GroupRules :: list() | null) -> true | false.
+search_group_rules(_, null) -> false;
 search_group_rules(TargetIdentifier, [Head | Tail]) ->
   ListTargetIdentifier = maps:get(identifier, Head, <<>>),
   if
@@ -233,6 +236,7 @@ search_group_rules(TargetIdentifier, [Head | Tail]) ->
 search_group_rules(_, []) -> false.
 
 -spec search_group_custom_rules(Target :: binary(), CustomRules :: list()) -> true | false.
+search_group_custom_rules(Target, null) -> false;
 search_group_custom_rules(Target, [Head | Tail]) ->
   %% Get necessary fields from rule
   RuleAttribute = maps:get(attribute, Head, <<>>),

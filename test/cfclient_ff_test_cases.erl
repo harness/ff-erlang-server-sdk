@@ -58,19 +58,20 @@ evaluate_tests([Head | Tail], Targets, CachePID) ->
     <<"boolean">> ->
       cfclient:bool_variation(maps:get(flag, Head), Target, false);
     <<"string">> ->
-      cfclient:string_variation(FlagIdentifier, Target, "blue");
+      list_to_binary(cfclient:string_variation(FlagIdentifier, Target, "blue"));
     <<"int">> ->
       cfclient:number_variation(FlagIdentifier, Target, 100);
     <<"json">> ->
-      cfclient:json_variation(FlagIdentifier, Target, #{})
+      jsx:encode(cfclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
   end,
-  try
-    ?assertEqual(maps:get(expected, Head), Result)
-    catch
-      _:_:Stacktrace  ->
-        logger:error("Assertion error for test ~pn", [Head]),
-        logger:error(Stacktrace)
-  end,
+%%  try
+%%    ?assertEqual(maps:get(expected, Head), Result)
+%%    catch
+%%      _:_:Stacktrace  ->
+%%        logger:error("Assertion error for test ~pn", [Head]),
+%%        logger:error(Stacktrace)
+%%  end,
+  ?assertEqual(maps:get(expected, Head), Result),
   evaluate_tests(Tail, Targets, CachePID);
 evaluate_tests([], _, _) -> ok.
 
@@ -90,7 +91,7 @@ test_file_json_to_map(Json) ->
 
 
 load_test_files(Dir) ->
-  load_test_files(Dir, false).
+  load_test_files(Dir, true).
 
 load_test_files(Dir, FilesOnly) ->
   case filelib:is_file(Dir) of
@@ -109,7 +110,7 @@ walk_directory([Path|Paths], FilesOnly, Acc) ->
       false -> [Path | Acc];
       true ->
         {ok, Listing} = file:list_dir(Path),
-        SubPaths = [filename:join(Path, Name) || Name <- Listing, filename:extension(Name) == ".json"],
+        SubPaths = [filename:join(Path, Name) || Name <- Listing],
         walk_directory(SubPaths, FilesOnly,
           case FilesOnly of
             true -> Acc;
