@@ -3,6 +3,6 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/_build/default/lib/cfapi" vcs="Git" />
-
+    <mapping directory="$PROJECT_DIR$/test/ff-test-cases" vcs="Git" />
   </component>
 </project>
