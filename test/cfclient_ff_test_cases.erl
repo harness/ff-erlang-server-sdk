@@ -22,9 +22,28 @@ evaluations_test() ->
 evaluate_test_files([Head | Tail]) ->
   %% Parse each file into a map - e.g. we can get The Flags, Targets, Tests
   TestAsMap = test_file_json_to_map(Head),
-  %% Create new LRU cache and load Targets and Flags into it
+  %% Create new LRU cache and load Flags and Groups into it
   {ok, CachePID} = start_lru_cache(),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
+  evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap)),
+
+  asd.
+
+evaluate_tests([Head | Tail], Targets) ->
+  %% Get correct Target for test case
+  GetTarget =
+    fun
+      F([H | T]) ->
+        Target = maps:get(target, Head),
+        case string:equal(maps:get(target, Head), Target, false) of
+          true ->
+            Target;
+          false ->
+            F(T)
+        end;
+      F([]) -> logger:error("Target for test case not found")
+    end,
+  GetTarget(Targets),
   asd.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
