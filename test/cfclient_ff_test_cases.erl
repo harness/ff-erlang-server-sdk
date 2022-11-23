@@ -28,8 +28,8 @@ evaluate_test_files([Head | Tail]) ->
   asd.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
-  [cfclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Groups],
-  asd.
+  [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID) || Flag <- Flags],
+  [cfclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Groups].
 
 start_lru_cache() ->
   Size = 32000000,
