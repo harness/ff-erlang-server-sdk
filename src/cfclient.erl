@@ -23,17 +23,27 @@ start(ApiKey, Options) ->
 -spec bool_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
 bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   bool_variation(list_to_binary(FlagKey), Target, Default);
-bool_variation(FlagKey, Target, Default) when is_binary(FlagKey)->
+bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
+  %% Users can provide TargetIdentifiers as lists (strings), binary or atoms so sanitise them to be binary as the Client API
+  %% works in binary.
+  SanitisedTarget =
+    case is_binary(maps:get(identifier, Target, <<>>)) of
+      true ->
+        Target;
+      false ->
+        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
+        Target#{identifier := SanitisedIdentifier}
+    end,
   try
-    case cfclient_evaluator:bool_variation(FlagKey, Target) of
+    case cfclient_evaluator:bool_variation(FlagKey, SanitisedTarget) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default", [FlagKey, SanitisedTarget]),
         Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default" , [FlagKey, Target, Stacktrace]),
+      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default", [FlagKey, Target, Stacktrace]),
       Default
   end.
 
@@ -41,11 +51,19 @@ bool_variation(FlagKey, Target, Default) when is_binary(FlagKey)->
 string_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   string_variation(list_to_binary(FlagKey), Target, Default);
 string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
+  SanitisedTarget =
+    case is_binary(maps:get(identifier, Target, <<>>)) of
+      true ->
+        Target;
+      false ->
+        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
+        Target#{identifier := SanitisedIdentifier}
+    end,
   try
-    case cfclient_evaluator:string_variation(FlagKey, Target) of
+    case cfclient_evaluator:string_variation(FlagKey, SanitisedTarget) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, SanitisedTarget]),
         Default
     end
   catch
@@ -58,11 +76,19 @@ string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
 number_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   number_variation(list_to_binary(FlagKey), Target, Default);
 number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
+  SanitisedTarget =
+    case is_binary(maps:get(identifier, Target, <<>>)) of
+      true ->
+        Target;
+      false ->
+        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
+        Target#{identifier := SanitisedIdentifier}
+    end,
   try
-    case cfclient_evaluator:number_variation(FlagKey, Target) of
+    case cfclient_evaluator:number_variation(FlagKey, SanitisedTarget) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, SanitisedTarget]),
         Default
     end
   catch
@@ -75,11 +101,19 @@ number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
 json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   json_variation(list_to_binary(FlagKey), Target, Default);
 json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
+  SanitisedTarget =
+    case is_binary(maps:get(identifier, Target, <<>>)) of
+      true ->
+        Target;
+      false ->
+        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
+        Target#{identifier := SanitisedIdentifier}
+    end,
   try
-    case cfclient_evaluator:json_variation(FlagKey, Target) of
+    case cfclient_evaluator:json_variation(FlagKey, SanitisedTarget) of
       {ok, Variation} -> Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, Target]),
+        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, SanitisedTarget]),
         Default
     end
   catch
@@ -106,6 +140,24 @@ retrieve_segments() ->
   RequestConfig = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("config_url")},  params => #{cluster => ClusterID }},
   ClientConfig = {RequestConfig, Environment},
   cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
+
+sanitise_target(Target) ->  SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
+  SanitisedName = target_name_to_binary(maps:get(name, Target, <<>>)),
+  Target#{identifier := SanitisedIdentifier, name := SanitisedName}.
+
+target_identifier_to_binary(TargetIdentifier) when is_binary(TargetIdentifier) ->
+  TargetIdentifier;
+target_identifier_to_binary(TargetIdentifier) when is_atom(TargetIdentifier) ->
+  atom_to_binary(TargetIdentifier);
+target_identifier_to_binary(TargetIdentifier) when is_list(TargetIdentifier) ->
+  list_to_binary(TargetIdentifier).
+
+target_name_to_binary(TargetName) when is_binary(TargetName) ->
+  TargetName;
+target_name_to_binary(TargetName) when is_atom(TargetName) ->
+  atom_to_binary(TargetName);
+target_name_to_binary(TargetName) when is_list(TargetName) ->
+  list_to_binary(TargetName).
 
 -spec stop() -> ok.
 stop() ->

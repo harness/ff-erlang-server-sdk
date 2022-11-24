@@ -49,10 +49,13 @@ evaluate_flag(Flag, Target, prerequisites) ->
     %% If no prerequisites to evaluate, go straight to target rules
     [] ->
       evaluate_flag(Flag, Target, target_rules);
+    null ->
+      evaluate_flag(Flag, Target, target_rules);
     Prerequisites ->
       case search_prerequisites(Prerequisites, Target) of
         %% Prerequisites met so we can continue evaluating
         true ->
+          logger:debug("All prerequisites met for Flag ~p~n with Target ~p~n", [Flag, Target]),
           evaluate_flag(Flag, Target, target_rules);
         %% Prerequisites not met so return off variation
         false ->
@@ -119,7 +122,7 @@ get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
 
 -spec evaluate_target_rule(VariationMap :: cfapi_variation_map:cfapi_variation_map(), Target :: target()) -> binary() | not_found.
 evaluate_target_rule(VariationMap, Target) when VariationMap /= null, Target /= null ->
-  TargetIdentifier = maps:get(identifier, Target),
+  TargetIdentifier = maps:get(identifier, Target, <<>>),
   search_variation_map(TargetIdentifier, VariationMap);
 
 evaluate_target_rule(_, _) ->
@@ -138,7 +141,7 @@ search_variation_map(_TargetIdentifier, []) -> not_found.
 
 -spec search_targets(TargetIdentifier :: binary(), Targets :: list()) -> found | not_found.
 search_targets(TargetIdentifier, [Head | Tail]) ->
-  SearchResult = maps:get(identifier, Head),
+  SearchResult = maps:get(identifier, Head, <<>>),
   if
     SearchResult == TargetIdentifier ->
       found;
@@ -149,6 +152,8 @@ search_targets(_TargetIdentifier, []) -> not_found.
 -spec evaluate_target_group_rules(Rules :: list(), Target :: target()) -> binary() | excluded | not_found.
 %% If no rules to evaluate return the Target variation
 evaluate_target_group_rules([], _) ->
+  not_found;
+evaluate_target_group_rules(null, _) ->
   not_found;
 evaluate_target_group_rules(Rules, Target) ->
   %% Sort Target Group Rules by priority - 0 is highest.
@@ -172,7 +177,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
         false ->
           maps:get(variation, maps:get(serve, Head));
         %% Apply the percentage rollout calculation for the rule
-        Distribution ->
+        Distribution when Distribution /= null ->
           BucketBy = maps:get(bucketBy, Distribution),
           TargetAttributeValue = get_attribute_value(maps:get(attributes, Target, #{}), BucketBy, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
           apply_percentage_rollout(maps:get(variations, Distribution), BucketBy, TargetAttributeValue, 0)
@@ -198,7 +203,7 @@ is_rule_included_or_excluded([], _) -> false.
 %% Parses Group Rules for the different rule types.
 -spec search_group(RuleType :: atom(), Target :: binary(), Group :: map()) -> included | excluded | false.
 search_group(excluded, Target, Group) ->
-  TargetIdentifier = maps:get(identifier, Target),
+  TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(excluded, Group, [])) of
     true ->
       excluded;
@@ -206,7 +211,7 @@ search_group(excluded, Target, Group) ->
       search_group(included, Target, Group)
   end;
 search_group(included, Target, Group) ->
-  TargetIdentifier = maps:get(identifier, Target),
+  TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
     true ->
       included;
@@ -221,9 +226,10 @@ search_group(custom_rules, Target, Group) ->
       false
   end.
 
--spec search_group_rules(Target :: binary(), GroupRules :: list()) -> true | false.
+-spec search_group_rules(Target :: binary(), GroupRules :: list() | null) -> true | false.
+search_group_rules(_, null) -> false;
 search_group_rules(TargetIdentifier, [Head | Tail]) ->
-  ListTargetIdentifier = maps:get(identifier, Head),
+  ListTargetIdentifier = maps:get(identifier, Head, <<>>),
   if
     TargetIdentifier == ListTargetIdentifier ->
       true;
@@ -232,6 +238,7 @@ search_group_rules(TargetIdentifier, [Head | Tail]) ->
 search_group_rules(_, []) -> false.
 
 -spec search_group_custom_rules(Target :: binary(), CustomRules :: list()) -> true | false.
+search_group_custom_rules(Target, null) -> false;
 search_group_custom_rules(Target, [Head | Tail]) ->
   %% Get necessary fields from rule
   RuleAttribute = maps:get(attribute, Head, <<>>),

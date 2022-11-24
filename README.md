@@ -56,31 +56,42 @@ The following is a complete code example that you can use to test the `harnessap
 - Close the SDK.
 
 ```Erlang
-  IsOK = case cfclient:start("SDK KEY") of
+-module(getting_started).
+%% API
+-export([start/0]).
+
+start(SDKKey) ->
+  logger:set_primary_config(level, info),
+  case cfclient:start(SDKKey) of
     ok ->
       logger:info("Erlang SDK Successfuly Started"),
-      ok;
+      get_flag_loop();
     {not_ok, Error} ->
       logger:error("Error when starting Erlang SDK: ~p~n", [Error]),
       not_ok
-  end,
-  %% Your application
-  ...
+  end.
+
+get_flag_loop() ->
+  Target = #{identifier => "Harness_Target_1",
+    name => "HT_1",
+    %% Attribute keys must be atoms. Values must be either bitstrings or atoms.
+    attributes => #{email => <<"demo@harness.io">>}
+  },
+  FlagIdentifier = "harnessappdemodarkmode",
+  Result = cfclient:bool_variation(FlagIdentifier, Target, false),
+  logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
+  timer:sleep(10000),
+  get_flag_loop().
 ```
 
 ### Running the example
 
 In the SDK project directory run the following using rebar3.
 ```
-$ rebar3 compile
 $ rebar3 shell
-1> cfclient:start("YOUR SDK KEY").
-ok
-2> Target = #{identifier => list_to_binary("Demo"), name => list_to_binary("demo"), anonymous => false, attributes => #{}}.       
-  #{anonymous => false,attributes => #{},
-  identifier => <<"Demo">>,name => <<"demo">>}
-3> cfclient:bool_variation("harnessappdemodarkmode", Target, false). 
-  false
+1> getting_started:start("YOUR SDK KEY").
+Erlang SDK Successfuly Started
+Varaion for Flag "harnessappdemodarkmode" witih Target "Harness_Target_1" is: true
 ```
 
 ### Targets with custom attributes
