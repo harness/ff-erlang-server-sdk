@@ -105,7 +105,7 @@ walk_directory([Path|Paths], FilesOnly, Acc) ->
       false -> [Path | Acc];
       true ->
         {ok, Listing} = file:list_dir(Path),
-        SubPaths = [filename:join(Path, Name) || Name <- Listing, lists:member(Name, ?NON_TEST_GRID_TESTS) == true],
+        SubPaths = [filename:join(Path, Name) || Name <- Listing, lists:member(Name, ?NON_TEST_GRID_TESTS) == false],
         walk_directory(SubPaths, FilesOnly,
           case FilesOnly of
             true -> Acc;
