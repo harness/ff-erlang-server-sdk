@@ -5,6 +5,7 @@
 .DS_STORE
 
 .eunit
+/eunit-reports
 out/
 *.o
 *.beam

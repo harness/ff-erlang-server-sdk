@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite tests="2" failures="0" errors="0" skipped="0" time="0.063" name="module 'cfclient_cache_repository_test'">
+  <testcase time="0.057" name="cfclient_cache_repository_test:0 get_from_cache_test">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.000" name="cfclient_cache_repository_test:0 format_key_test">
+    <system-out>
+    </system-out>
+  </testcase>
+</testsuite>
