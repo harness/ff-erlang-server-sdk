@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="1" failures="0" errors="0" skipped="0" time="0.000" name="module 'cfclient_ff_test_cases'">
-  <testcase time="0.096" name="cfclient_ff_test_cases:0 evaluations_test (module 'cfclient_ff_test_cases')">
-    <system-out>
-    </system-out>
-  </testcase>
-</testsuite>
