@@ -95,29 +95,29 @@ evaluate_flag(Flag, Target, default_on) ->
   DefaultServe = maps:get(defaultServe, Flag),
   DefaultServeIdentifier = maps:get(variation, DefaultServe),
   case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
-    #{} = DefaultVariation ->
-      {ok, DefaultServeIdentifier, maps:get(value, DefaultVariation)};
-    not_found ->
+    [] ->
       logger:error("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [maps:get(feature, Flag), DefaultServeIdentifier]),
-      not_ok
+      not_ok;
+    DefaultVariation ->
+      {ok, DefaultServeIdentifier, maps:get(value, DefaultVariation)}
   end.
 
 get_default_off_variation(Flag, OffVariationIdentifier) ->
   case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
-    #{} = OffVariation ->
-      {ok, OffVariationIdentifier, maps:get(value, OffVariation)};
-    not_found ->
+    [] ->
       logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
-      not_ok
+      not_ok;
+    OffVariation ->
+      {ok, OffVariationIdentifier, maps:get(value, OffVariation)}
   end.
 
 get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
   case get_variation(maps:get(variations, Flag), TargetVariationIdentifier) of
-    #{} = Variation ->
-      {ok, TargetVariationIdentifier, maps:get(value, Variation)};
-    not_found ->
+    [] ->
       logger:error("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ", [maps:get(feature, Flag), TargetVariationIdentifier]),
-      not_ok
+      not_ok;
+    Variation ->
+      {ok, TargetVariationIdentifier, maps:get(value, Variation)}
   end.
 
 -spec evaluate_target_rule(VariationMap :: cfapi_variation_map:cfapi_variation_map(), Target :: target()) -> binary() | not_found.
@@ -440,7 +440,7 @@ json_variation(FlagIdentifier, Target) ->
 
 
 %% TODO - refactor using recursion so can exit upon condition.
--spec get_variation(Variations :: list(), Identifier :: binary()) -> binary() | not_found.
+-spec get_variation(Variations :: list(), Identifier :: binary()) -> binary() | [].
 get_variation(Variations, Identifier) ->
   hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation, not_found)]).
 
