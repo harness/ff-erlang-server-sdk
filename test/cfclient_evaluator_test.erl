@@ -467,7 +467,6 @@ is_rule_included_or_excluded_test() ->
 
   %% Cache data for mocked cache call
   cfclient_cache_repository:set_pid(self()),
-  CacheName = cfclient_cache_repository:get_cache_name(),
   CachedGroup = #{environment => <<"dev">>, identifier => <<"target_group_1">>,
     excluded =>
     [#{account => <<>>, environment => <<>>,
