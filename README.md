@@ -74,7 +74,8 @@ start(SDKKey) ->
 get_flag_loop() ->
   Target = #{identifier => "Harness_Target_1",
     name => "HT_1",
-    %% Attribute keys must be atoms. Values must be either bitstrings or atoms.
+    %% Attribute keys must be atoms. 
+    %% Values must be either bitstrings, atoms, or a list of bitstrings/atoms - see Targets with custom attributes section below.
     attributes => #{email => <<"demo@harness.io">>}
   },
   FlagIdentifier = "harnessappdemodarkmode",
