@@ -15,23 +15,23 @@
   "segment_includes_target.json", "test_empty_or_missing_target_attributes.json"]).
 
 
-evaluations_test() ->
+evaluations_test_() ->
   {ok, TestFiles} = load_test_files(?TESTS_PATH),
-  evaluate_test_files(TestFiles).
+  evaluate_test_files(TestFiles, []).
 
-evaluate_test_files([Head | Tail]) ->
+evaluate_test_files([Head | Tail], Accu) ->
   %% Parse each file into a map - e.g. we can get The Flags, Targets, Tests
   TestAsMap = test_file_json_to_map(Head),
   %% Create new LRU cache and load Flags and Groups into it
   {ok, CachePID} = start_lru_cache(),
   cfclient_cache_repository:set_pid(CachePID),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
-  evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID),
+  Result = evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID, Accu),
   lru:stop(CachePID),
-  evaluate_test_files(Tail);
-evaluate_test_files([]) -> ok.
+  evaluate_test_files(Tail,  Result);
+evaluate_test_files([], Accu) -> Accu.
 
-evaluate_tests([Head | Tail], Targets, CachePID) ->
+evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
   %% Get correct Target for test case
   Target =
     case maps:is_key(target, Head) of
@@ -66,9 +66,9 @@ evaluate_tests([Head | Tail], Targets, CachePID) ->
     <<"json">> ->
       jsx:encode(cfclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
   end,
-  ?assertEqual(maps:get(expected, Head), Result),
-  evaluate_tests(Tail, Targets, CachePID);
-evaluate_tests([], _, _) -> ok.
+  Test = [{FlagIdentifier, ?_assertEqual(maps:get(expected, Head), Result)}],
+  evaluate_tests(Tail, Targets, CachePID, [Test | Accu]);
+evaluate_tests([], _, _, Accu) -> Accu.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
   [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID) || Flag <- Flags],
