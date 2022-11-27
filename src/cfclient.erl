@@ -127,7 +127,7 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
 
 -spec enqueue_analytics(FlagIdentifier :: binary(), Target :: target(), Variation :: any()) -> atom().
 enqueue_analytics(FlagIdentifier, Target, Variation) ->
-  ads.
+  cfclient_analytics:enqueue(FlagIdentifier, Target, Variation).
 
 -spec retrieve_flags() -> ok.
 retrieve_flags() ->
