@@ -39,7 +39,9 @@ bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
     end,
   try
     case cfclient_evaluator:bool_variation(FlagKey, SanitisedTarget) of
-      {ok, Variation} -> Variation;
+      {ok, Variation} ->
+        enqueue_analytics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, Variation),
+        Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default", [FlagKey, SanitisedTarget]),
         Default
@@ -64,7 +66,9 @@ string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
     end,
   try
     case cfclient_evaluator:string_variation(FlagKey, SanitisedTarget) of
-      {ok, Variation} -> Variation;
+      {ok, Variation} ->
+        enqueue_analytics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, Variation),
+        Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, SanitisedTarget]),
         Default
@@ -89,7 +93,9 @@ number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
     end,
   try
     case cfclient_evaluator:number_variation(FlagKey, SanitisedTarget) of
-      {ok, Variation} -> Variation;
+      {ok, Variation} ->
+        enqueue_analytics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, Variation),
+        Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, SanitisedTarget]),
         Default
@@ -114,7 +120,9 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
     end,
   try
     case cfclient_evaluator:json_variation(FlagKey, SanitisedTarget) of
-      {ok, Variation} -> Variation;
+      {ok, Variation} ->
+        enqueue_analytics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, Variation),
+        Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default" , [FlagKey, SanitisedTarget]),
         Default
@@ -125,9 +133,13 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
       Default
   end.
 
--spec enqueue_analytics(FlagIdentifier :: binary(), Target :: target(), Variation :: any()) -> atom().
-enqueue_analytics(FlagIdentifier, Target, Variation) ->
-  cfclient_analytics:enqueue(FlagIdentifier, Target, Variation).
+-spec enqueue_analytics(IsAnalyticsEnabled :: boolean(), FlagIdentifier :: binary(), Target :: target(), Variation :: any()) -> atom().
+enqueue_analytics(true, FlagIdentifier, Target, Variation) ->
+  logger:debug("Analytics is enabled. Passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, Variation]),
+  cfclient_analytics:enqueue(FlagIdentifier, Target, Variation);
+enqueue_analytics(false, FlagIdentifier, Target, Variation) ->
+  logger:debug("Analytics not enabled, not passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, Variation]),
+  ok.
 
 -spec retrieve_flags() -> ok.
 retrieve_flags() ->
