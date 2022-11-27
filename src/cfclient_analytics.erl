@@ -6,3 +6,4 @@
 
 -export([]).
 
+-type analytics_config() :: #{enabled := boolean(), push_interval := integer()}.
