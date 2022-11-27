@@ -4,7 +4,7 @@
 %%% @end
 -module(cfclient_analytics).
 
--export([]).
+-export([enqueue/3]).
 
 -spec enqueue(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any()) -> atom().
 enqueue(FlagIdentifier, Target, Variation) ->
