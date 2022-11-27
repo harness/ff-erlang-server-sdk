@@ -8,14 +8,7 @@
 -export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2]).
 -include("cfclient_evaluator_operators.hrl").
 
--type target() ::
-#{identifier := binary(),
-name := binary(),
-anonymous => boolean(),
-attributes := #{atom() := binary() | atom() | list()}
-}.
-
--spec evaluate(FlagIdentifier :: binary(), Target :: target()) -> {ok, binary()} | not_ok.
+-spec evaluate(FlagIdentifier :: binary(), Target :: cfclient:target()) -> {ok, binary()} | not_ok.
 evaluate(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
@@ -31,7 +24,7 @@ evaluate(FlagIdentifier, Target) ->
       end
   end.
 
--spec evaluate_flag(Flag :: binary(), Target :: target(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
+-spec evaluate_flag(Flag :: binary(), Target :: cfclient:target(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
 % Evaluate for off state
 evaluate_flag(Flag, Target, off) ->
   State = maps:get(state, Flag),
@@ -120,7 +113,7 @@ get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
       {ok, TargetVariationIdentifier, maps:get(value, Variation)}
   end.
 
--spec evaluate_target_rule(VariationMap :: cfapi_variation_map:cfapi_variation_map(), Target :: target()) -> binary() | not_found.
+-spec evaluate_target_rule(VariationMap :: cfapi_variation_map:cfapi_variation_map(), Target :: cfclient:target()) -> binary() | not_found.
 evaluate_target_rule(VariationMap, Target) when VariationMap /= null, Target /= null ->
   TargetIdentifier = maps:get(identifier, Target, <<>>),
   search_variation_map(TargetIdentifier, VariationMap);
@@ -149,7 +142,7 @@ search_targets(TargetIdentifier, [Head | Tail]) ->
   end;
 search_targets(_TargetIdentifier, []) -> not_found.
 
--spec evaluate_target_group_rules(Rules :: list(), Target :: target()) -> binary() | excluded | not_found.
+-spec evaluate_target_group_rules(Rules :: list(), Target :: cfclient:target()) -> binary() | excluded | not_found.
 %% If no rules to evaluate return the Target variation
 evaluate_target_group_rules([], _) ->
   not_found;
@@ -165,7 +158,7 @@ evaluate_target_group_rules(Rules, Target) ->
   %% Check if a target is included or excluded from the rules.
   search_rules_for_inclusion(PrioritizedRules, Target).
 
--spec search_rules_for_inclusion(Rules :: list(), Target :: target()) -> binary() | excluded | not_found.
+-spec search_rules_for_inclusion(Rules :: list(), Target :: cfclient:target()) -> binary() | excluded | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
   case is_rule_included_or_excluded(maps:get(clauses, Head), Target) of
     excluded ->
@@ -187,7 +180,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
   end;
 search_rules_for_inclusion([], _) -> not_found.
 
--spec is_rule_included_or_excluded(Clauses :: list(), Target :: target()) -> true | false.
+-spec is_rule_included_or_excluded(Clauses :: list(), Target :: cfclient:target()) -> true | false.
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
     ?SEGMENT_MATCH_OPERATOR ->
@@ -395,7 +388,7 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
       logger:error("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n", [PrerequisiteFlagIdentifier])
   end.
 
--spec bool_variation(Identifier :: binary(), Target :: target()) -> {ok, boolean()} | not_ok.
+-spec bool_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, Variation} ->
@@ -403,7 +396,7 @@ bool_variation(FlagIdentifier, Target) ->
     not_ok -> not_ok
   end.
 
--spec string_variation(Identifier :: binary(), Target :: target()) -> {ok, string()} | not_ok.
+-spec string_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, string()} | not_ok.
 string_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, Variation} ->
@@ -412,7 +405,7 @@ string_variation(FlagIdentifier, Target) ->
   end.
 
 
--spec number_variation(Identifier :: binary(), Target :: target()) -> {ok, number()} | not_ok.
+-spec number_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, number()} | not_ok.
 number_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, Variation} ->
@@ -424,7 +417,7 @@ number_variation(FlagIdentifier, Target) ->
   end.
 
 
--spec json_variation(Identifier :: binary(), Target :: target()) -> {ok, map()} | not_ok.
+-spec json_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, map()} | not_ok.
 json_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, Variation} ->

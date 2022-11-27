@@ -8,9 +8,13 @@
 %% API
 -export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, stop/0, number_variation/3, json_variation/3]).
 
-%% Constants
+-type target() ::
+#{identifier := binary(),
+name := binary(),
+anonymous => boolean(),
+attributes := #{atom() := binary() | atom() | list()}
+}.
 
-%% API
 
 -spec start(ApiKey :: string()) -> ok.
 start(ApiKey) ->
@@ -20,7 +24,7 @@ start(ApiKey) ->
 start(ApiKey, Options) ->
   cfclient_instance:start(ApiKey, Options).
 
--spec bool_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
+-spec bool_variation(FlagKey :: binary() | list(), Target :: target(), Default :: binary()) -> binary().
 bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   bool_variation(list_to_binary(FlagKey), Target, Default);
 bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
@@ -47,7 +51,7 @@ bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
       Default
   end.
 
--spec string_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: binary()) -> binary().
+-spec string_variation(FlagKey :: binary() | list(), Target :: target(), Default :: binary()) -> binary().
 string_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   string_variation(list_to_binary(FlagKey), Target, Default);
 string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
@@ -72,7 +76,7 @@ string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
       Default
   end.
 
--spec number_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: number()) -> number().
+-spec number_variation(FlagKey :: binary() | list(), Target :: target(), Default :: number()) -> number().
 number_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   number_variation(list_to_binary(FlagKey), Target, Default);
 number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
@@ -97,7 +101,7 @@ number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
       Default
   end.
 
--spec json_variation(FlagKey :: binary() | list(), Target :: cfclient_evaluator:target(), Default :: map()) -> map().
+-spec json_variation(FlagKey :: binary() | list(), Target :: target(), Default :: map()) -> map().
 json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   json_variation(list_to_binary(FlagKey), Target, Default);
 json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
@@ -122,6 +126,9 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
       Default
   end.
 
+-spec enqueue_analytics(FlagIdentifier :: binary(), Target :: target(), Variation :: any()) -> atom().
+enqueue_analytics(FlagIdentifier, Target, Variation) ->
+  ads.
 
 -spec retrieve_flags() -> ok.
 retrieve_flags() ->
@@ -140,10 +147,6 @@ retrieve_segments() ->
   RequestConfig = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("config_url")},  params => #{cluster => ClusterID }},
   ClientConfig = {RequestConfig, Environment},
   cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
-
-sanitise_target(Target) ->  SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-  SanitisedName = target_name_to_binary(maps:get(name, Target, <<>>)),
-  Target#{identifier := SanitisedIdentifier, name := SanitisedName}.
 
 target_identifier_to_binary(TargetIdentifier) when is_binary(TargetIdentifier) ->
   TargetIdentifier;
