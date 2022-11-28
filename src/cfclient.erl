@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient).
 
-%% API
+%% API§§
 -export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, stop/0, number_variation/3, json_variation/3]).
 
 -type target() ::
@@ -43,7 +43,7 @@ bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
         enqueue_analytics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, Variation),
         Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default", [FlagKey, SanitisedTarget]),
+        logger:error(logging:evaluation_failed(["Boolean", binary_to_list(FlagKey), binary_to_list(maps:get(identifier, SanitisedTarget))])),
         Default
     end
   catch
