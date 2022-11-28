@@ -75,9 +75,16 @@ stop() ->
 %% Internal functions
 -spec start_children() -> ok.
 start_children() ->
-  %% Start Cache
+  %% Start Feature/Group Cache
   {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
   cfclient_cache_repository:set_pid(CachePID),
+  %% Start Metrics Cache if analytics are enabled.
+  case cfclient_config:get_value(analytics_enabled) of
+    true ->
+      {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+      cfclient_analytics:set_metrics_cache_pid(MetricsCachePID);
+    false -> ok
+  end,
   %% Start Poll Processor
   {ok, PollProcessorPID} = supervisor:start_child(?PARENTSUP, {cfclient_poll_processor_default,{cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
   %% Save the PID for future reference.
