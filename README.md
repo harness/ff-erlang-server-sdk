@@ -21,7 +21,7 @@ For a sample FF Erlang SDK Project for Elixir, see our [test Elixir Project](htt
 
 ## Requirements
 
-[Erlang OTP 22]() or newer (Erlang --version)<br>
+[Erlang OTP 23]() or newer (Erlang --version)<br>
 [rebar3]()<br>
 <br>
 
