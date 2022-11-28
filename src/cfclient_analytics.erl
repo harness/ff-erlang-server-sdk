@@ -8,10 +8,9 @@
 
 -type analytics_config() :: #{enabled := boolean(), push_interval := integer()}.
 
--spec enqueue(FlagIdentifier :: binary(), Target :: target(), Variation :: any()) -> atom().
+-spec enqueue(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any()) -> atom().
 enqueue(FlagIdentifier, Target, Variation) ->
   asd.
-
 
 -spec set_metrics_cache_pid(MetricsCachePID :: pid()) -> ok.
 set_metrics_cache_pid(MetricsCachePID) ->
