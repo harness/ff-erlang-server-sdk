@@ -76,12 +76,12 @@ stop() ->
 -spec start_children() -> ok.
 start_children() ->
   %% Start Feature/Group Cache
-  {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+  {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 10000}]]}, permanent, 5000, worker, ['lru']}),
   cfclient_cache_repository:set_pid(CachePID),
   %% Start Metrics Cache if analytics are enabled.
   case cfclient_config:get_value(analytics_enabled) of
     true ->
-      {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+      {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 2048}]]}, permanent, 5000, worker, ['lru']}),
       cfclient_analytics:set_metrics_cache_pid(MetricsCachePID);
     false -> ok
   end,
