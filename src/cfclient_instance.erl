@@ -10,6 +10,7 @@
 -export([start/1, start/2, get_authtoken/0, get_project_value/1, stop/0]).
 
 -define(DEFAULT_OPTIONS, #{}).
+-define(ERROR_LOGGING_TEMPLATES_PATH, "log-templates/templates/errors/errors.json").
 -define(PARENTSUP, cfclient_sup).
 
 -spec start(ApiKey :: string()) -> ok.
@@ -25,6 +26,7 @@ start(ApiKey, Options) ->
     {ok, AuthToken} ->
       AuthToken,
       parse_project_data(AuthToken),
+      get_logging_templates(?ERROR_LOGGING_TEMPLATES_PATH),
       start_children();
     {not_ok, Error} ->
       {not_ok, Error}
@@ -64,6 +66,12 @@ get_project_value(Key) ->
   {ok, Project} = application:get_env(cfclient, project),
   Value = maps:get(list_to_binary(Key), Project),
   binary_to_list(Value).
+
+%% TODO - using hardcoded path for error logs. Refactor to store all log types under this env variable.
+get_logging_templates(LoggingFilePath) ->
+  {ok, Data} = file:read_file(LoggingFilePath),
+  Templates = jsx:decode(Data, [return_maps, {labels, atom}]),
+  application:set_env(cfclient, logging, Templates).
 
 -spec stop() -> ok | {error, not_found, term()}.
 stop() ->
