@@ -12,12 +12,12 @@ evaluation_failed(Args) ->
   EvaluationErrors = get_evaluation_errors(),
   EvaluationFailed = maps:get(evaluationFailed, EvaluationErrors),
   LogArguments = maps:get(arguments, EvaluationFailed),
-  ParsedErrorString = binary_to_list(maps:get(errorString, EvaluationFailed)) ++ "\n" ++ parse_arguments(LogArguments, Args, "").
+  binary_to_list(maps:get(errorString, EvaluationFailed)) ++ "\n" ++ parse_arguments(LogArguments, Args, "").
 
 
 get_evaluation_errors() ->
   {ok, Logging} = application:get_env(cfclient, logging),
-  EvaluationErrors = maps:get(evaluationErrors, Logging).
+  maps:get(evaluationErrors, Logging).
 
 parse_arguments([Head | Tail], Args, Accu) ->
   String = binary_to_list(maps:get(value, Head)) ++ lists:nth(maps:get(position, Head), Args) ++ "",
