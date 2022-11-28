@@ -6,4 +6,6 @@
 
 -export([]).
 
--type analytics_config() :: #{enabled := boolean(), push_interval := integer()}.
+-spec enqueue(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any()) -> atom().
+enqueue(FlagIdentifier, Target, Variation) ->
+  asd.
