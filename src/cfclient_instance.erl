@@ -79,10 +79,11 @@ start_children() ->
   {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
   cfclient_cache_repository:set_pid(CachePID),
   case cfclient_config:get_value(analytics_enabled) of
-    %% Start two caches to be used by the metrics module.
-    %% 1. A cache for Metrics Data
-    %% 2. A cache for Target data
+    %% If analytics are enabled then we need to start the metrics gen server along with two caches used for metrics.
     true ->
+      %% Start metrics gen server
+      {ok, _} = supervisor:start_child(?PARENTSUP, {cfclient_metrics_default,{cfclient_metrics, start_link, []}, permanent, 5000, worker, ['cfclient_metrics']}),
+      %% Start metrics and metrics targets caches
       {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
       cfclient_metrics:set_metrics_cache_pid(MetricsCachePID),
       {ok, MetricsTargetsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_targets_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
@@ -90,10 +91,8 @@ start_children() ->
     false -> ok
   end,
   %% Start Poll Processor
-  {ok, PollProcessorPID} = supervisor:start_child(?PARENTSUP, {cfclient_poll_processor_default,{cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
+  {ok, _} = supervisor:start_child(?PARENTSUP, {cfclient_poll_processor_default,{cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
   %% Save the PID for future reference.
-  %% TO-DO: Clean this up, b/c this probably isn't necessary
-  application:set_env(cfclient, pollprocessorpid, PollProcessorPID),
   ok.
 
 -spec stop_child(Child :: map()) -> ok.
@@ -105,6 +104,5 @@ stop_child(ChildId) ->
 unset_env() ->
   cfclient_config:clear_config(),
   cfclient_cache_repository:unset_pid(),
-  application:unset_env(cfclient, pollprocessorpid),
   application:unset_env(cfclient, project),
   application:unset_env(cfclient, authtoken).

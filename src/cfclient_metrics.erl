@@ -4,9 +4,25 @@
 %%% @end
 -module(cfclient_metrics).
 
--export([enqueue_metrics/3, set_metrics_cache_pid/1, set_metrics_targets_cache_pid/1]).
+-behaviour(gen_server).
 
--type analytics_config() :: #{enabled := boolean(), push_interval := integer()}.
+-export([start_link/0, enqueue_metrics/3, set_metrics_cache_pid/1, set_metrics_targets_cache_pid/1, init/1, handle_call/3, handle_cast/2]).
+
+-define(SERVER, ?MODULE).
+-record(cfclient_metrics_state, {}).
+
+start_link() ->
+  gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+
+init(Args) ->
+  logger:info("Starting metrics gen server with interval ~pn", [cfclient_config:get_value(analytics_push_interval)]).
+
+handle_call(Request, From, State) ->
+  erlang:error(not_implemented).
+
+handle_cast(Request, State) ->
+  erlang:error(not_implemented).
 
 enqueue_metrics(FlagIdentifier, Target, Variation) ->
   set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()),
@@ -64,3 +80,4 @@ get_metrics_targets_cache_pid() ->
 -spec reset_metrics_cache(MetricsCachePID :: pid()) -> pid().
 reset_metrics_cache(MetricsCachePID) ->
   lru:purge(MetricsCachePID).
+
