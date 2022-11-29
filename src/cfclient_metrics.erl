@@ -6,7 +6,8 @@
 
 -behaviour(gen_server).
 
--export([start_link/0, enqueue_metrics/3, set_metrics_cache_pid/1, set_metrics_targets_cache_pid/1, init/1, handle_call/3, handle_cast/2]).
+-export([start_link/0, enqueue_metrics/3, set_metrics_cache_pid/1, set_metrics_targets_cache_pid/1]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
 -define(SERVER, ?MODULE).
 -record(cfclient_metrics_state, {}).
@@ -14,15 +15,28 @@
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
+init([]) ->
+  interval(),
+  {ok, #cfclient_metrics_state{}}.
 
-init(Args) ->
-  logger:info("Starting metrics gen server with interval ~pn", [cfclient_config:get_value(analytics_push_interval)]).
+handle_call(_Request, _From, State) ->
+  {reply, ok, State}.
 
-handle_call(Request, From, State) ->
-  erlang:error(not_implemented).
+handle_cast(_Request, State) ->
+  {noreply, State}.
 
-handle_cast(Request, State) ->
-  erlang:error(not_implemented).
+handle_info(_Info, State = #cfclient_metrics_state{}) ->
+  interval(),
+  {noreply, State}.
+
+interval() ->
+  AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
+  logger:info("Gathering Analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
+  erlang:send_after(AnalyticsPushInterval, self(), trigger).
+
+post_metrics_and_reset_cache() ->
+  %% 1. Loop through all cached metrics.
+  implement_me.
 
 enqueue_metrics(FlagIdentifier, Target, Variation) ->
   set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()),
@@ -61,17 +75,12 @@ set_metrics_cache_pid(MetricsCachePID) ->
 set_metrics_targets_cache_pid(MetricsTargetsCachePID) ->
   application:set_env(cfclient, metrics_targets_cache_pid, MetricsTargetsCachePID).
 
-
-post_metrics_and_reset_cache() ->
-  %% 1. Loop through all cached metrics.
-  asd.
-
 -spec get_metrics_cache_pid() -> pid().
 get_metrics_cache_pid() ->
   {ok, MetricsCachePID} = application:get_env(cfclient, metrics_cache_pid),
   MetricsCachePID.
 
--spec get_metrics_cache_pid() -> pid().
+-spec get_metrics_targets_cache_pid() -> pid().
 get_metrics_targets_cache_pid() ->
   {ok, MetricsTargetsCachePID} = application:get_env(cfclient, metrics_targets_cache_pid),
   MetricsTargetsCachePID.
@@ -81,3 +90,5 @@ get_metrics_targets_cache_pid() ->
 reset_metrics_cache(MetricsCachePID) ->
   lru:purge(MetricsCachePID).
 
+terminate(_Reason, _State = #cfclient_metrics_state{}) ->
+  ok.
