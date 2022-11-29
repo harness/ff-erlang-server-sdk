@@ -86,7 +86,7 @@ start_children() ->
       {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
       cfclient_metrics:set_metrics_cache_pid(MetricsCachePID),
       {ok, MetricsTargetsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_targets_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_metrics:set_metrics_cache_pid(MetricsTargetsCachePID);
+      cfclient_metrics:set_metrics_targets_cache_pid(MetricsTargetsCachePID);
     false -> ok
   end,
   %% Start Poll Processor

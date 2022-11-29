@@ -4,7 +4,7 @@
 %%% @end
 -module(cfclient_metrics).
 
--export([push_to_cache/3, set_metrics_cache_pid/1, get_metrics_cache_pid/0]).
+-export([push_to_cache/3, set_metrics_cache_pid/1, get_metrics_cache_pid/0, set_metrics_targets_cache_pid/1]).
 
 -type analytics_config() :: #{enabled := boolean(), push_interval := integer()}.
 
