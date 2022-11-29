@@ -17,6 +17,8 @@
 
 evaluations_test_() ->
   {ok, TestFiles} = load_test_files(?TESTS_PATH),
+  %% Load Client Config
+  cfclient_config:init("fake_key", #{}),
   evaluate_test_files(TestFiles, []).
 
 evaluate_test_files([Head | Tail], Accu) ->
