@@ -4,14 +4,12 @@
 %%% @end
 -module(cfclient_metrics).
 
--export([add_to_cache/3, set_metrics_cache_pid/1, get_metrics_cache_pid/0]).
+-export([push_to_cache/3, set_metrics_cache_pid/1, get_metrics_cache_pid/0]).
 
 -type analytics_config() :: #{enabled := boolean(), push_interval := integer()}.
 
-
-
--spec add_to_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any()) -> atom().
-add_to_cache(FlagIdentifier, Target, Variation) ->
+-spec push_to_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any()) -> atom().
+push_to_cache(FlagIdentifier, Target, Variation) ->
   MetricsCachePID = cfclient_metrics:get_metrics_cache_pid(),
   Target1 = #{identifier => "Harness_Target_1",
     name => "HT_1",
@@ -31,6 +29,10 @@ add_to_cache(FlagIdentifier, Target, Variation) ->
 -spec set_metrics_cache_pid(MetricsCachePID :: pid()) -> ok.
 set_metrics_cache_pid(MetricsCachePID) ->
   application:set_env(cfclient, metrics_cache_pid, MetricsCachePID).
+
+post_metrics_and_reset_cache() ->
+  %% 1. Loop through all cached metrics.
+  asd.
 
 -spec get_metrics_cache_pid() -> pid().
 get_metrics_cache_pid() ->
