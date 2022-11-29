@@ -30,6 +30,11 @@ push_to_cache(FlagIdentifier, Target, Variation) ->
 set_metrics_cache_pid(MetricsCachePID) ->
   application:set_env(cfclient, metrics_cache_pid, MetricsCachePID).
 
+-spec set_metrics_targets_cache_pid(MetricsTargetsCachePID :: pid()) -> ok.
+set_metrics_targets_cache_pid(MetricsTargetsCachePID) ->
+  application:set_env(cfclient, metrics_targets_cache_pid, MetricsTargetsCachePID).
+
+
 post_metrics_and_reset_cache() ->
   %% 1. Loop through all cached metrics.
   asd.

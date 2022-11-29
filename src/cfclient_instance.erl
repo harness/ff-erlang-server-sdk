@@ -78,11 +78,15 @@ start_children() ->
   %% Start Feature/Group Cache
   {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
   cfclient_cache_repository:set_pid(CachePID),
-  %% Start Metrics Cache if analytics are enabled.
   case cfclient_config:get_value(analytics_enabled) of
+    %% Start two caches to be used by the metrics module.
+    %% 1. A cache for Metrics Data
+    %% 2. A cache for Target data
     true ->
       {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_metrics:set_metrics_cache_pid(MetricsCachePID);
+      cfclient_metrics:set_metrics_cache_pid(MetricsCachePID),
+      {ok, MetricsTargetsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_targets_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+      cfclient_metrics:set_metrics_cache_pid(MetricsTargetsCachePID);
     false -> ok
   end,
   %% Start Poll Processor
