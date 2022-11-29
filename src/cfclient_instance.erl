@@ -82,7 +82,7 @@ start_children() ->
   case cfclient_config:get_value(analytics_enabled) of
     true ->
       {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_analytics:set_metrics_cache_pid(MetricsCachePID);
+      cfclient_metrics:set_metrics_cache_pid(MetricsCachePID);
     false -> ok
   end,
   %% Start Poll Processor
