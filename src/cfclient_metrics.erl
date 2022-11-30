@@ -47,9 +47,9 @@ post_metrics_and_reset_cache(MetricsCachePID) ->
 enqueue_metrics(FlagIdentifier, Target, Variation) ->
   set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()).
 
+-spec create_metrics_data(MetricsCacheKeys :: list(), any(), any()) -> any().
 create_metrics_data([Head | Tail], MetricsCachePID, Accu) ->
-  %% 1. For each Metric from the cache, parse it into a metrics object and pass it to the Accumulator list.
-  %% Get raw metric from cache and
+  %% Get raw metric from cache and transform it into the shape required by ff-server, then add it to the metrics data list
   Metric = create_metric(lru:get(MetricsCachePID, Head)),
   create_metrics_data(Tail, MetricsCachePID, [Metric | Accu]);
 create_metrics_data([], _, Accu) ->
