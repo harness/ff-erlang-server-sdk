@@ -59,6 +59,16 @@ create_metric_and_target_data([], _, Accu) ->
   Accu.
 
 create_metric(Metric) ->
+  MetricAttributes = [
+    #{
+      key => <<"featureIdentifier">>,
+      value => maps:get(Metric, feature_name)
+    },
+    #{
+      key => <<"featureIdentifierAttribute">>,
+      value => maps:get(Metric, feature_name)
+    }
+  ],
   asd.
 
 create_target(Metric) ->
