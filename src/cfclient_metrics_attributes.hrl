@@ -7,7 +7,6 @@
 -define(SDK_LANGUAGE_ATTRIBUTE, <<"SDK_LANGUAGE">>).
 -define(SDK_VERSION_ATTRIBUTE, <<"SDK_VERSION">>).
 -define(TARGET_ATTRIBUTE, <<"target">>).
--define(TARGET_ATTRIBUTE, <<"target">>).
 %% The only metric attribute value we store a constant for
 -define(TARGET_VALUE, <<"global">>).
 

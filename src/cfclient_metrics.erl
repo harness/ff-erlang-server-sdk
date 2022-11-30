@@ -72,6 +72,10 @@ create_metric(Metric) ->
     #{
       key => ?VARIATION_IDENTIFIER_ATTRIBUTE,
       value => maps:get(Metric, variation)
+    },
+    #{
+      key => ?FEATURE_VALUE_ATTRIBUTE,
+      value => maps:get(Metric, variation)
     }
   ],
   asd.
