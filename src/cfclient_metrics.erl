@@ -8,6 +8,7 @@
 
 -export([start_link/0, enqueue_metrics/3, set_metrics_cache_pid/1, set_metrics_targets_cache_pid/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
+-include("cfclient_metrics_attributes.hrl").
 
 -define(SERVER, ?MODULE).
 -record(cfclient_metrics_state, {}).
@@ -61,12 +62,16 @@ create_metric_and_target_data([], _, Accu) ->
 create_metric(Metric) ->
   MetricAttributes = [
     #{
-      key => <<"featureIdentifier">>,
+      key => ?FEATURE_IDENTIFIER_ATTRIBUTE,
       value => maps:get(Metric, feature_name)
     },
     #{
-      key => <<"featureIdentifierAttribute">>,
+      key => ?FEATURE_NAME_ATTRIBUTE,
       value => maps:get(Metric, feature_name)
+    },
+    #{
+      key => ?VARIATION_IDENTIFIER_ATTRIBUTE,
+      value => maps:get(Metric, variation)
     }
   ],
   asd.
