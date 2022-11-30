@@ -41,22 +41,27 @@ interval() ->
 post_metrics_and_reset_cache(MetricsCachePID) ->
   %% Get all the keys from the cache so we can iterate through the cache and create metrics data
   MetricsCacheKeys = lru:keys(get_metrics_cache_pid()),
-  create_metrics_data(MetricsCacheKeys, MetricsCachePID, []),
+  create_metric_and_target_data(MetricsCacheKeys, MetricsCachePID, []),
   implement_me.
 
 enqueue_metrics(FlagIdentifier, Target, Variation) ->
   set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()).
 
--spec create_metrics_data(MetricsCacheKeys :: list(), any(), any()) -> any().
-create_metrics_data([Head | Tail], MetricsCachePID, Accu) ->
+-spec create_metric_and_target_data(MetricsCacheKeys :: list(), any(), any()) -> any().
+create_metric_and_target_data([Head | Tail], MetricsCachePID, Accu) ->
   %% Get raw metric from cache and transform it into the shape required by ff-server, then add it to the metrics data list
-  Metric = create_metric(lru:get(MetricsCachePID, Head)),
-  create_metrics_data(Tail, MetricsCachePID, [Metric | Accu]);
-create_metrics_data([], _, Accu) ->
+  RawMetric = lru:get(MetricsCachePID, Head),
+  TransformedMetric = create_metric(RawMetric),
+  %% Use the raw metric from the cache to create target data
+  Target = create_target(RawMetric),
+  create_metric_and_target_data(Tail, MetricsCachePID, [TransformedMetric | Accu]);
+create_metric_and_target_data([], _, Accu) ->
   Accu.
 
 create_metric(Metric) ->
+  asd.
 
+create_target(Metric) ->
   asd.
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any(), MetricsCachePID :: pid()) -> atom().
