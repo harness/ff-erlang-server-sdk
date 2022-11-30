@@ -42,6 +42,11 @@ enqueue_metrics(FlagIdentifier, Target, Variation) ->
   set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()),
   set_to_target_cache(Target, get_metrics_targets_cache_pid()).
 
+create_metrics_data() ->
+  %% 1. Get all metrics data from metrics data cache
+  %% 2. Loop through each
+  ads.
+
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, Variation, MetricsCachePID) ->
   %% We want to capture the unique evaluations which are a combination of Flag, Target and Variation.
