@@ -48,12 +48,16 @@ enqueue_metrics(FlagIdentifier, Target, Variation) ->
   set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()).
 
 create_metrics_data([Head | Tail], MetricsCachePID, Accu) ->
-  %% 1. Get all metrics data from metrics data cache
-  %% 2. Loop through each
-  Metric = lru:get(MetricsCachePID, Head),
-  ads;
+  %% 1. For each Metric from the cache, parse it into a metrics object and pass it to the Accumulator list.
+  %% Get raw metric from cache and
+  Metric = create_metric(lru:get(MetricsCachePID, Head)),
+  create_metrics_data(Tail, MetricsCachePID, [Metric | Accu]);
 create_metrics_data([], _, Accu) ->
   Accu.
+
+create_metric(Metric) ->
+
+  asd.
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, Variation, MetricsCachePID) ->
