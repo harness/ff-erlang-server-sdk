@@ -15,6 +15,8 @@
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
+%% TODO - can we use the gen server state to store the cache PID and push interval env variables?
+%% Instead of getting them every time.
 init([]) ->
   interval(),
   {ok, #cfclient_metrics_state{}}.
@@ -32,20 +34,26 @@ handle_info(_Info, State = #cfclient_metrics_state{}) ->
 interval() ->
   AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
   logger:info("Gathering Analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
+  MetricsCachePID = get_metrics_cache_pid(),
+  post_metrics_and_reset_cache(MetricsCachePID),
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
 
-post_metrics_and_reset_cache() ->
-  %% 1. Loop through all cached metrics.
+post_metrics_and_reset_cache(MetricsCachePID) ->
+  %% Get all the keys from the cache so we can iterate through the cache and create metrics data
+  MetricsCacheKeys = lru:keys(get_metrics_cache_pid()),
+  create_metrics_data(MetricsCacheKeys, MetricsCachePID, []),
   implement_me.
 
 enqueue_metrics(FlagIdentifier, Target, Variation) ->
-  set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()),
-  set_to_target_cache(Target, get_metrics_targets_cache_pid()).
+  set_to_metrics_cache(FlagIdentifier, Target, Variation, get_metrics_cache_pid()).
 
-create_metrics_data() ->
+create_metrics_data([Head | Tail], MetricsCachePID, Accu) ->
   %% 1. Get all metrics data from metrics data cache
   %% 2. Loop through each
-  ads.
+  Metric = lru:get(MetricsCachePID, Head),
+  ads;
+create_metrics_data([], _, Accu) ->
+  Accu.
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), Variation :: any(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, Variation, MetricsCachePID) ->
@@ -60,6 +68,7 @@ set_to_metrics_cache(FlagIdentifier, Target, Variation, MetricsCachePID) ->
       ok
   end.
 
+%% TODO - we don't need this. We store Targets in the metrics cache. Need to remove.
 -spec set_to_target_cache(Target :: cfclient:target(), MetricsCachePID :: pid()) -> atom().
 set_to_target_cache(Target, MetricsCachePID) ->
   %% We only want to store unique Targets.
