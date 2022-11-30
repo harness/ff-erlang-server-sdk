@@ -6,7 +6,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/0, enqueue_metrics/4, set_metrics_cache_pid/1, set_metric_targets_cache_pid/1]).
+-export([start_link/0, enqueue_metrics/4, set_metrics_cache_pid/1, set_metrics_target_cache_pid/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 -include("cfclient_metrics_attributes.hrl").
 
@@ -36,43 +36,41 @@ interval() ->
   AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
   logger:info("Gathering Analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
   MetricsCachePID = get_metrics_cache_pid(),
-  post_metrics_and_reset_cache(MetricsCachePID),
+  MetricsTargetCachePID = get_metric_target_cache_pid(),
+  post_metrics(MetricsCachePID, MetricsTargetCachePID),
+  reset_metrics_cache(MetricsCachePID),
+  reset_metric_target_cache(MetricsTargetCachePID),
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
 
-post_metrics_and_reset_cache(MetricsCachePID) ->
-  %% Get all the keys from the cache so we can iterate through the cache and create metrics data
-  MetricsCacheKeys = lru:keys(get_metrics_cache_pid()),
-  create_metric_and_target_data(MetricsCacheKeys, MetricsCachePID, [{#{}, #{}}], sets:new([{version, 2}])),
+post_metrics(MetricsCachePID, MetricsTargetCachePID) ->
+  %% Get all the keys so we can create metrics data
+  MetricsCacheKeys = lru:keys(MetricsCachePID),
+  %% Our metrics target cache can store duplicate targets, so we use a set to get the unique target keys
+  %% Use version 2 set which is backed by a map
+  MetricsTargetCacheKeys = sets:from_list(lru:keys(MetricsTargetCachePID), [{version, 2}]),
+  %% Create the metrics and metrics target data to post to the API
+  MetricsData = create_metrics_data(MetricsCacheKeys, MetricsCachePID, []),
+  MetricsTargetsData = create_metric_target_data(MetricsTargetCacheKeys, MetricsTargetCachePID, []),
   asd.
+
 enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, get_metrics_cache_pid()),
-  set_to_metric_targets_cache(Target, get_metric_targets_cache_pid()).
+  set_to_metric_target_cache(Target, get_metric_target_cache_pid()).
 
-%% Note for me: delete. Keep track of target identifiers we've seen
--spec create_metric_and_target_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Accu :: list(), TargetSetAccu :: any()) -> list().
-create_metric_and_target_data([UniqueEvaluation | Tail], MetricsCachePID, Accu, TargetSetAccu) ->
+-spec create_metrics_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Accu :: list()) -> list().
+create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Accu) ->
   %% Each key is the unique evaluation mapped to its evaluation occurrence count and target
   {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
-  Metric = create_metric(UniqueEvaluation, Count),
-  %% Despite the fact we only store unique evaluations, the targets from those evaluations can be the same (equality is
-  %% based on target identifier). For Target Metric Data, we only want to send unique targets, so we we use an additional accumulator
-  %% which is a set to keep track of the unique target identifiers.
-  CurrentTargetIdentifier = maps:get(identifier, UniqueEvaluationTarget),
-  case sets:is_element(CurrentTargetIdentifier, TargetSetAccu) of
-    %% Only create Target Metric Data if it's a unique target
-    false ->
-      Target = create_target(UniqueEvaluation),
-      create_metric_and_target_data(Tail, MetricsCachePID, [{Metric, Target} | Accu], sets:add_element(CurrentTargetIdentifier, TargetSetAccu));
-    %% If we've already dealt with this Target, then don't create target data for it and just
-    %% update the accumulator with a metrics element
-    true ->
-      %% TODO - note as each element can now have a tuple of either 1 or 2 elements, make sure the caller gets the size somewhere
-      create_metric_and_target_data(Tail, MetricsCachePID, [{Metric} | Accu], sets:add_element(CurrentTargetIdentifier, TargetSetAccu))
-  end;
-create_metric_and_target_data([], _, Accu, _) ->
+  Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count),
+  create_metrics_data(Tail, MetricsCachePID, [Metric | Accu]);
+
+create_metrics_data([], _, Accu) ->
   Accu.
 
-create_metric(UniqueEvaluation, Count) ->
+%% TODO - we are passing in the target here, but so far only using the Global target per ff-server requirements.
+%% however we will want to add an option to the config to disable that global config and use the actual target.
+%% So for the moment the UniqueEvaluationTarget is unreferenced.
+create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count) ->
   MetricAttributes = [
     #{
       key => ?FEATURE_IDENTIFIER_ATTRIBUTE,
@@ -118,16 +116,35 @@ create_metric(UniqueEvaluation, Count) ->
     attributes => MetricAttributes
   }.
 
-create_target(UniqueEvaluation) ->
-  asd.
+create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Accu) ->
+  Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
+  %% Only create a metric for target if it not anonymous
+  Anonymous = target_anonymous_to_binary(maps:get(anonymous, Target, <<"false">>)),
+  case Anonymous of
+    <<"false">> ->
+      ad;
+    <<"true">> ->
+      %% Skip this target is it's anonymous
+      create_metric_target_data([Tail], MetricsTargetCachePID, Accu)
+  end;
+create_metric_target_data([], MetricsTargetCachePID, Accu) -> Accu.
 
--spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier ::binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
+target_anonymous_to_binary(Anonymous) when is_binary(Anonymous) ->
+  Anonymous;
+target_anonymous_to_binary(Anonymous) when is_atom(Anonymous) ->
+  atom_to_binary(Anonymous);
+target_anonymous_to_binary(Anonymous) when is_list(Anonymous) ->
+  list_to_binary(Anonymous).
+
+
+-spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
-  %% We want to capture the unique evaluations which are a combination of Flag, Target and a Variation's value and identifier).
+  %% We want to capture the unique evaluations which are a combination of Flag, Target and a Variation's value and identifier.
   Metric = #{feature_name => FlagIdentifier, variation_identifier => VariationIdentifier, variation_value => VariationValue},
   %% In the cache, we map unique evaluations to two data points
   %% 1. A counter so we can count how many times it has occurred.
-  %% 2. The target for the unique evaluation.
+  %% 2. The target for the unique evaluation. At present, we use the so called Global Target when posting metrics to
+  %% FF-server, but lets cache the actual target as in the future we want to enable real target posting for when we need to debug.
   case lru:contains_or_add(MetricsCachePID, Metric, {1, Target}) of
     {true, _} ->
       {Counter, CachedTarget} = lru:get(MetricsCachePID, Metric),
@@ -136,16 +153,18 @@ set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue
       ok
   end.
 
--spec set_to_metric_targets_cache(Target :: cfclient:target(), MetricTargetsCachePID :: pid()) -> atom().
-set_to_metric_targets_cache(Target, MetricTargetsCachePID) ->
-  %% We only want to store unique Targets.
-  case lru:contains(MetricTargetsCachePID, Target) of
+-spec set_to_metric_target_cache(Target :: cfclient:target(), MetricsTargetCachePID :: pid()) -> atom().
+set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
+  Identifier = maps:get(identifier, Target),
+  %% We only want to store unique Targets. Targets are considered unique if they have different identifiers.
+  %% We achieve this by mapping the identifier to the target it belongs to and checking if it exists before putting it in the cache.
+  case lru:contains(MetricsTargetCachePID, Identifier) of
     true ->
       ok;
     false ->
-      Identifier = maps:get(identifier, Target),
       MetricTarget = #{identifier => Identifier, name => maps:get(name, Target, Identifier), attributes => maps:get(attributes, Target, #{})},
-      lru:add(MetricTargetsCachePID, Target, MetricTarget)
+      %% Key is identifier and value is the target itself
+      lru:add(MetricsTargetCachePID, Identifier, MetricTarget)
   end.
 
 
@@ -153,9 +172,9 @@ set_to_metric_targets_cache(Target, MetricTargetsCachePID) ->
 set_metrics_cache_pid(MetricsCachePID) ->
   application:set_env(cfclient, metrics_cache_pid, MetricsCachePID).
 
--spec set_metrics_cache_pid(MetricTargetsCachePID :: pid()) -> ok.
-set_metric_targets_cache_pid(MetricTargetsCachePID) ->
-  application:set_env(cfclient, metric_targets_cache_pid, MetricTargetsCachePID).
+-spec set_metrics_target_cache_pid(MetricsTargetCachePID :: pid()) -> ok.
+set_metrics_target_cache_pid(MetricsTargetCachePID) ->
+  application:set_env(cfclient, metrics_target_cache_pid, MetricsTargetCachePID).
 
 
 -spec get_metrics_cache_pid() -> pid().
@@ -163,15 +182,18 @@ get_metrics_cache_pid() ->
   {ok, MetricsCachePID} = application:get_env(cfclient, metrics_cache_pid),
   MetricsCachePID.
 
--spec get_metric_targets_cache_pid() -> pid().
-get_metric_targets_cache_pid() ->
-  {ok, MetricTargetsCachePID} = application:get_env(cfclient, metric_targets_cache_pid),
-  MetricTargetsCachePID.
+-spec get_metric_target_cache_pid() -> pid().
+get_metric_target_cache_pid() ->
+  {ok, MetricsTargetCachePID} = application:get_env(cfclient, metrics_target_cache_pid),
+  MetricsTargetCachePID.
 
 %% TODO - have caller do a case for ok and log
 -spec reset_metrics_cache(MetricsCachePID :: pid()) -> pid().
 reset_metrics_cache(MetricsCachePID) ->
   lru:purge(MetricsCachePID).
+
+reset_metric_target_cache(MetricsTargetCachePID) ->
+  lru:purge(MetricsTargetCachePID).
 
 terminate(_Reason, _State = #cfclient_metrics_state{}) ->
   ok.

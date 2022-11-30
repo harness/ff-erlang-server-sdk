@@ -79,13 +79,13 @@ start_children() ->
   {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
   cfclient_cache_repository:set_pid(CachePID),
   case cfclient_config:get_value(analytics_enabled) of
-    %% If analytics are enabled then we need to start the metrics gen server along with two separate caches for metrics and metric targets.
+    %% If analytics are enabled then we need to start the metrics gen server along with two separate caches for metrics and metrics targets.
     true ->
-      %% Start metrics and metric target caches
+      %% Start metrics and metrics target caches
       {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {metrics_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
       cfclient_metrics:set_metrics_cache_pid(MetricsCachePID),
-      {ok, MetricTargetsCachePID} = supervisor:start_child(?PARENTSUP, {metric_targets_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_metrics:set_metric_targets_cache_pid(MetricTargetsCachePID),
+      {ok, MetricsTargetCachePID} = supervisor:start_child(?PARENTSUP, {metrics_target_lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+      cfclient_metrics:set_metrics_target_cache_pid(MetricsTargetCachePID),
       %% Start metrics gen server
       {ok, _} = supervisor:start_child(?PARENTSUP, {cfclient_metrics_default,{cfclient_metrics, start_link, []}, permanent, 5000, worker, ['cfclient_metrics']});
     false -> ok
