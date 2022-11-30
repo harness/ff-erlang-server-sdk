@@ -68,7 +68,7 @@ evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
     <<"json">> ->
       jsx:encode(cfclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
   end,
-  Test = [{FlagIdentifier, ?_assertEqual(maps:get(expected, Head), Result)}],
+  Test = {FlagIdentifier, ?_assertEqual(maps:get(expected, Head), Result)},
   evaluate_tests(Tail, Targets, CachePID, [Test | Accu]);
 evaluate_tests([], _, _, Accu) -> Accu.
 

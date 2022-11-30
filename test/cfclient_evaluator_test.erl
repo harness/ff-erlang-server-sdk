@@ -1,7 +1,7 @@
 -module(cfclient_evaluator_test).
 
 -include_lib("eunit/include/eunit.hrl").
--include("cfclient_evaluator_operators.hrl").
+-include("../src/cfclient_evaluator_operators.hrl").
 variations_test() ->
   %% Target Sample Data
   ExistingTargetA = #{'identifier' => <<"target_identifier_1">>,
@@ -73,15 +73,15 @@ variations_test() ->
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) ->
     cfclient_evaluator_test_data:boolean_flag_off() end),
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) ->
     cfclient_evaluator_test_data:boolean_flag_single_target() end),
   %% Target found
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"true">>, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
 
   %%%%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
@@ -91,17 +91,17 @@ variations_test() ->
                         end),
 
   %% Target excluded
-  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"true">>, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
   %% Target included
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
 
   %% Target included by custom rules
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEndsWith)),
 
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
@@ -111,13 +111,13 @@ variations_test() ->
                           (CacheName, <<"flags/My_boolean_flag">>) ->
                             cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok,true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"true">>, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
   %%-------------------- String Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_string_flag">>) ->
     cfclient_evaluator_test_data:string_flag_off() end),
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
@@ -125,23 +125,23 @@ variations_test() ->
                           (CacheName, <<"flags/My_string_flag">>) ->
                             cfclient_evaluator_test_data:string_flag_target_and_groups()
                         end),  %% Target found
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, NonExistentTarget)),
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   %% Target excluded
-  ?assertEqual({ok, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetExcludedFromGroup)),
 
   %% Target included
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetIncludedFromGroup)),
 
   %% Target included by custom rules
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEndsWith)),
 
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
@@ -151,13 +151,13 @@ variations_test() ->
                           (CacheName, <<"flags/My_string_flag">>) ->
                             cfclient_evaluator_test_data:string_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
 
   %%-------------------- Number Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_cool_number_flag">>) ->
     cfclient_evaluator_test_data:number_flag_off() end),
-  ?assertEqual({ok, 0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_a_zero_int">>, 0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
@@ -166,9 +166,9 @@ variations_test() ->
                             cfclient_evaluator_test_data:number_flag_only_targets()
                         end),
   %% Target found
-  ?assertEqual({ok, 0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_a_zero_int">>,  0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, NonExistentTarget)),
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
@@ -177,17 +177,17 @@ variations_test() ->
                             cfclient_evaluator_test_data:number_flag_only_groups()
                         end),
   %% Target excluded
-  ?assertEqual({ok, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetExcludedFromGroup)),
 
   %% Target Included
-  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetIncludedFromGroup)),
 
   %% Target included by custom rules
-  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEndsWith)),
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
@@ -196,12 +196,12 @@ variations_test() ->
                           (CacheName, <<"flags/My_cool_number_flag">>) ->
                             cfclient_evaluator_test_data:number_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
 
   %%-------------------- JSON Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_off() end),
-  ?assertEqual({ok, #{<<"serveIt">> => <<"no">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
@@ -209,9 +209,9 @@ variations_test() ->
                           (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_targets()
                         end),
   %% Target found
-  ?assertEqual({ok, #{<<"serveIt">> => <<"no">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, NonExistentTarget)),
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
@@ -219,17 +219,17 @@ variations_test() ->
                           (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_groups()
                         end),
   %% Target excluded
-  ?assertEqual({ok, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetExcludedFromGroup)),
 
   %% Target Included
-  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetIncludedFromGroup)),
 
   %% Target Included by custom rules
-  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEndsWith)),
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
@@ -238,7 +238,7 @@ variations_test() ->
                           (CacheName, <<"flags/My_JSON_flag">>) ->
                             cfclient_evaluator_test_data:json_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
 
   meck:unload(lru).
 
@@ -792,9 +792,9 @@ do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
     anonymous => <<"">>
   },
   case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget) of
-    {ok,true} ->
+    {ok, _VariationIdentifier, true} ->
       do_variation_20_times({TrueCounter + 1, FalseCounter + 0}, Counter);
-    {ok, false} ->
+    {ok, _VariationIdentifier, false} ->
       do_variation_20_times({TrueCounter + 0, FalseCounter + 1}, Counter)
   end.
 
