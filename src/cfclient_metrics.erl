@@ -131,7 +131,7 @@ target_anonymous_to_binary(Anonymous) when is_list(Anonymous) ->
   list_to_binary(Anonymous).
 
 combine_metrics_and_target_data(MetricsData, MetricTargetData) ->
-  erlang:error(not_implemented).
+  asd.
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->

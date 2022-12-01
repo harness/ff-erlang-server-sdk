@@ -16,10 +16,6 @@
 
 -record(cfclient_poll_processor_state, {}).
 
-%%%===================================================================
-%%% Spawning and gen_server implementation
-%%%===================================================================
-
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
@@ -50,7 +46,3 @@ terminate(_Reason, _State = #cfclient_poll_processor_state{}) ->
 
 code_change(_OldVsn, State = #cfclient_poll_processor_state{}, _Extra) ->
   {ok, State}.
-
-%%%===================================================================
-%%% Internal functions
-%%%===================================================================
