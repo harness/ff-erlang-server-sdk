@@ -11,16 +11,18 @@
 -include("cfclient_metrics_attributes.hrl").
 
 -define(SERVER, ?MODULE).
--record(cfclient_metrics_state, {}).
+-record(cfclient_metrics_state, {analytics_push_interval, metrics_cache_pid, metric_target_cache_pid}).
 
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-%% TODO - can we use the gen server state to store the cache PID and push interval env variables?
-%% Instead of getting them every time.
 init([]) ->
-  interval(),
-  {ok, #cfclient_metrics_state{}}.
+  AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
+  MetricsCachePID = get_metrics_cache_pid(),
+  MetricTargetCachePID = get_metric_target_cache_pid(),
+  State = #cfclient_metrics_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID},
+  metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
+  {ok, State}.
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
@@ -28,29 +30,22 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
   {noreply, State}.
 
-handle_info(_Info, State = #cfclient_metrics_state{}) ->
-  interval(),
+handle_info(_Info, State = #cfclient_metrics_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID}) ->
+  metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
   {noreply, State}.
 
-interval() ->
-  AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
+metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) ->
   logger:info("Gathering Analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
-  MetricsCachePID = get_metrics_cache_pid(),
-  MetricsTargetCachePID = get_metric_target_cache_pid(),
-  post_metrics(MetricsCachePID, MetricsTargetCachePID),
+  MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, []),
+  MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
+  CombinedData = combine_metrics_and_target_data(MetricsData, MetricTargetData),
+  post_metrics(CombinedData),
   reset_metrics_cache(MetricsCachePID),
-  reset_metric_target_cache(MetricsTargetCachePID),
+  reset_metric_target_cache(MetricTargetCachePID),
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
 
-post_metrics(MetricsCachePID, MetricsTargetCachePID) ->
-  %% Get all the keys so we can create metrics data
-  MetricsCacheKeys = lru:keys(MetricsCachePID),
-  %% Our metrics target cache can store duplicate targets, so we use a set to get the unique target keys
-  %% Use version 2 set which is backed by a map
-  MetricsTargetCacheKeys = sets:from_list(lru:keys(MetricsTargetCachePID), [{version, 2}]),
-  %% Create the metrics and metrics target data to post to the API
-  MetricsData = create_metrics_data(MetricsCacheKeys, MetricsCachePID, []),
-  MetricsTargetsData = create_metric_target_data(MetricsTargetCacheKeys, MetricsTargetCachePID, []),
+post_metrics(CombinedMetricsData) ->
+  %% Get all the keys from the cache so we can iterate through and build out the metrics/metrics target data
   asd.
 
 enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
@@ -63,7 +58,6 @@ create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Accu) ->
   {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
   Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count),
   create_metrics_data(Tail, MetricsCachePID, [Metric | Accu]);
-
 create_metrics_data([], _, Accu) ->
   Accu.
 
@@ -136,6 +130,8 @@ target_anonymous_to_binary(Anonymous) when is_atom(Anonymous) ->
 target_anonymous_to_binary(Anonymous) when is_list(Anonymous) ->
   list_to_binary(Anonymous).
 
+combine_metrics_and_target_data(MetricsData, MetricTargetData) ->
+  erlang:error(not_implemented).
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
@@ -150,7 +146,7 @@ set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue
       {Counter, CachedTarget} = lru:get(MetricsCachePID, Metric),
       lru:add(MetricsCachePID, Metric, {Counter + 1, CachedTarget});
     {false, _} ->
-      ok
+      noop
   end.
 
 -spec set_to_metric_target_cache(Target :: cfclient:target(), MetricsTargetCachePID :: pid()) -> atom().
@@ -160,7 +156,7 @@ set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
   %% We achieve this by mapping the identifier to the target it belongs to and checking if it exists before putting it in the cache.
   case lru:contains(MetricsTargetCachePID, Identifier) of
     true ->
-      ok;
+      noop;
     false ->
       MetricTarget = #{identifier => Identifier, name => maps:get(name, Target, Identifier), attributes => maps:get(attributes, Target, #{})},
       %% Key is identifier and value is the target itself
