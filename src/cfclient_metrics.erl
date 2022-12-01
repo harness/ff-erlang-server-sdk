@@ -117,7 +117,7 @@ create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID
     true ->
       case target_anonymous_to_binary(maps:get(anonymous, Target)) of
         <<"false">> ->
-          ad;
+          MetricTarget = create_metric_target(Target);
         <<"true">> ->
           %% Skip this target is it's anonymous
           logger:debug("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
@@ -126,7 +126,29 @@ create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID
     false ->
       asd
   end;
-create_metric_target_data([], MetricsTargetCachePID, Accu) -> Accu.
+create_metric_target_data([], _, Accu) -> Accu.
+
+create_metric_target(Target) ->
+  Fun =
+    fun(K, V, AccIn) ->
+      Attribute = cfclient_evaluator:custom_attribute_to_binary(V),
+      [#{key => K, value => Attribute} | AccIn]
+    end,
+
+  Attributes = case is_map_key(attributes, Target) of
+    true ->
+      maps:fold(Fun, [], maps:get(attributes, Target));
+    false ->
+      []
+  end,
+
+  Identifier = maps:get(identifier, Target),
+
+  #{
+    identifier => Identifier,
+    name => maps:get(name, Target, Identifier),
+    attributes => Attributes
+  }.
 
 target_anonymous_to_binary(Anonymous) when is_binary(Anonymous) ->
   Anonymous;
