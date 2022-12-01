@@ -36,7 +36,7 @@ handle_info(_Info, State = #cfclient_metrics_state{analytics_push_interval = Ana
 
 metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) ->
   logger:info("Gathering Analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
-  MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, []),
+  MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(second), []),
   MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
   CombinedData = combine_metrics_and_target_data(MetricsData, MetricTargetData),
   post_metrics(CombinedData),
@@ -52,19 +52,19 @@ enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, get_metrics_cache_pid()),
   set_to_metric_target_cache(Target, get_metric_target_cache_pid()).
 
--spec create_metrics_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Accu :: list()) -> list().
-create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Accu) ->
+-spec create_metrics_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Timestamp :: integer(), Accu :: list()) -> list().
+create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Timestamp, Accu) ->
   %% Each key is the unique evaluation mapped to its evaluation occurrence count and target
   {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
-  Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count),
-  create_metrics_data(Tail, MetricsCachePID, [Metric | Accu]);
-create_metrics_data([], _, Accu) ->
+  Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, Timestamp),
+  create_metrics_data(Tail, MetricsCachePID, Timestamp, [Metric | Accu]);
+create_metrics_data([], _, _, Accu) ->
   Accu.
 
 %% TODO - we are passing in the target here, but so far only using the Global target per ff-server requirements.
 %% however we will want to add an option to the config to disable that global config and use the actual target.
 %% So for the moment the UniqueEvaluationTarget is unreferenced.
-create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count) ->
+create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, TimeStamp) ->
   MetricAttributes = [
     #{
       key => ?FEATURE_IDENTIFIER_ATTRIBUTE,
@@ -100,10 +100,8 @@ create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count) ->
     }
   ],
 
-  {_, _, MicroSecs} = erlang:timestamp(),
-
   #{
-    timestamp => MicroSecs * 1000,
+    timestamp => TimeStamp,
     count => Count,
     %% Camel case to honour the API.
     metricsType => ?METRICS_TYPE,
@@ -113,18 +111,14 @@ create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count) ->
 create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Accu) ->
   Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
   %% Only create a metric for target if it not anonymous
-  case is_map_key(anonymous, Target) of
-    true ->
-      case target_anonymous_to_binary(maps:get(anonymous, Target)) of
-        <<"false">> ->
-          MetricTarget = create_metric_target(Target);
-        <<"true">> ->
-          %% Skip this target is it's anonymous
-          logger:debug("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
-          create_metric_target_data([Tail], MetricsTargetCachePID, Accu)
-      end;
-    false ->
-      asd
+  case target_anonymous_to_binary(maps:get(anonymous, Target, <<"false">>)) of
+    <<"false">> ->
+      MetricTarget = create_metric_target(Target),
+      create_metric_target_data(Tail, MetricsTargetCachePID, [MetricTarget | Accu]);
+    <<"true">> ->
+      %% Skip this target is it's anonymous
+      logger:debug("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
+      create_metric_target_data(Tail, MetricsTargetCachePID, Accu)
   end;
 create_metric_target_data([], _, Accu) -> Accu.
 
@@ -136,11 +130,11 @@ create_metric_target(Target) ->
     end,
 
   Attributes = case is_map_key(attributes, Target) of
-    true ->
-      maps:fold(Fun, [], maps:get(attributes, Target));
-    false ->
-      []
-  end,
+                 true ->
+                   maps:fold(Fun, [], maps:get(attributes, Target));
+                 false ->
+                   []
+               end,
 
   Identifier = maps:get(identifier, Target),
 
@@ -162,16 +156,16 @@ combine_metrics_and_target_data(MetricsData, MetricTargetData) ->
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
-  %% We want to capture the unique evaluations which are a combination of Flag, Target and a Variation's value and identifier.
-  Metric = #{feature_name => FlagIdentifier, variation_identifier => VariationIdentifier, variation_value => VariationValue},
+  %% We want to capture the unique evaluations which are a combination of Flag and Variation (which includes the variation value and identifier)
+  Evaluation = #{feature_name => FlagIdentifier, variation_identifier => VariationIdentifier, variation_value => VariationValue},
   %% In the cache, we map unique evaluations to two data points
   %% 1. A counter so we can count how many times it has occurred.
   %% 2. The target for the unique evaluation. At present, we use the so called Global Target when posting metrics to
   %% FF-server, but lets cache the actual target as in the future we want to enable real target posting for when we need to debug.
-  case lru:contains_or_add(MetricsCachePID, Metric, {1, Target}) of
+  case lru:contains_or_add(MetricsCachePID, Evaluation, {1, Target}) of
     {true, _} ->
-      {Counter, CachedTarget} = lru:get(MetricsCachePID, Metric),
-      lru:add(MetricsCachePID, Metric, {Counter + 1, CachedTarget});
+      {Counter, CachedTarget} = lru:get(MetricsCachePID, Evaluation),
+      lru:add(MetricsCachePID, Evaluation, {Counter + 1, CachedTarget});
     {false, _} ->
       noop
   end.

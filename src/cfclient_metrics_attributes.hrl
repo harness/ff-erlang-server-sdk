@@ -19,3 +19,156 @@
 -define(SDK_LANGUAGE_ATTRIBUTE_VALUE, <<"erlang">>).
 -define(TARGET_GLOBAL_IDENTIFIER, <<"__global__cf_target">>).
 
+temp2() ->
+  Expected = [#{attributes =>
+  [#{key =>
+  <<"featureIdentifier">>,
+    value =>
+    <<"flag1">>},
+    #{key =>
+    <<"featureName">>,
+      value =>
+      <<"flag1">>},
+    #{key =>
+    <<"target">>,
+      value =>
+      <<"__global__cf_target">>},
+    #{key =>
+    <<"variationIdentifier">>,
+      value =>
+      <<"true">>},
+    #{key =>
+    <<"variationValue">>,
+      value =>
+      <<"true">>},
+    #{key =>
+    <<"SDK_VERSION">>,
+      value =>
+      <<"1.0.0">>},
+    #{key =>
+    <<"SDK_TYPE">>,
+      value =>
+      <<"server">>},
+    #{key =>
+    <<"SDK_LANGUAGE">>,
+      value =>
+      <<"erlang">>}],
+    count => 1,
+    metricsType =>
+    <<"FFMETRICS">>,
+    timestamp =>
+    1669982360},
+    #{attributes =>
+    [#{key =>
+    <<"featureIdentifier">>,
+      value =>
+      <<"flag1">>},
+      #{key =>
+      <<"featureName">>,
+        value =>
+        <<"flag1">>},
+      #{key =>
+      <<"target">>,
+        value =>
+        <<"__global__cf_target">>},
+      #{key =>
+      <<"variationIdentifier">>,
+        value =>
+        <<"false">>},
+      #{key =>
+      <<"variationValue">>,
+        value =>
+        <<"false">>},
+      #{key =>
+      <<"SDK_VERSION">>,
+        value =>
+        <<"1.0.0">>},
+      #{key =>
+      <<"SDK_TYPE">>,
+        value =>
+        <<"server">>},
+      #{key =>
+      <<"SDK_LANGUAGE">>,
+        value =>
+        <<"erlang">>}],
+      count => 1,
+      metricsType =>
+      <<"FFMETRICS">>,
+      timestamp =>
+      1669982360}].
+
+
+
+
+temp() ->
+  Actual = [#{attributes =>
+  [#{key =>
+  <<"featureIdentifier">>,
+    value =>
+    <<"flag1">>},
+    #{key =>
+    <<"featureName">>,
+      value =>
+      <<"flag1">>},
+    #{key => <<"target">>,
+      value =>
+      <<"__global__cf_target">>},
+    #{key =>
+    <<"variationIdentifier">>,
+      value =>
+      <<"false">>},
+    #{key =>
+    <<"variationValue">>,
+      value =>
+      <<"false">>},
+    #{key =>
+    <<"SDK_VERSION">>,
+      value =>
+      <<"1.0.0">>},
+    #{key =>
+    <<"SDK_TYPE">>,
+      value =>
+      <<"server">>},
+    #{key =>
+    <<"SDK_LANGUAGE">>,
+      value =>
+      <<"erlang">>}],
+    count => 1,
+    metricsType =>
+    <<"FFMETRICS">>,
+    timestamp => 1669982360}
+    ,
+    #{attributes =>
+    [#{key =>
+    <<"featureIdentifier">>,
+      value =>
+      <<"flag1">>},
+      #{key =>
+      <<"featureName">>,
+        value =>
+        <<"flag1">>},
+      #{key => <<"target">>,
+        value =>
+        <<"__global__cf_target">>},
+      #{key =>
+      <<"variationIdentifier">>,
+        value => <<"true">>},
+      #{key =>
+      <<"variationValue">>,
+        value => <<"true">>},
+      #{key =>
+      <<"SDK_VERSION">>,
+        value =>
+        <<"1.0.0">>},
+      #{key =>
+      <<"SDK_TYPE">>,
+        value =>
+        <<"server">>},
+      #{key =>
+      <<"SDK_LANGUAGE">>,
+        value =>
+        <<"erlang">>}],
+      count => 1,
+      metricsType =>
+      <<"FFMETRICS">>,
+      timestamp => 1669982360}].
