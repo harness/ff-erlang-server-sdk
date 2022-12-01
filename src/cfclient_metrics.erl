@@ -113,13 +113,18 @@ create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count) ->
 create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Accu) ->
   Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
   %% Only create a metric for target if it not anonymous
-  Anonymous = target_anonymous_to_binary(maps:get(anonymous, Target, <<"false">>)),
-  case Anonymous of
-    <<"false">> ->
-      ad;
-    <<"true">> ->
-      %% Skip this target is it's anonymous
-      create_metric_target_data([Tail], MetricsTargetCachePID, Accu)
+  case is_map_key(anonymous, Target) of
+    true ->
+      case target_anonymous_to_binary(maps:get(anonymous, Target)) of
+        <<"false">> ->
+          ad;
+        <<"true">> ->
+          %% Skip this target is it's anonymous
+          logger:debug("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
+          create_metric_target_data([Tail], MetricsTargetCachePID, Accu)
+      end;
+    false ->
+      asd
   end;
 create_metric_target_data([], MetricsTargetCachePID, Accu) -> Accu.
 
