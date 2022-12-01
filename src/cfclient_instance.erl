@@ -76,16 +76,7 @@ get_project_value(Key) ->
 -spec stop() -> ok | {error, not_found, term()}.
 stop() ->
   logger:debug("Stopping client"),
-  stop_child(?POLL_PROCESSOR_CHILD_REF),
-  case cfclient_config:get_value(analytics_enabled) of
-    true ->
-      stop_child(?METRICS_GEN_SERVER_CHILD_REF),
-      stop_child(?METRICS_CACHE_CHILD_REF),
-      stop_child(?METRIC_TARGET_CACHE_CHILD_REF);
-    false ->
-      noop
-  end,
-  stop_child(?LRU_CACHE_CHILD_REF),
+  stop_children(supervisor:which_children(?PARENTSUP)),
   unset_application_environment(application:get_all_env(cfclient)).
 
 %% Internal functions
@@ -111,10 +102,13 @@ start_children() ->
   %% Save the PID for future reference.
   ok.
 
--spec stop_child(Child :: map()) -> ok.
-stop_child(ChildId) ->
-  supervisor:terminate_child(?PARENTSUP, ChildId),
-  supervisor:delete_child(?PARENTSUP, ChildId).
+-spec stop_children(Children :: list()) -> ok.
+stop_children([{Id, _, _, _} | Tail]) ->
+  supervisor:terminate_child(?PARENTSUP, Id),
+  supervisor:delete_child(?PARENTSUP, Id),
+  stop_children(Tail);
+stop_children([]) -> ok.
+
 
 -spec unset_application_environment(CfClientEnvironmentVariables :: list()) -> ok.
 unset_application_environment([{Key, _} | Tail]) ->
