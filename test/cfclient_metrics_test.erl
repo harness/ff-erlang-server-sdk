@@ -129,8 +129,7 @@ create_metric_data_test() ->
   ],
 
 
-  Expected = cfclient_metrics:create_metrics_data([UniqueEvaluation1, UniqueEvaluation2], CachePID, Timestamp, []),
-  ?assertEqual(ExpectedMetrics, Expected),
+  ?assertEqual(ExpectedMetrics, cfclient_metrics:create_metrics_data([UniqueEvaluation1, UniqueEvaluation2], CachePID, Timestamp, [])),
 
   lru:stop(CachePID).
 
@@ -235,18 +234,6 @@ create_metric_target_data_test() ->
   meck:sequence(lru, get, 2, [AnonymousTarget1, AnonymousTarget2, AnonymousTarget3]),
 
   ?assertEqual([], cfclient_metrics:create_metric_target_data(UnusedKeys, UnusedCachePID, [])).
-
-
-%%%% helper function that allows us to compare list equality for metric data
-%%sort_metric_list(MetricsData) ->
-%%  lists:sort(
-%%    fun(A, B) ->
-%%      Attributes = maps:get(attributes, A),
-%%      fun(A,B) ->
-%%        maps:get(key, A) =< maps:get(key, B)
-%%      end, Attributes
-%%    end, MetricsData).
-
 
 %% helper function that allows us to compare list equality for metric target data
 sort_metric_target_list(MetricTargetData) ->

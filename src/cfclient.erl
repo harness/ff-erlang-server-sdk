@@ -40,7 +40,7 @@ bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:bool_variation(FlagKey, SanitisedTarget) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, Variation),
+        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, atom_to_binary(Variation)),
         Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, SanitisedTarget, Default]),
@@ -67,7 +67,7 @@ string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:string_variation(FlagKey, SanitisedTarget) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, Variation),
+        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(Variation)),
         Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
@@ -94,7 +94,7 @@ number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:number_variation(FlagKey, SanitisedTarget) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, Variation),
+        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(mochinum:digits(Variation))),
         Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
@@ -121,7 +121,7 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:json_variation(FlagKey, SanitisedTarget) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, Variation),
+        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, jsx:encode(Variation)),
         Variation;
       not_ok ->
         logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),

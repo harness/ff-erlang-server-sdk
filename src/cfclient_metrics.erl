@@ -35,18 +35,40 @@ handle_info(_Info, State = #cfclient_metrics_state{analytics_push_interval = Ana
   {noreply, State}.
 
 metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) ->
-  logger:info("Gathering Analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
-  MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(second), []),
+  logger:info("Gathering and sending analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
+  MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(millisecond), []),
   MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
-  CombinedData = combine_metrics_and_target_data(MetricsData, MetricTargetData),
-  post_metrics(CombinedData),
-  reset_metrics_cache(MetricsCachePID),
-  reset_metric_target_cache(MetricTargetCachePID),
+  case post_metrics(MetricsData, MetricTargetData) of
+    %% Only reset the cache if there were unique evaluation events this interval
+    {ok, Response} ->
+      logger:info("Successfully posted metric to ff-server: ~p~n: ",[Response]),
+      reset_metrics_cache(MetricsCachePID),
+      reset_metric_target_cache(MetricTargetCachePID);
+    noop ->
+      logger:info("No metrics to post for this Analytics interval"),
+      noop;
+    %% We've already logged an error fro
+    {not_ok, Response} ->
+      logger:error("Error recieved from ff-server when posting metrics: ~p~n", [Response]),
+      not_ok
+  end,
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
 
-post_metrics(CombinedMetricsData) ->
-  %% Get all the keys from the cache so we can iterate through and build out the metrics/metrics target data
-  asd.
+%% Don't sent a request to the API if no metrics gathered this interval
+post_metrics([], []) ->
+  noop;
+post_metrics(MetricsData, MetricTargetData) ->
+  AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
+  Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
+  ClusterID = cfclient_instance:get_project_value("clusterIdentifier"),
+  ClusterMap = #{cluster => ClusterID},
+  RequestConfig = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("events_url")},  params => #{ metricsData => MetricsData, targetData => MetricTargetData }},
+  case cfapi_metrics_api:post_metrics(ctx:new(), ClusterMap, Environment, RequestConfig) of
+    {ok, Response, _} ->
+      {ok, Response};
+    {error, Response, _} ->
+      {not_ok, Response}
+  end.
 
 enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, get_metrics_cache_pid()),
@@ -111,7 +133,7 @@ create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, TimeStamp) ->
 create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Accu) ->
   Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
   %% Only create a metric for target if it not anonymous
-  case target_anonymous_to_binary(maps:get(anonymous, Target, <<"false">>)) of
+  case value_to_binary(maps:get(anonymous, Target, <<"false">>)) of
     <<"false">> ->
       MetricTarget = create_metric_target(Target),
       create_metric_target_data(Tail, MetricsTargetCachePID, [MetricTarget | Accu]);
@@ -123,7 +145,7 @@ create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID
 create_metric_target_data([], _, Accu) -> Accu.
 
 create_metric_target(Target) ->
-  Fun =
+  F =
     fun(K, V, AccIn) ->
       Attribute = cfclient_evaluator:custom_attribute_to_binary(V),
       [#{key => K, value => Attribute} | AccIn]
@@ -131,28 +153,26 @@ create_metric_target(Target) ->
 
   Attributes = case is_map_key(attributes, Target) of
                  true ->
-                   maps:fold(Fun, [], maps:get(attributes, Target));
+                   maps:fold(F, [], maps:get(attributes, Target));
                  false ->
                    []
                end,
 
   Identifier = maps:get(identifier, Target),
+  Name = maps:get(name, Target, Identifier),
 
   #{
     identifier => Identifier,
-    name => maps:get(name, Target, Identifier),
+    name => Name,
     attributes => Attributes
   }.
 
-target_anonymous_to_binary(Anonymous) when is_binary(Anonymous) ->
-  Anonymous;
-target_anonymous_to_binary(Anonymous) when is_atom(Anonymous) ->
-  atom_to_binary(Anonymous);
-target_anonymous_to_binary(Anonymous) when is_list(Anonymous) ->
-  list_to_binary(Anonymous).
-
-combine_metrics_and_target_data(MetricsData, MetricTargetData) ->
-  asd.
+value_to_binary(Value) when is_binary(Value) ->
+  Value;
+value_to_binary(Value) when is_atom(Value) ->
+  atom_to_binary(Value);
+value_to_binary(Value) when is_list(Value) ->
+  list_to_binary(Value).
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
@@ -204,7 +224,6 @@ get_metric_target_cache_pid() ->
   {ok, MetricsTargetCachePID} = application:get_env(cfclient, metrics_target_cache_pid),
   MetricsTargetCachePID.
 
-%% TODO - have caller do a case for ok and log
 -spec reset_metrics_cache(MetricsCachePID :: pid()) -> pid().
 reset_metrics_cache(MetricsCachePID) ->
   lru:purge(MetricsCachePID).
