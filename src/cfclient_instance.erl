@@ -99,7 +99,6 @@ start_children() ->
   end,
   %% Start Poll Processor
   {ok, _} = supervisor:start_child(?PARENTSUP, {?POLL_PROCESSOR_CHILD_REF, {cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
-  %% Save the PID for future reference.
   ok.
 
 -spec stop_children(Children :: list()) -> ok.

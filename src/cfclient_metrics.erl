@@ -39,7 +39,6 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
   MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(millisecond), []),
   MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
   case post_metrics(MetricsData, MetricTargetData) of
-    %% Only reset the cache if there were unique evaluation events this interval
     {ok, Response} ->
       logger:info("Successfully posted metric to ff-server: ~p~n: ",[Response]),
       reset_metrics_cache(MetricsCachePID),
@@ -47,7 +46,6 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
     noop ->
       logger:info("No metrics to post for this Analytics interval"),
       noop;
-    %% We've already logged an error fro
     {not_ok, Response} ->
       logger:error("Error recieved from ff-server when posting metrics: ~p~n", [Response]),
       not_ok
