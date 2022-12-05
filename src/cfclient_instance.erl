@@ -12,6 +12,14 @@
 -define(DEFAULT_OPTIONS, #{}).
 -define(PARENTSUP, cfclient_sup).
 
+%% Child references
+-define(POLL_PROCESSOR_CHILD_REF, cfclient_poll_processor).
+-define(LRU_CACHE_CHILD_REF, cfclient_lru).
+-define(METRICS_GEN_SERVER_CHILD_REF, cfclient_metrics).
+-define(METRICS_CACHE_CHILD_REF, cfclient_metrics_lru).
+-define(METRIC_TARGET_CACHE_CHILD_REF, cfclient_metrics_target_lru).
+
+
 -spec start(ApiKey :: string()) -> ok.
 start(ApiKey) ->
   start(ApiKey, ?DEFAULT_OPTIONS).
@@ -33,7 +41,7 @@ start(ApiKey, Options) ->
 
 -spec connect(ApiKey :: string()) -> string() | {error, connect_failure, term()}.
 connect(ApiKey) ->
-  Opts = #{ cfg => #{host => cfclient_config:get_value(config_url)}, params => #{ apiKey => list_to_binary(ApiKey) }},
+  Opts = #{cfg => #{host => cfclient_config:get_value(config_url)}, params => #{apiKey => list_to_binary(ApiKey)}},
   {_Status, ResponseBody, _Headers} = cfapi_client_api:authenticate(ctx:new(), Opts),
   case cfapi_client_api:authenticate(ctx:new(), Opts) of
     {ok, ResponseBody, _} ->
@@ -68,32 +76,44 @@ get_project_value(Key) ->
 -spec stop() -> ok | {error, not_found, term()}.
 stop() ->
   logger:debug("Stopping client"),
-  stop_child(cfclient_poll_processor_default),
-  stop_child(lru),
-  unset_env().
+  stop_children(supervisor:which_children(?PARENTSUP)),
+  unset_application_environment(application:get_all_env(cfclient)).
 
 %% Internal functions
 -spec start_children() -> ok.
 start_children() ->
-  %% Start Cache
-  {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru,{lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+  %% Start Feature/Group Cache
+  {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
   cfclient_cache_repository:set_pid(CachePID),
+  case cfclient_config:get_value(analytics_enabled) of
+    %% If analytics are enabled then we need to start the metrics gen server along with two separate caches for metrics and metrics targets.
+    true ->
+      %% Start metrics and metrics target caches
+      {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {?METRICS_CACHE_CHILD_REF, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+      cfclient_metrics:set_metrics_cache_pid(MetricsCachePID),
+      {ok, MetricsTargetCachePID} = supervisor:start_child(?PARENTSUP, {?METRIC_TARGET_CACHE_CHILD_REF, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
+      cfclient_metrics:set_metrics_target_cache_pid(MetricsTargetCachePID),
+      %% Start metrics gen server
+      {ok, _} = supervisor:start_child(?PARENTSUP, {?METRICS_GEN_SERVER_CHILD_REF, {cfclient_metrics, start_link, []}, permanent, 5000, worker, ['cfclient_metrics']});
+    false -> ok
+  end,
   %% Start Poll Processor
-  {ok, PollProcessorPID} = supervisor:start_child(?PARENTSUP, {cfclient_poll_processor_default,{cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
-  %% Save the PID for future reference.
-  %% TO-DO: Clean this up, b/c this probably isn't necessary
-  application:set_env(cfclient, pollprocessorpid, PollProcessorPID),
+  {ok, _} = supervisor:start_child(?PARENTSUP, {?POLL_PROCESSOR_CHILD_REF, {cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
   ok.
 
--spec stop_child(Child :: map()) -> ok.
-stop_child(ChildId) ->
-  supervisor:terminate_child(?PARENTSUP, ChildId),
-  supervisor:delete_child(?PARENTSUP, ChildId).
+-spec stop_children(Children :: list()) -> ok.
+stop_children([{Id, _, _, _} | Tail]) ->
+  supervisor:terminate_child(?PARENTSUP, Id),
+  supervisor:delete_child(?PARENTSUP, Id),
+  stop_children(Tail);
+stop_children([]) -> ok.
 
--spec unset_env() -> ok.
-unset_env() ->
-  cfclient_config:clear_config(),
-  cfclient_cache_repository:unset_pid(),
-  application:unset_env(cfclient, pollprocessorpid),
-  application:unset_env(cfclient, project),
-  application:unset_env(cfclient, authtoken).
+
+-spec unset_application_environment(CfClientEnvironmentVariables :: list()) -> ok.
+unset_application_environment([{Key, _} | Tail]) ->
+  application:unset_env(cfclient, Key),
+  unset_application_environment(Tail);
+unset_application_environment([]) -> ok.
+
+
+

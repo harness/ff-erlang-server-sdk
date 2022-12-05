@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
--export([get_from_cache/2, set_to_cache/3, set_pid/1, get_pid/0, unset_pid/0]).
+-export([get_from_cache/2, set_to_cache/3, set_pid/1, get_pid/0]).
 
 -type flag() :: {flag, Identifier :: binary()}.
 -type segment() :: {segment, Identifier :: binary()}.
@@ -80,6 +80,3 @@ get_pid() ->
   {ok, Pid} = application:get_env(cfclient, cachepid),
   Pid.
 
--spec unset_pid() -> ok.
-unset_pid() ->
-  application:unset_env(cfclient, cachepid).

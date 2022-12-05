@@ -5,7 +5,7 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_evaluator).
 
--export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2]).
+-export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2, custom_attribute_to_binary/1]).
 -include("cfclient_evaluator_operators.hrl").
 
 -spec evaluate(FlagIdentifier :: binary(), Target :: cfclient:target()) -> {ok, binary()} | not_ok.
@@ -17,8 +17,8 @@ evaluate(FlagIdentifier, Target) ->
       not_ok;
     Flag ->
       case evaluate_flag(Flag, Target, off) of
-        {ok, _VariationIdentifier, VariationValue} ->
-          {ok, VariationValue};
+        {ok, VariationIdentifier, VariationValue} ->
+          {ok, VariationIdentifier, VariationValue};
         not_ok ->
           not_ok
       end
@@ -391,16 +391,17 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
 -spec bool_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
-    {ok, Variation} ->
-      {ok, binary_to_list(Variation) == "true"};
+    {ok, VariationIdentifier, Variation} ->
+      %% TODO - don't think we need to convert to list here. Just compare binaries.
+      {ok, VariationIdentifier, binary_to_list(Variation) == "true"};
     not_ok -> not_ok
   end.
 
 -spec string_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, string()} | not_ok.
 string_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
-    {ok, Variation} ->
-      {ok, binary_to_list(Variation)};
+    {ok, VariationIdentifier, Variation} ->
+      {ok, VariationIdentifier, binary_to_list(Variation)};
     not_ok -> not_ok
   end.
 
@@ -408,10 +409,10 @@ string_variation(FlagIdentifier, Target) ->
 -spec number_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, number()} | not_ok.
 number_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
-    {ok, Variation} ->
-      try {ok, binary_to_float(Variation)}
+    {ok, VariationIdentifier, Variation} ->
+      try {ok, VariationIdentifier, binary_to_float(Variation)}
       catch
-        error:badarg -> {ok, binary_to_integer(Variation)}
+        error:badarg -> {ok, VariationIdentifier, binary_to_integer(Variation)}
       end;
     not_ok -> not_ok
   end.
@@ -420,9 +421,9 @@ number_variation(FlagIdentifier, Target) ->
 -spec json_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, map()} | not_ok.
 json_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
-    {ok, Variation} ->
+    {ok, VariationIdentifier, Variation} ->
       try
-        {ok, jsx:decode(Variation, [])}
+        {ok, VariationIdentifier, jsx:decode(Variation, [])}
       catch
         error:badarg ->
           logger:error("Error when decoding Json variation. Not returning variation for: ~p~n", [Variation]),

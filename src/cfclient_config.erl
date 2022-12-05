@@ -18,7 +18,7 @@
 -define(DEFAULT_POLL_INTERVAL, 60000). %% interval in milliseconds for polling data from CF Server
 -define(DEFAULT_STREAM_ENABLED, true). %% boolean for enabling events stream
 -define(DEFAULT_ANALYTICS_ENABLED, true). %% boolean for enabling analytics send to CF Server
--define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000). %% interval for pushing metrics to CF Server
+-define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000). 
 
 -spec init(ApiKey :: string(), Opts :: map()) -> ok.
 init(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->

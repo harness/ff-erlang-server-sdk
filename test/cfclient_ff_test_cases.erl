@@ -17,6 +17,8 @@
 
 evaluations_test_() ->
   {ok, TestFiles} = load_test_files(?TESTS_PATH),
+  %% Disable analytics as we call the public variation functions.
+  cfclient_config:init("fake_key", #{analytics_enabled => false}),
   evaluate_test_files(TestFiles, []).
 
 evaluate_test_files([Head | Tail], Accu) ->
@@ -66,7 +68,7 @@ evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
     <<"json">> ->
       jsx:encode(cfclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
   end,
-  Test = [{FlagIdentifier, ?_assertEqual(maps:get(expected, Head), Result)}],
+  Test = {FlagIdentifier, ?_assertEqual(maps:get(expected, Head), Result)},
   evaluate_tests(Tail, Targets, CachePID, [Test | Accu]);
 evaluate_tests([], _, _, Accu) -> Accu.
 
