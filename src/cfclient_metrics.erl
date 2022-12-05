@@ -40,7 +40,7 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
   MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
   case post_metrics(MetricsData, MetricTargetData) of
     {ok, Response} ->
-      logger:info("Successfully posted metric to ff-server: ~p~n: ",[Response]),
+      logger:info("Successfully posted metric to ff-server: ~p~n: ", [Response]),
       reset_metrics_cache(MetricsCachePID),
       reset_metric_target_cache(MetricTargetCachePID);
     noop ->
@@ -60,7 +60,7 @@ post_metrics(MetricsData, MetricTargetData) ->
   Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
   ClusterID = cfclient_instance:get_project_value("clusterIdentifier"),
   ClusterMap = #{cluster => ClusterID},
-  RequestConfig = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("events_url")},  params => #{ metricsData => MetricsData, targetData => MetricTargetData }},
+  RequestConfig = #{cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("events_url")}, params => #{metricsData => MetricsData, targetData => MetricTargetData}},
   case cfapi_metrics_api:post_metrics(ctx:new(), ClusterMap, Environment, RequestConfig) of
     {ok, Response, _} ->
       {ok, Response};
@@ -130,16 +130,8 @@ create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, TimeStamp) ->
 
 create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Accu) ->
   Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
-  %% Only create a metric for target if it not anonymous
-  case value_to_binary(maps:get(anonymous, Target, <<"false">>)) of
-    <<"false">> ->
       MetricTarget = create_metric_target(Target),
       create_metric_target_data(Tail, MetricsTargetCachePID, [MetricTarget | Accu]);
-    <<"true">> ->
-      %% Skip this target is it's anonymous
-      logger:debug("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
-      create_metric_target_data(Tail, MetricsTargetCachePID, Accu)
-  end;
 create_metric_target_data([], _, Accu) -> Accu.
 
 create_metric_target(Target) ->
@@ -190,15 +182,22 @@ set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue
 
 -spec set_to_metric_target_cache(Target :: cfclient:target(), MetricsTargetCachePID :: pid()) -> atom().
 set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
-  Identifier = maps:get(identifier, Target),
-  %% We only want to store unique Targets. Targets are considered unique if they have different identifiers.
-  %% We achieve this by mapping the identifier to the target it belongs to and checking if it exists before putting it in the cache.
-  case lru:contains(MetricsTargetCachePID, Identifier) of
-    true ->
-      noop;
-    false ->
-      %% Key is identifier and value is the target itself
-      lru:add(MetricsTargetCachePID, Identifier, Target)
+  %% Only store target if it's not anymous.
+  case value_to_binary(maps:get(anonymous, Target, <<"false">>)) of
+    <<"false">> ->
+      Identifier = maps:get(identifier, Target),
+      %% We only want to store unique Targets. Targets are considered unique if they have different identifiers.
+      %% We achieve this by mapping the identifier to the target it belongs to and checking if it exists before putting it in the cache.
+      case lru:contains(MetricsTargetCachePID, Identifier) of
+        true ->
+          noop;
+        false ->
+          %% Key is identifier and value is the target itself
+          lru:add(MetricsTargetCachePID, Identifier, Target)
+      end;
+    <<"true">> ->
+      logger:debug("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
+      noop
   end.
 
 
