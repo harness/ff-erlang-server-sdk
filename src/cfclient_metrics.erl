@@ -197,9 +197,8 @@ set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
     true ->
       noop;
     false ->
-      MetricTarget = #{identifier => Identifier, name => maps:get(name, Target, Identifier), attributes => maps:get(attributes, Target, #{})},
       %% Key is identifier and value is the target itself
-      lru:add(MetricsTargetCachePID, Identifier, MetricTarget)
+      lru:add(MetricsTargetCachePID, Identifier, Target)
   end.
 
 
