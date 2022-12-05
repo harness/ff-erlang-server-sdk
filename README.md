@@ -99,7 +99,7 @@ Varaion for Flag "harnessappdemodarkmode" witih Target "Harness_Target_1" is: tr
 You can use the `attributes` map to provide custom attributes. If the Target isn't anonymous, the attributes will shortly appear in the Harness UI after an evaluation using the Target. You can create [Group Rules](https://docs.harness.io/article/5qz1qrugyk-add-target-groups) based on these attributes.
 
 Note: `attribute` keys must be `atoms` and the values must either be `bitstrings` or `atoms`, or if using
-a `list` then each element must be either `bitstrings` or `atoms` 
+a `list` then each element must be either `bitstrings` or `atoms`
 
 ```Erlang
   TargetBetaGroup = #{'identifier' => <<"my_target">>,
