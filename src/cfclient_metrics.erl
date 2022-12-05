@@ -182,7 +182,7 @@ set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue
 
 -spec set_to_metric_target_cache(Target :: cfclient:target(), MetricsTargetCachePID :: pid()) -> atom().
 set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
-  %% Only store target if it's not anymous.
+  %% Only store target if it's not anonymous.
   case value_to_binary(maps:get(anonymous, Target, <<"false">>)) of
     <<"false">> ->
       Identifier = maps:get(identifier, Target),
