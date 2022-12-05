@@ -128,9 +128,11 @@ create_metric_data_test() ->
     }
   ],
 
-
   ?assertEqual(ExpectedMetrics, cfclient_metrics:create_metrics_data([UniqueEvaluation1, UniqueEvaluation2], CachePID, Timestamp, [])),
 
+  %%-------------------- No Unique Evaluations --------------------
+  ?assertEqual([], cfclient_metrics:create_metrics_data([], CachePID, Timestamp, [])),
+  
   lru:stop(CachePID).
 
 
@@ -203,37 +205,8 @@ create_metric_target_data_test() ->
   ],
   ?assertEqual(ExpectedMetricTargetData, sort_metric_target_list(cfclient_metrics:create_metric_target_data(UnusedKeys, UnusedCachePID, []))),
 
-%%-------------------- Three Public Targets and One Anonymous --------------------
-  AnonymousTarget1 = #{'identifier' => <<"target_999">>,
-    name => <<"target_name_999">>,
-    anonymous => <<"true">>,
-    attributes => #{location => <<"top_secret">>}
-  },
-
-  meck:sequence(lru, get, 2, [PublicTarget1, PublicTarget2, PublicTarget3, AnonymousTarget1]),
-
-  ?assertEqual(ExpectedMetricTargetData, sort_metric_target_list(cfclient_metrics:create_metric_target_data(UnusedKeys, UnusedCachePID, []))),
-
-  %%-------------------- Three Anonymous Targets --------------------
-  AnonymousTarget1 = #{'identifier' => <<"target_999">>,
-    name => <<"target_name_999">>,
-    anonymous => <<"true">>,
-    attributes => #{location => <<"top_secret">>}
-  },
-  AnonymousTarget2 = #{'identifier' => <<"target_888">>,
-    name => <<"target_name_888">>,
-    anonymous => <<"true">>,
-    attributes => #{location => <<"top_secret">>}
-  },
-  AnonymousTarget3 = #{'identifier' => <<"target_777">>,
-    name => <<"target_name_777">>,
-    anonymous => <<"true">>,
-    attributes => #{location => <<"top_secret">>}
-  },
-
-  meck:sequence(lru, get, 2, [AnonymousTarget1, AnonymousTarget2, AnonymousTarget3]),
-
-  ?assertEqual([], cfclient_metrics:create_metric_target_data(UnusedKeys, UnusedCachePID, [])).
+%%-------------------- No Targets --------------------
+  ?assertEqual([], cfclient_metrics:create_metric_target_data([], UnusedCachePID, [])).
 
 %% helper function that allows us to compare list equality for metric target data
 sort_metric_target_list(MetricTargetData) ->
