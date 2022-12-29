@@ -3,7 +3,7 @@
 %%% %% Runs the JSON tests in the git submodule ff-test-cases
 %%% @end
 %%%-------------------------------------------------------------------
--module(cfclient_ff_test_cases).
+-module(ffclient_ff_test_cases).
 -author("erowlands").
 
 -include_lib("eunit/include/eunit.hrl").
@@ -18,7 +18,7 @@
 evaluations_test_() ->
   {ok, TestFiles} = load_test_files(?TESTS_PATH),
   %% Disable analytics as we call the public variation functions.
-  cfclient_config:init("fake_key", #{analytics_enabled => false}),
+  ffclient_config:init("fake_key", #{analytics_enabled => false}),
   evaluate_test_files(TestFiles, []).
 
 evaluate_test_files([Head | Tail], Accu) ->
@@ -26,7 +26,7 @@ evaluate_test_files([Head | Tail], Accu) ->
   TestAsMap = test_file_json_to_map(Head),
   %% Create new LRU cache and load Flags and Groups into it
   {ok, CachePID} = start_lru_cache(),
-  cfclient_cache_repository:set_pid(CachePID),
+  ffclient_cache_repository:set_pid(CachePID),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
   Result = evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID, Accu),
   lru:stop(CachePID),
@@ -54,31 +54,31 @@ evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
         #{}
     end,
 
-  Flag = cfclient_cache_repository:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
+  Flag = ffclient_cache_repository:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
   Kind = maps:get(kind, Flag),
 
   FlagIdentifier = maps:get(flag, Head),
   Result = case Kind of
     <<"boolean">> ->
-      cfclient:bool_variation(maps:get(flag, Head), Target, false);
+      ffclient:bool_variation(maps:get(flag, Head), Target, false);
     <<"string">> ->
-      list_to_binary(cfclient:string_variation(FlagIdentifier, Target, "blue"));
+      list_to_binary(ffclient:string_variation(FlagIdentifier, Target, "blue"));
     <<"int">> ->
-      cfclient:number_variation(FlagIdentifier, Target, 100);
+      ffclient:number_variation(FlagIdentifier, Target, 100);
     <<"json">> ->
-      jsx:encode(cfclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
+      jsx:encode(ffclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
   end,
   Test = {FlagIdentifier, ?_assertEqual(maps:get(expected, Head), Result)},
   evaluate_tests(Tail, Targets, CachePID, [Test | Accu]);
 evaluate_tests([], _, _, Accu) -> Accu.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
-  [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID) || Flag <- Flags],
-  [cfclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Groups].
+  [ffclient_cache_repository:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID) || Flag <- Flags],
+  [ffclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Groups].
 
 start_lru_cache() ->
   Size = 32000000,
-  CacheName = cfclient_cache_default,
+  CacheName = ffclient_cache_default,
   lru:start_link({local, CacheName},[{max_size, Size}]).
 
 test_file_json_to_map(Json) ->

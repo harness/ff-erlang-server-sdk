@@ -2,25 +2,25 @@
 %%% @doc
 
 %%% @end
--module(cfclient_metrics_server).
+-module(ffclient_metrics_server).
 
 -behaviour(gen_server).
 
 -export([start_link/0, enqueue_metrics/4, set_metrics_cache_pid/1, set_metrics_target_cache_pid/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
--include("cfclient_metrics_attributes.hrl").
+-include("ffclient_metrics_attributes.hrl").
 
 -define(SERVER, ?MODULE).
--record(cfclient_metrics_server_state, {analytics_push_interval, metrics_cache_pid, metric_target_cache_pid}).
+-record(ffclient_metrics_server_state, {analytics_push_interval, metrics_cache_pid, metric_target_cache_pid}).
 
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 init([]) ->
-  AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
+  AnalyticsPushInterval = ffclient_config:get_value(analytics_push_interval),
   MetricsCachePID = get_metrics_cache_pid(),
   MetricTargetCachePID = get_metric_target_cache_pid(),
-  State = #cfclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID},
+  State = #ffclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID},
   metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
   {ok, State}.
 
@@ -30,7 +30,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
   {noreply, State}.
 
-handle_info(_Info, State = #cfclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID}) ->
+handle_info(_Info, State = #ffclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID}) ->
   metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
   {noreply, State}.
 
@@ -56,11 +56,11 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
 post_metrics([], []) ->
   noop;
 post_metrics(MetricsData, MetricTargetData) ->
-  AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
-  Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
-  ClusterID = cfclient_instance:get_project_value("clusterIdentifier"),
+  AuthToken = list_to_binary(ffclient_instance:get_authtoken()),
+  Environment = list_to_binary(ffclient_instance:get_project_value("environment")),
+  ClusterID = ffclient_instance:get_project_value("clusterIdentifier"),
   ClusterMap = #{cluster => ClusterID},
-  RequestConfig = #{cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("events_url")}, params => #{metricsData => MetricsData, targetData => MetricTargetData}},
+  RequestConfig = #{cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => ffclient_config:get_value("events_url")}, params => #{metricsData => MetricsData, targetData => MetricTargetData}},
   case cfapi_metrics_api:post_metrics(ctx:new(), ClusterMap, Environment, RequestConfig) of
     {ok, Response, _} ->
       {ok, Response};
@@ -137,7 +137,7 @@ create_metric_target_data([], _, Accu) -> Accu.
 create_metric_target(Target) ->
   F =
     fun(K, V, AccIn) ->
-      Attribute = cfclient_evaluator:custom_attribute_to_binary(V),
+      Attribute = ffclient_evaluator:custom_attribute_to_binary(V),
       [#{key => K, value => Attribute} | AccIn]
     end,
 
@@ -164,7 +164,7 @@ value_to_binary(Value) when is_atom(Value) ->
 value_to_binary(Value) when is_list(Value) ->
   list_to_binary(Value).
 
--spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
+-spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: ffclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
   %% We want to capture the unique evaluations which are a combination of Flag and Variation (which includes the variation value and identifier)
   Evaluation = #{feature_name => FlagIdentifier, variation_identifier => VariationIdentifier, variation_value => VariationValue},
@@ -180,7 +180,7 @@ set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue
       noop
   end.
 
--spec set_to_metric_target_cache(Target :: cfclient:target(), MetricsTargetCachePID :: pid()) -> atom().
+-spec set_to_metric_target_cache(Target :: ffclient:target(), MetricsTargetCachePID :: pid()) -> atom().
 set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
   %% Only store target if it's not anonymous.
   case value_to_binary(maps:get(anonymous, Target, <<"false">>)) of
@@ -203,21 +203,21 @@ set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
 
 -spec set_metrics_cache_pid(MetricsCachePID :: pid()) -> ok.
 set_metrics_cache_pid(MetricsCachePID) ->
-  application:set_env(cfclient, metrics_cache_pid, MetricsCachePID).
+  application:set_env(ffclient, metrics_cache_pid, MetricsCachePID).
 
 -spec set_metrics_target_cache_pid(MetricsTargetCachePID :: pid()) -> ok.
 set_metrics_target_cache_pid(MetricsTargetCachePID) ->
-  application:set_env(cfclient, metrics_target_cache_pid, MetricsTargetCachePID).
+  application:set_env(ffclient, metrics_target_cache_pid, MetricsTargetCachePID).
 
 
 -spec get_metrics_cache_pid() -> pid().
 get_metrics_cache_pid() ->
-  {ok, MetricsCachePID} = application:get_env(cfclient, metrics_cache_pid),
+  {ok, MetricsCachePID} = application:get_env(ffclient, metrics_cache_pid),
   MetricsCachePID.
 
 -spec get_metric_target_cache_pid() -> pid().
 get_metric_target_cache_pid() ->
-  {ok, MetricsTargetCachePID} = application:get_env(cfclient, metrics_target_cache_pid),
+  {ok, MetricsTargetCachePID} = application:get_env(ffclient, metrics_target_cache_pid),
   MetricsTargetCachePID.
 
 -spec reset_metrics_cache(MetricsCachePID :: pid()) -> pid().
@@ -227,5 +227,5 @@ reset_metrics_cache(MetricsCachePID) ->
 reset_metric_target_cache(MetricsTargetCachePID) ->
   lru:purge(MetricsTargetCachePID).
 
-terminate(_Reason, _State = #cfclient_metrics_server_state{}) ->
+terminate(_Reason, _State = #ffclient_metrics_server_state{}) ->
   ok.

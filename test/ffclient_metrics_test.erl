@@ -6,11 +6,11 @@
 %%% @end
 %%% Created : 01. Dec 2022 15:17
 %%%-------------------------------------------------------------------
--module(cfclient_metrics_test).
+-module(ffclient_metrics_test).
 -author("erowlands").
 
 -include_lib("eunit/include/eunit.hrl").
--include("../src/cfclient_metrics_attributes.hrl").
+-include("../src/ffclient_metrics_attributes.hrl").
 
 create_metric_data_test() ->
   {ok, CachePID} = start_lru_cache(),
@@ -128,10 +128,10 @@ create_metric_data_test() ->
     }
   ],
 
-  ?assertEqual(ExpectedMetrics, cfclient_metrics_server:create_metrics_data([UniqueEvaluation1, UniqueEvaluation2], CachePID, Timestamp, [])),
+  ?assertEqual(ExpectedMetrics, ffclient_metrics_server:create_metrics_data([UniqueEvaluation1, UniqueEvaluation2], CachePID, Timestamp, [])),
 
   %%-------------------- No Unique Evaluations --------------------
-  ?assertEqual([], cfclient_metrics_server:create_metrics_data([], CachePID, Timestamp, [])),
+  ?assertEqual([], ffclient_metrics_server:create_metrics_data([], CachePID, Timestamp, [])),
   
   lru:stop(CachePID).
 
@@ -203,10 +203,10 @@ create_metric_target_data_test() ->
       attributes => PublicTarget3Attributes
     }
   ],
-  ?assertEqual(ExpectedMetricTargetData, sort_metric_target_list(cfclient_metrics_server:create_metric_target_data(UnusedKeys, UnusedCachePID, []))),
+  ?assertEqual(ExpectedMetricTargetData, sort_metric_target_list(ffclient_metrics_server:create_metric_target_data(UnusedKeys, UnusedCachePID, []))),
 
 %%-------------------- No Targets --------------------
-  ?assertEqual([], cfclient_metrics_server:create_metric_target_data([], UnusedCachePID, [])).
+  ?assertEqual([], ffclient_metrics_server:create_metric_target_data([], UnusedCachePID, [])).
 
 %% helper function that allows us to compare list equality for metric target data
 sort_metric_target_list(MetricTargetData) ->
@@ -235,7 +235,7 @@ create_metric_target_test() ->
       name => <<"target_name_2345">>,
       attributes => SingleBinaryAttributes
     },
-  ?assertEqual(SingleBinaryExpectedTarget, cfclient_metrics_server:create_metric_target(SingleBinaryTarget)),
+  ?assertEqual(SingleBinaryExpectedTarget, ffclient_metrics_server:create_metric_target(SingleBinaryTarget)),
 
   %% Multiple binary attributes
   MultipleBinaryTarget = #{'identifier' => <<"target_3333">>,
@@ -259,7 +259,7 @@ create_metric_target_test() ->
       name => <<"target_name_1444">>,
       attributes => MultipleBinaryAttributes
     },
-  ?assertEqual(MultipleBinaryExpectedTarget, cfclient_metrics_server:create_metric_target(MultipleBinaryTarget)),
+  ?assertEqual(MultipleBinaryExpectedTarget, ffclient_metrics_server:create_metric_target(MultipleBinaryTarget)),
 
   %%-------------------- Target with atom attributes --------------------
   %% Single atom attribute
@@ -279,7 +279,7 @@ create_metric_target_test() ->
       name => <<"target_name_1444">>,
       attributes => SingleAtomAttributes
     },
-  ?assertEqual(SingleAtomAttributeExpectedTarget, cfclient_metrics_server:create_metric_target(SingleAtomAttributeTarget)),
+  ?assertEqual(SingleAtomAttributeExpectedTarget, ffclient_metrics_server:create_metric_target(SingleAtomAttributeTarget)),
 
   %% Multiple atom attributes
   MultipleAtomAttributeTarget = #{'identifier' => <<"target_3333">>,
@@ -302,10 +302,10 @@ create_metric_target_test() ->
       name => <<"target_name_1444">>,
       attributes => MultipleAtomAttributes
     },
-  ?assertEqual(MultipleAtomAttributeExpectedTarget, cfclient_metrics_server:create_metric_target(MultipleAtomAttributeTarget)).
+  ?assertEqual(MultipleAtomAttributeExpectedTarget, ffclient_metrics_server:create_metric_target(MultipleAtomAttributeTarget)).
 
 %% Used for metric data - we just get more value spinning up a real cache vs mocking calls.
 start_lru_cache() ->
   Size = 32000000,
-  CacheName = cfclient_metrics,
+  CacheName = ffclient_metrics,
   lru:start_link({local, CacheName}, [{max_size, Size}]).

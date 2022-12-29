@@ -4,7 +4,7 @@
 %%%
 %%% @end
 %%%-------------------------------------------------------------------
--module(cfclient_instance_sup).
+-module(ffclient_instance_sup).
 
 -behaviour(supervisor).
 

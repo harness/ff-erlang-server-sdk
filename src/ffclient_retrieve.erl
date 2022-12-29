@@ -3,7 +3,7 @@
 %%% Pull Feature and Target configuration from the Feature Flags API and store them to an LRU cache.
 %%% @end
 %%%-------------------------------------------------------------------
--module(cfclient_retrieve).
+-module(ffclient_retrieve).
 
 -export([retrieve_flags/2, retrieve_segments/2]).
 
@@ -17,11 +17,11 @@
 %% @end
 -spec retrieve_flags(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_flags(Context, ClientConfig) ->
-  CachePID = cfclient_cache_repository:get_pid(),
+  CachePID = ffclient_cache_repository:get_pid(),
   {Optional, EnvironmentID} = ClientConfig,
   case cfapi_client_api:get_feature_config(Context, EnvironmentID, Optional) of
     {ok, Features, _} ->
-      [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Feature)}, Feature, CachePID) || Feature <- Features],
+      [ffclient_cache_repository:set_to_cache({flag, maps:get(feature, Feature)}, Feature, CachePID) || Feature <- Features],
       ok;
     {error, Response, _} ->
       logger:error("Error when retrieving Flags from Server. Error response: ~p~n", [Response]),
@@ -32,11 +32,11 @@ retrieve_flags(Context, ClientConfig) ->
 %% @end
 -spec retrieve_segments(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_segments(Context, ClientConfig) ->
-  CachePID = cfclient_cache_repository:get_pid(),
+  CachePID = ffclient_cache_repository:get_pid(),
   {Optional, EnvironmentID} = ClientConfig,
   case cfapi_client_api:get_all_segments(Context, EnvironmentID, Optional) of
     {ok, Segments, _} ->
-      [cfclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Segments],
+      [ffclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Segments],
       ok;
     {error, Response, _} ->
       logger:error("Error when retrieving Segments from Server. Error response: ~p~n", [Response]),

@@ -37,7 +37,7 @@ Install the Erlang SDK using [rebar3](https://www.rebar3.org/)
 First add the dependency to your `rebar.config`.
 ```Erlang
 {deps, [
-{cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {branch, "0.1.0"}}}
+{ffclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {branch, "0.1.0"}}}
 ]}.
 ```
 Then add the dependency to your project's `app.src`.
@@ -45,7 +45,7 @@ Then add the dependency to your project's `app.src`.
 {applications,
   [kernel,
   stdlib,
-  cfclient
+  ffclient
 ]},
 ```
 
@@ -62,7 +62,7 @@ The following is a complete code example that you can use to test the `harnessap
 
 start(SDKKey) ->
   logger:set_primary_config(level, info),
-  case cfclient:start(SDKKey) of
+  case ffclient:start(SDKKey) of
     ok ->
       logger:info("Erlang SDK Successfuly Started"),
       get_flag_loop();
@@ -79,7 +79,7 @@ get_flag_loop() ->
     attributes => #{email => <<"demo@harness.io">>}
   },
   FlagIdentifier = "harnessappdemodarkmode",
-  Result = cfclient:bool_variation(FlagIdentifier, Target, false),
+  Result = ffclient:bool_variation(FlagIdentifier, Target, false),
   logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
   timer:sleep(10000),
   get_flag_loop().
@@ -125,7 +125,7 @@ To avoid potential memory leak, when SDK is no longer needed
 (when the app is closed, for example), a caller should call this method:
 
 ```
-cfclient:stop().
+ffclient:stop().
 ```
 
 ### Additional Reading

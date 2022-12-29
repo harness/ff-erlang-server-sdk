@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc cfclient top level supervisor.
+%% @doc ffclient top level supervisor.
 %% @end
 %%%-------------------------------------------------------------------
 
--module(cfclient_sup).
+-module(ffclient_sup).
 
 -behaviour(supervisor).
 

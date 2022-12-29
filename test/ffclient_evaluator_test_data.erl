@@ -1,4 +1,4 @@
--module(cfclient_evaluator_test_data).
+-module(ffclient_evaluator_test_data).
 -author("erowlands").
 
 %% API
@@ -209,7 +209,7 @@ number_flag_off() ->
       negate => false, op => <<"segmentMatch">>,
       values => [<<"target_group_2">>]}],
       priority => 0,
-      ruleId => <<"cf5cc01a-e2dc-442b-9d86-f4db6ac2a180">>,
+      ruleId => <<"ff5cc01a-e2dc-442b-9d86-f4db6ac2a180">>,
       serve => #{variation => <<"Serve_a_zero_float">>}},
       #{clauses =>
       [#{attribute => <<>>,
@@ -298,7 +298,7 @@ number_flag_only_groups() ->
       negate => false, op => <<"segmentMatch">>,
       values => [<<"target_group_1">>]}],
       priority => 0,
-      ruleId => <<"cf5cc01a-e2dc-442b-9d86-f4db6ac2a180">>,
+      ruleId => <<"ff5cc01a-e2dc-442b-9d86-f4db6ac2a180">>,
       serve => #{variation => <<"Serve_a_zero_float">>}},
       #{clauses =>
       [#{attribute => <<>>,
