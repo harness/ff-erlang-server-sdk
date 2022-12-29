@@ -15,9 +15,9 @@
 %% Child references
 -define(POLL_PROCESSOR_CHILD_REF, cfclient_poll_processor).
 -define(LRU_CACHE_CHILD_REF, cfclient_lru).
--define(METRICS_GEN_SERVER_CHILD_REF, cfclient_metrics).
--define(METRICS_CACHE_CHILD_REF, cfclient_metrics_lru).
--define(METRIC_TARGET_CACHE_CHILD_REF, cfclient_metrics_target_lru).
+-define(METRICS_GEN_SERVER_CHILD_REF, cfclient_metrics_server).
+-define(METRICS_CACHE_CHILD_REF, cfclient_metrics_server_lru).
+-define(METRIC_TARGET_CACHE_CHILD_REF, cfclient_metrics_server_target_lru).
 
 
 -spec start(ApiKey :: string()) -> ok.
@@ -90,11 +90,11 @@ start_children() ->
     true ->
       %% Start metrics and metrics target caches
       {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {?METRICS_CACHE_CHILD_REF, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_metrics:set_metrics_cache_pid(MetricsCachePID),
+      cfclient_metrics_server:set_metrics_cache_pid(MetricsCachePID),
       {ok, MetricsTargetCachePID} = supervisor:start_child(?PARENTSUP, {?METRIC_TARGET_CACHE_CHILD_REF, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_metrics:set_metrics_target_cache_pid(MetricsTargetCachePID),
+      cfclient_metrics_server:set_metrics_target_cache_pid(MetricsTargetCachePID),
       %% Start metrics gen server
-      {ok, _} = supervisor:start_child(?PARENTSUP, {?METRICS_GEN_SERVER_CHILD_REF, {cfclient_metrics, start_link, []}, permanent, 5000, worker, ['cfclient_metrics']});
+      {ok, _} = supervisor:start_child(?PARENTSUP, {?METRICS_GEN_SERVER_CHILD_REF, {cfclient_metrics_server, start_link, []}, permanent, 5000, worker, ['cfclient_metrics_server']});
     false -> ok
   end,
   %% Start Poll Processor

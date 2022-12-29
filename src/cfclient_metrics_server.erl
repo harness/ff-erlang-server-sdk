@@ -2,7 +2,7 @@
 %%% @doc
 
 %%% @end
--module(cfclient_metrics).
+-module(cfclient_metrics_server).
 
 -behaviour(gen_server).
 
@@ -11,7 +11,7 @@
 -include("cfclient_metrics_attributes.hrl").
 
 -define(SERVER, ?MODULE).
--record(cfclient_metrics_state, {analytics_push_interval, metrics_cache_pid, metric_target_cache_pid}).
+-record(cfclient_metrics_server_state, {analytics_push_interval, metrics_cache_pid, metric_target_cache_pid}).
 
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -20,7 +20,7 @@ init([]) ->
   AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
   MetricsCachePID = get_metrics_cache_pid(),
   MetricTargetCachePID = get_metric_target_cache_pid(),
-  State = #cfclient_metrics_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID},
+  State = #cfclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID},
   metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
   {ok, State}.
 
@@ -30,7 +30,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
   {noreply, State}.
 
-handle_info(_Info, State = #cfclient_metrics_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID}) ->
+handle_info(_Info, State = #cfclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID}) ->
   metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
   {noreply, State}.
 
@@ -227,5 +227,5 @@ reset_metrics_cache(MetricsCachePID) ->
 reset_metric_target_cache(MetricsTargetCachePID) ->
   lru:purge(MetricsTargetCachePID).
 
-terminate(_Reason, _State = #cfclient_metrics_state{}) ->
+terminate(_Reason, _State = #cfclient_metrics_server_state{}) ->
   ok.
