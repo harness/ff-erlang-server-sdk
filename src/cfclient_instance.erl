@@ -13,7 +13,7 @@
 -define(PARENTSUP, cfclient_sup).
 
 %% Child references
--define(POLL_PROCESSOR_CHILD_REF, cfclient_poll_processor).
+-define(POLL_SERVER_CHILD_REF, cfclient_poll_server).
 -define(LRU_CACHE_CHILD_REF, cfclient_lru).
 -define(METRICS_GEN_SERVER_CHILD_REF, cfclient_metrics_server).
 -define(METRICS_CACHE_CHILD_REF, cfclient_metrics_server_lru).
@@ -98,7 +98,7 @@ start_children() ->
     false -> ok
   end,
   %% Start Poll Processor
-  {ok, _} = supervisor:start_child(?PARENTSUP, {?POLL_PROCESSOR_CHILD_REF, {cfclient_poll_processor, start_link, []}, permanent, 5000, worker, ['cfclient_poll_processor']}),
+  {ok, _} = supervisor:start_child(?PARENTSUP, {?POLL_SERVER_CHILD_REF, {cfclient_poll_server, start_link, []}, permanent, 5000, worker, ['cfclient_poll_server']}),
   ok.
 
 -spec stop_children(Children :: list()) -> ok.
