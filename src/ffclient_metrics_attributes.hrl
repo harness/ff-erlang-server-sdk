@@ -17,4 +17,4 @@
 -define(SDK_TYPE_ATTRIBUTE_VALUE, <<"server">>).
 -define(SDK_VERSION_ATTRIBUTE_VALUE, <<"1.0.0">>).
 -define(SDK_LANGUAGE_ATTRIBUTE_VALUE, <<"erlang">>).
--define(TARGET_GLOBAL_IDENTIFIER, <<"__global__cf_target">>).
+-define(TARGET_GLOBAL_IDENTIFIER, <<"__global__ff_target">>).

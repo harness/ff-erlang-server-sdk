@@ -3,7 +3,7 @@
 %%% LRU Repository for Flag and Segment configuration
 %%% @end
 %%%-------------------------------------------------------------------
--module(cfclient_cache_repository).
+-module(ffclient_cache_repository).
 
 -export([get_from_cache/2, set_to_cache/3, set_pid/1, get_pid/0]).
 
@@ -73,10 +73,10 @@ format_key({segment, Identifier}) ->
 
 -spec set_pid(CachePID :: pid()) -> ok.
 set_pid(CachePID) ->
-  application:set_env(cfclient, cachepid, CachePID).
+  application:set_env(ffclient, cachepid, CachePID).
 
 -spec get_pid() -> pid().
 get_pid() ->
-  {ok, Pid} = application:get_env(cfclient, cachepid),
+  {ok, Pid} = application:get_env(ffclient, cachepid),
   Pid.
 

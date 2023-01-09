@@ -1,7 +1,7 @@
--module(cfclient_evaluator_test).
+-module(ffclient_evaluator_test).
 
 -include_lib("eunit/include/eunit.hrl").
--include("../src/cfclient_evaluator_operators.hrl").
+-include("../src/ffclient_evaluator_operators.hrl").
 variations_test() ->
   %% Target Sample Data
   ExistingTargetA = #{'identifier' => <<"target_identifier_1">>,
@@ -67,178 +67,178 @@ variations_test() ->
 
   %% Mock LRU Cache
   meck:new(lru),
-  meck:expect(cfclient_cache_repository, get_pid, fun() -> self() end),
+  meck:expect(ffclient_cache_repository, get_pid, fun() -> self() end),
 
   %%-------------------- Bool Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) ->
-    cfclient_evaluator_test_data:boolean_flag_off() end),
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
+    ffclient_evaluator_test_data:boolean_flag_off() end),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_boolean_flag">>) ->
-    cfclient_evaluator_test_data:boolean_flag_single_target() end),
+    ffclient_evaluator_test_data:boolean_flag_single_target() end),
   %% Target found
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, <<"true">>, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"true">>, true}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, NonExistentTarget)),
 
   %%%%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_boolean_flag">>) ->
-                            cfclient_evaluator_test_data:boolean_flag_group_only()
+                            ffclient_evaluator_test_data:boolean_flag_group_only()
                         end),
 
   %% Target excluded
-  ?assertEqual({ok, <<"true">>, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"true">>, true}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
   %% Target included
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetIncludedFromGroup)),
 
   %% Target included by custom rules
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, <<"false">>, false}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"false">>, false}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, CustomRulesEndsWith)),
 
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_boolean_flag">>) ->
-                            cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
+                            ffclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, <<"true">>, true}, cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"true">>, true}, ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, TargetExcludedFromGroup)),
 
   %%-------------------- String Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_string_flag">>) ->
-    cfclient_evaluator_test_data:string_flag_off() end),
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
+    ffclient_evaluator_test_data:string_flag_off() end),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_string_flag">>) ->
-                            cfclient_evaluator_test_data:string_flag_target_and_groups()
+                            ffclient_evaluator_test_data:string_flag_target_and_groups()
                         end),  %% Target found
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, NonExistentTarget)),
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   %% Target excluded
-  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, TargetExcludedFromGroup)),
 
   %% Target included
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, TargetIncludedFromGroup)),
 
   %% Target included by custom rules
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, "don't serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, CustomRulesEndsWith)),
 
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_string_flag">>) ->
-                            cfclient_evaluator_test_data:string_flag_no_targets_or_groups()
+                            ffclient_evaluator_test_data:string_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, cfclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_it">>, "serve it"}, ffclient_evaluator:string_variation(<<"My_string_flag">>, ExistingTargetA)),
 
   %%-------------------- Number Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(lru, get, fun(CacheName, <<"flags/My_cool_number_flag">>) ->
-    cfclient_evaluator_test_data:number_flag_off() end),
-  ?assertEqual({ok, <<"Serve_a_zero_int">>, 0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
+    ffclient_evaluator_test_data:number_flag_off() end),
+  ?assertEqual({ok, <<"Serve_a_zero_int">>, 0}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_cool_number_flag">>) ->
-                            cfclient_evaluator_test_data:number_flag_only_targets()
+                            ffclient_evaluator_test_data:number_flag_only_targets()
                         end),
   %% Target found
-  ?assertEqual({ok, <<"Serve_a_zero_int">>,  0}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_a_zero_int">>,  0}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, NonExistentTarget)),
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_cool_number_flag">>) ->
-                            cfclient_evaluator_test_data:number_flag_only_groups()
+                            ffclient_evaluator_test_data:number_flag_only_groups()
                         end),
   %% Target excluded
-  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetExcludedFromGroup)),
 
   %% Target Included
-  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, TargetIncludedFromGroup)),
 
   %% Target included by custom rules
-  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"Serve_a_zero_float">>, 0.001}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, CustomRulesEndsWith)),
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_cool_number_flag">>) ->
-                            cfclient_evaluator_test_data:number_flag_no_targets_or_groups()
+                            ffclient_evaluator_test_data:number_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, cfclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_an_int">>, 12456}, ffclient_evaluator:number_variation(<<"My_cool_number_flag">>, ExistingTargetA)),
 
   %%-------------------- JSON Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
-  meck:expect(lru, get, fun(CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_off() end),
-  ?assertEqual({ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
+  meck:expect(lru, get, fun(CacheName, <<"flags/My_JSON_flag">>) -> ffclient_evaluator_test_data:json_flag_off() end),
+  ?assertEqual({ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
 
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_targets()
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
+                          (CacheName, <<"flags/My_JSON_flag">>) -> ffclient_evaluator_test_data:json_flag_only_targets()
                         end),
   %% Target found
-  ?assertEqual({ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
   %% Target not found
-  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, NonExistentTarget)),
+  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, NonExistentTarget)),
 
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-                          (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_groups()
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
+                          (CacheName, <<"flags/My_JSON_flag">>) -> ffclient_evaluator_test_data:json_flag_only_groups()
                         end),
   %% Target excluded
-  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetExcludedFromGroup)),
+  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetExcludedFromGroup)),
 
   %% Target Included
-  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetIncludedFromGroup)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, TargetIncludedFromGroup)),
 
   %% Target Included by custom rules
-  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesStartsWith)),
-  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqual)),
-  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqualSensitive)),
-  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesIn)),
-  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEndsWith)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesStartsWith)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqual)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEqualSensitive)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesIn)),
+  ?assertEqual({ok, <<"Maybe_serve_it">>, #{<<"serveIt">> => <<"maybe">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, CustomRulesEndsWith)),
 
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(lru, get, fun
-                          (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+                          (CacheName, <<"segments/target_group_1">>) -> ffclient_evaluator_test_data:target_group();
                           (CacheName, <<"flags/My_JSON_flag">>) ->
-                            cfclient_evaluator_test_data:json_flag_no_targets_or_groups()
+                            ffclient_evaluator_test_data:json_flag_no_targets_or_groups()
                         end),
-  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
+  ?assertEqual({ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}}, ffclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)),
 
   meck:unload(lru).
 
@@ -290,9 +290,9 @@ evaluate_target_rule_test() ->
 
 
   %% Found %%
-  ?assertEqual(<<"false">>, cfclient_evaluator:evaluate_target_rule(SmallVariationMap, ExistingTargetA)),
+  ?assertEqual(<<"false">>, ffclient_evaluator:evaluate_target_rule(SmallVariationMap, ExistingTargetA)),
   %% Not Found %%
-  ?assertEqual(not_found, cfclient_evaluator:evaluate_target_rule(SmallVariationMap, NonExistentTarget)),
+  ?assertEqual(not_found, ffclient_evaluator:evaluate_target_rule(SmallVariationMap, NonExistentTarget)),
 
 
   %%-------------------- Multiple Targets--------------------
@@ -313,17 +313,17 @@ evaluate_target_rule_test() ->
       variation => <<"false">>}],
 
   %% Found %%
-  ?assertEqual(<<"true">>, cfclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetA)),
-  ?assertEqual(<<"true">>, cfclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetB)),
-  ?assertEqual(<<"true">>, cfclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetC)),
-  ?assertEqual(<<"false">>, cfclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetD)),
-  ?assertEqual(<<"false">>, cfclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetE)),
+  ?assertEqual(<<"true">>, ffclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetA)),
+  ?assertEqual(<<"true">>, ffclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetB)),
+  ?assertEqual(<<"true">>, ffclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetC)),
+  ?assertEqual(<<"false">>, ffclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetD)),
+  ?assertEqual(<<"false">>, ffclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetE)),
 
   %% Not Found %%
-  ?assertEqual(not_found, cfclient_evaluator:evaluate_target_rule(LargeVariationMap, NonExistentTarget)),
+  ?assertEqual(not_found, ffclient_evaluator:evaluate_target_rule(LargeVariationMap, NonExistentTarget)),
 
   %%-------------------- Null Variation Map or Target --------------------
-  ?assertEqual(not_found, cfclient_evaluator:evaluate_target_rule(null, asd)).
+  ?assertEqual(not_found, ffclient_evaluator:evaluate_target_rule(null, asd)).
 
 
 search_variation_map_test() ->
@@ -341,11 +341,11 @@ search_variation_map_test() ->
 
 
   %% Found %%
-  ?assertEqual(<<"false">>, cfclient_evaluator:search_variation_map(<<"target_identifier_2">>, VariationMap)),
+  ?assertEqual(<<"false">>, ffclient_evaluator:search_variation_map(<<"target_identifier_2">>, VariationMap)),
 
 
   %% Not Found %%
-  ?assertEqual(not_found, cfclient_evaluator:search_variation_map(<<"target_identifier_33333">>, VariationMap)),
+  ?assertEqual(not_found, ffclient_evaluator:search_variation_map(<<"target_identifier_33333">>, VariationMap)),
 
 %%-------------------- Multiple targets --------------------
 
@@ -363,11 +363,11 @@ search_variation_map_test() ->
 
 
   %% Found %%
-  ?assertEqual(<<"true">>, cfclient_evaluator:search_variation_map(<<"target_identifier_2">>, VariationMap2)),
-  ?assertEqual(<<"true">>, cfclient_evaluator:search_variation_map(<<"target_identifier_1">>, VariationMap2)),
+  ?assertEqual(<<"true">>, ffclient_evaluator:search_variation_map(<<"target_identifier_2">>, VariationMap2)),
+  ?assertEqual(<<"true">>, ffclient_evaluator:search_variation_map(<<"target_identifier_1">>, VariationMap2)),
 
   %% Not Found %%
-  ?assertEqual(not_found, cfclient_evaluator:search_variation_map(<<"target_identifier_9999">>, VariationMap2)).
+  ?assertEqual(not_found, ffclient_evaluator:search_variation_map(<<"target_identifier_9999">>, VariationMap2)).
 
 
 
@@ -379,10 +379,10 @@ search_targets_test() ->
     name => <<"target_test_1">>}],
 
   %% Found %%
-  ?assertEqual(found, cfclient_evaluator:search_targets(<<"target_identifier_1">>, TargetsSingle)),
+  ?assertEqual(found, ffclient_evaluator:search_targets(<<"target_identifier_1">>, TargetsSingle)),
 
   %% NotFound %%
-  ?assertEqual(not_found, cfclient_evaluator:search_targets(<<"target_identifier_34w3434">>, TargetsSingle)),
+  ?assertEqual(not_found, ffclient_evaluator:search_targets(<<"target_identifier_34w3434">>, TargetsSingle)),
 
 
   %%-------------------- Multiple Targets --------------------
@@ -393,11 +393,11 @@ search_targets_test() ->
       name => <<"target_test_2">>}],
 
   %% Found %%
-  ?assertEqual(found, cfclient_evaluator:search_targets(<<"target_identifier_1">>, TargetsMultiple)),
-  ?assertEqual(found, cfclient_evaluator:search_targets(<<"target_identifier_2">>, TargetsMultiple)),
+  ?assertEqual(found, ffclient_evaluator:search_targets(<<"target_identifier_1">>, TargetsMultiple)),
+  ?assertEqual(found, ffclient_evaluator:search_targets(<<"target_identifier_2">>, TargetsMultiple)),
 
   %% NotFound %%
-  ?assertEqual(not_found, cfclient_evaluator:search_targets(<<"target_identifier_34214awe">>, TargetsMultiple)).
+  ?assertEqual(not_found, ffclient_evaluator:search_targets(<<"target_identifier_34214awe">>, TargetsMultiple)).
 
 
 is_rule_included_or_excluded_test() ->
@@ -466,7 +466,7 @@ is_rule_included_or_excluded_test() ->
   },
 
   %% Cache data for mocked cache call
-  cfclient_cache_repository:set_pid(self()),
+  ffclient_cache_repository:set_pid(self()),
   CachedGroup = #{environment => <<"dev">>, identifier => <<"target_group_1">>,
     excluded =>
     [#{account => <<>>, environment => <<>>,
@@ -507,25 +507,25 @@ is_rule_included_or_excluded_test() ->
 
   %% Excluded %%
   meck:expect(lru, get, fun(CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
-  ?assertEqual(excluded, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTarget)),
-  ?assertEqual(excluded, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTargetB)),
+  ?assertEqual(excluded, ffclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTarget)),
+  ?assertEqual(excluded, ffclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTargetB)),
 
 
   %% Included %%
-  ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetA)),
-  ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetB)),
+  ?assertEqual(included, ffclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetA)),
+  ?assertEqual(included, ffclient_evaluator:is_rule_included_or_excluded(Clauses, IncludedTargetB)),
 
   %% Not Included %%
-  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetA)),
-  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetB)),
+  ?assertEqual(false, ffclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetA)),
+  ?assertEqual(false, ffclient_evaluator:is_rule_included_or_excluded(Clauses, NotIncludedTargetB)),
 
   %% Included by custom rules %%
-  ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesTargetA)),
-  ?assertEqual(included, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesTargetB)),
+  ?assertEqual(included, ffclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesTargetA)),
+  ?assertEqual(included, ffclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesTargetB)),
 
   %% No match custom rules %%
-  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesNotIncludedA)),
-  ?assertEqual(false, cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesNotIncludedB)),
+  ?assertEqual(false, ffclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesNotIncludedA)),
+  ?assertEqual(false, ffclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesNotIncludedB)),
 
   meck:unload(lru).
 
@@ -566,9 +566,9 @@ search_group_custom_rule_test() ->
     name => <<"target_name_1">>,
     anonymous => <<"">>
   },
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes1, Rules)),
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes2, Rules)),
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes3, Rules)),
+  ?assertEqual(true, ffclient_evaluator:search_group_custom_rules(TargetNoAttributes1, Rules)),
+  ?assertEqual(true, ffclient_evaluator:search_group_custom_rules(TargetNoAttributes2, Rules)),
+  ?assertEqual(true, ffclient_evaluator:search_group_custom_rules(TargetNoAttributes3, Rules)),
 
   %% Target with custom attributes
   TargetWithAttributes1 = #{'identifier' => <<"target_324235">>,
@@ -581,8 +581,8 @@ search_group_custom_rule_test() ->
     anonymous => <<"">>,
     attributes => #{preference => <<"marketing">>}
   },
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetWithAttributes1, Rules)),
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetWithAttributes2, Rules)),
+  ?assertEqual(true, ffclient_evaluator:search_group_custom_rules(TargetWithAttributes1, Rules)),
+  ?assertEqual(true, ffclient_evaluator:search_group_custom_rules(TargetWithAttributes2, Rules)),
 
   %%-------------------- No Match --------------------
   %% Target no custom attributes
@@ -598,9 +598,9 @@ search_group_custom_rule_test() ->
     name => <<"target_name_2222">>,
     anonymous => <<"">>
   },
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch1, Rules)),
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch2, Rules)),
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch3, Rules)),
+  ?assertEqual(false, ffclient_evaluator:search_group_custom_rules(NoMatch1, Rules)),
+  ?assertEqual(false, ffclient_evaluator:search_group_custom_rules(NoMatch2, Rules)),
+  ?assertEqual(false, ffclient_evaluator:search_group_custom_rules(NoMatch3, Rules)),
 
   %% Target with custom attributes
   NoMatch4 = #{'identifier' => <<"target_324235">>,
@@ -613,173 +613,173 @@ search_group_custom_rule_test() ->
     anonymous => <<"">>,
     attributes => #{preference => <<"no_marketing">>}
   },
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch4, Rules)),
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch5, Rules)).
+  ?assertEqual(false, ffclient_evaluator:search_group_custom_rules(NoMatch4, Rules)),
+  ?assertEqual(false, ffclient_evaluator:search_group_custom_rules(NoMatch5, Rules)).
 
 
 is_custom_rule_match_test() ->
 
   %%-------------------- Equals --------------------
   %% Match
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, [<<"focus_group_1">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, [<<"FOCUS_GROUP_1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, [<<"focus_group_1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_1">>, [<<"FOCUS_GROUP_1">>])),
 
   %% No match
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, [<<"focus_group_1">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, [<<"FOCUS_GROUP_1">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, [<<"focus_group_1">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?EQUAL_OPERATOR, <<"focus_group_2">>, [<<"FOCUS_GROUP_1">>])),
 
   %%-------------------- Equals Case Sensitive--------------------
   %% Match
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, [<<"focus_group_1">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_1">>, [<<"FOCUS_GROUP_1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, [<<"focus_group_1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_1">>, [<<"FOCUS_GROUP_1">>])),
 
   %% No match
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, [<<"FOCUS_GROUP_1">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_2">>, [<<"FOCUS_GROUP_1">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"focus_group_1">>, [<<"FOCUS_GROUP_1">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, <<"FOCUS_GROUP_2">>, [<<"FOCUS_GROUP_1">>])),
 
   %%-------------------- Starts with --------------------
   %% Match
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group_1">>, [<<"beta">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"betagroup_2">>, [<<"beta">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group3">>, [<<"beta">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta1">>, [<<"beta">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"???">>, [<<"???">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group_1">>, [<<"beta">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"betagroup_2">>, [<<"beta">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta_group3">>, [<<"beta">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"beta1">>, [<<"beta">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"???">>, [<<"???">>])),
 
   %% No match
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group_1">>, [<<"beta">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alphagroup_2">>, [<<"beta">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group3">>, [<<"beta">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"btea">>, [<<"beta">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group_1">>, [<<"beta">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alphagroup_2">>, [<<"beta">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"alpha_group3">>, [<<"beta">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?STARTS_WITH_OPERATOR, <<"btea">>, [<<"beta">>])),
 
   %%-------------------- Ends with --------------------
   %% Match
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"1">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"_1">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"identifier_1">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"target_identifier_1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"_1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"identifier_1">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"target_identifier_1">>])),
   %% No match
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"2">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"tifier_2">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"target_identifier_2">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"2">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"tifier_2">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?ENDS_WITH_OPERATOR, <<"target_identifier_1">>, [<<"target_identifier_2">>])),
 
   %%-------------------- Contains--------------------
   %% Match
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, [<<"february">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, [<<"january">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"beta">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"beta_">>])),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, [<<"premium">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, [<<"february">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, [<<"january">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"beta">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"beta_">>])),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, [<<"premium">>])),
   %% No match
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, [<<"alpha_">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, [<<"december">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"january">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"march">>])),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, [<<"free">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"february_beta_group">>, [<<"alpha_">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"january_beta_group">>, [<<"december">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"january">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"december_beta_group">>, [<<"march">>])),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?CONTAINS_OPERATOR, <<"users_who_are_premium">>, [<<"free">>])),
 
   %%-------------------- In --------------------
   InRule = [<<"7">>, <<"2">>, <<"3">>],
   %% MATCH %%
   %% Single attributes
-  Bitstring = cfclient_evaluator:custom_attribute_to_binary(<<"2">>),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, Bitstring, InRule)),
+  Bitstring = ffclient_evaluator:custom_attribute_to_binary(<<"2">>),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, Bitstring, InRule)),
 
-  ListAtomAttribute = cfclient_evaluator:custom_attribute_to_binary('3'),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttribute, InRule)),
+  ListAtomAttribute = ffclient_evaluator:custom_attribute_to_binary('3'),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttribute, InRule)),
 
   %% List attribute
-  ListSingleBitstringAttribute = cfclient_evaluator:custom_attribute_to_binary([<<"2">>]),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttribute, InRule)),
+  ListSingleBitstringAttribute = ffclient_evaluator:custom_attribute_to_binary([<<"2">>]),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttribute, InRule)),
 
-  ListMultipleBitsringAttributes = cfclient_evaluator:custom_attribute_to_binary([<<"1000">>, <<"2">>]),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributes, InRule)),
+  ListMultipleBitsringAttributes = ffclient_evaluator:custom_attribute_to_binary([<<"1000">>, <<"2">>]),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributes, InRule)),
 
-  ListMultipleAtomAttribute = cfclient_evaluator:custom_attribute_to_binary(['50', '2']),
-  ?assertEqual(true, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttribute, InRule)),
+  ListMultipleAtomAttribute = ffclient_evaluator:custom_attribute_to_binary(['50', '2']),
+  ?assertEqual(true, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttribute, InRule)),
 
   %% NO MATCH %%
-  BitstringNoMatch = cfclient_evaluator:custom_attribute_to_binary(<<"34">>),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, BitstringNoMatch, InRule)),
+  BitstringNoMatch = ffclient_evaluator:custom_attribute_to_binary(<<"34">>),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, BitstringNoMatch, InRule)),
 
-  ListAtomAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary('22'),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttributeNoMatch, InRule)),
+  ListAtomAttributeNoMatch = ffclient_evaluator:custom_attribute_to_binary('22'),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListAtomAttributeNoMatch, InRule)),
 
-  ListSingleBitstringAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary([<<"111111">>]),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttributeNoMatch, InRule)),
+  ListSingleBitstringAttributeNoMatch = ffclient_evaluator:custom_attribute_to_binary([<<"111111">>]),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListSingleBitstringAttributeNoMatch, InRule)),
 
-  ListMultipleBitsringAttributesNoMatch = cfclient_evaluator:custom_attribute_to_binary([<<"1212">>, <<"44">>]),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributesNoMatch, InRule)),
+  ListMultipleBitsringAttributesNoMatch = ffclient_evaluator:custom_attribute_to_binary([<<"1212">>, <<"44">>]),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleBitsringAttributesNoMatch, InRule)),
 
-  ListMultipleAtomAttributeNoMatch = cfclient_evaluator:custom_attribute_to_binary(['2323', '2222']),
-  ?assertEqual(false, cfclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttributeNoMatch, InRule)).
+  ListMultipleAtomAttributeNoMatch = ffclient_evaluator:custom_attribute_to_binary(['2323', '2222']),
+  ?assertEqual(false, ffclient_evaluator:is_custom_rule_match(?IN_OPERATOR, ListMultipleAtomAttributeNoMatch, InRule)).
 
 custom_attribute_to_binary_test() ->
   %% Binary
   Binary = <<"Sample">>,
-  ?assertEqual(<<"Sample">>, cfclient_evaluator:custom_attribute_to_binary(Binary)),
+  ?assertEqual(<<"Sample">>, ffclient_evaluator:custom_attribute_to_binary(Binary)),
 
   %% Atom
   Atom = sample,
-  ?assertEqual(<<"sample">>, cfclient_evaluator:custom_attribute_to_binary(Atom)),
+  ?assertEqual(<<"sample">>, ffclient_evaluator:custom_attribute_to_binary(Atom)),
 
   %% Integer
   Integer = 2,
-  ?assertEqual(<<"2">>, cfclient_evaluator:custom_attribute_to_binary(Integer)),
+  ?assertEqual(<<"2">>, ffclient_evaluator:custom_attribute_to_binary(Integer)),
 
   %% Float
   Float = 2.2,
-  ?assertEqual(<<"2.2">>, cfclient_evaluator:custom_attribute_to_binary(Float)),
+  ?assertEqual(<<"2.2">>, ffclient_evaluator:custom_attribute_to_binary(Float)),
 
   %% List of Bit Strings
   ListBitStrings = [<<"Sample 1">>, <<"Sample2">>],
-  ?assertEqual([<<"Sample 1">>, <<"Sample2">>], cfclient_evaluator:custom_attribute_to_binary(ListBitStrings)),
+  ?assertEqual([<<"Sample 1">>, <<"Sample2">>], ffclient_evaluator:custom_attribute_to_binary(ListBitStrings)),
 
   %% List of atoms
   AtomsList = [sample2, sample3],
-  ?assertEqual([<<"sample2">>, <<"sample3">>], cfclient_evaluator:custom_attribute_to_binary(AtomsList)),
+  ?assertEqual([<<"sample2">>, <<"sample3">>], ffclient_evaluator:custom_attribute_to_binary(AtomsList)),
 
   %% Mixed lis3
   MixedList = [sample2, <<"3">>],
-  ?assertEqual([<<"sample2">>, <<"3">>], cfclient_evaluator:custom_attribute_to_binary(MixedList)),
+  ?assertEqual([<<"sample2">>, <<"3">>], ffclient_evaluator:custom_attribute_to_binary(MixedList)),
 
   %%---------- Unsupported Inputs  --------------
   %% String
   String = "Sample",
-  ?assertEqual(not_ok, cfclient_evaluator:custom_attribute_to_binary(String)),
+  ?assertEqual(not_ok, ffclient_evaluator:custom_attribute_to_binary(String)),
 
   %% List of Strings
   ListStrings = ["Sample 1", "Sample2"],
-  ?assertEqual([not_ok, not_ok], cfclient_evaluator:custom_attribute_to_binary(ListStrings)).
+  ?assertEqual([not_ok, not_ok], ffclient_evaluator:custom_attribute_to_binary(ListStrings)).
 
 percentage_rollout_test() ->
   %%-------------------- 50/50 ------------------------------------------------------------
-  cfclient_cache_repository:set_pid(self()),
+  ffclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) ->
-                            cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+                            ffclient_evaluator_test_data:target_group_for_percentage_rollout();
                           (CacheName, <<"flags/My_boolean_flag">>) ->
-                            cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
+                            ffclient_evaluator_test_data:percentage_rollout_boolean_50_50()
                         end),
 
   %% For low target counts, in this case 20, a split like this is expected.
   ?assertEqual({12, 8}, do_variation_20_times({0, 0}, 0)),
 
   %%-------------------- 100/0 ------------------------------------------------------------
-  cfclient_cache_repository:set_pid(self()),
+  ffclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) ->
-                            cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+                            ffclient_evaluator_test_data:target_group_for_percentage_rollout();
                           (CacheName, <<"flags/My_boolean_flag">>) ->
-                            cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
+                            ffclient_evaluator_test_data:percentage_rollout_boolean_100_true()
                         end),
   ?assertEqual({20, 0}, do_variation_20_times({0, 0}, 0)),
 
 %%-------------------- 0/100 ------------------------------------------------------------
-  cfclient_cache_repository:set_pid(self()),
+  ffclient_cache_repository:set_pid(self()),
   meck:expect(lru, get, fun
                           (CacheName, <<"segments/target_group_1">>) ->
-                            cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+                            ffclient_evaluator_test_data:target_group_for_percentage_rollout();
                           (CacheName, <<"flags/My_boolean_flag">>) ->
-                            cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
+                            ffclient_evaluator_test_data:percentage_rollout_boolean_100_false()
                         end),
   ?assertEqual({0, 20}, do_variation_20_times({0, 0}, 0)).
 
@@ -791,7 +791,7 @@ do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
     name => <<"targetname", TargetIdentifierNumber/binary>>,
     anonymous => <<"">>
   },
-  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget) of
+  case ffclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget) of
     {ok, _VariationIdentifier, true} ->
       do_variation_20_times({TrueCounter + 1, FalseCounter + 0}, Counter);
     {ok, _VariationIdentifier, false} ->
@@ -819,14 +819,14 @@ search_prerequisites_test() ->
         variations =>
         [<<"A cool string variation identifier3">>]}],
 
-  PrerequisiteMatchesFlag1 = cfclient_evaluator_test_data:prerequisite_matches_flag_1(),
+  PrerequisiteMatchesFlag1 = ffclient_evaluator_test_data:prerequisite_matches_flag_1(),
 
-  PrerequisiteMatchesFlag2 = cfclient_evaluator_test_data:prerequisite_matches_flag_2(),
+  PrerequisiteMatchesFlag2 = ffclient_evaluator_test_data:prerequisite_matches_flag_2(),
 
-  PrerequisiteMatchesFlag3 = cfclient_evaluator_test_data:prerequisite_matches_flag_3(),
+  PrerequisiteMatchesFlag3 = ffclient_evaluator_test_data:prerequisite_matches_flag_3(),
 
   %% Mock calls to the cache to return the above three Prerequisite flags
-  cfclient_cache_repository:set_pid(self()),
+  ffclient_cache_repository:set_pid(self()),
   meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag3]),
 
   %%-------------------- All Prerequisites Match ------------------------------------------------------------
@@ -834,7 +834,7 @@ search_prerequisites_test() ->
     name => <<"target_1">>,
     anonymous => <<"">>
   },
-  ?assertEqual(true, cfclient_evaluator:search_prerequisites(Prerequisites, Target1)),
+  ?assertEqual(true, ffclient_evaluator:search_prerequisites(Prerequisites, Target1)),
 
   %%-------------------- Two out of three Prerequisites Match ------------------------------------------------------------
   %% Same flag data but with a target rule that doesn't include our sample Target1
@@ -868,7 +868,7 @@ search_prerequisites_test() ->
         <<"very boring!!!!">>}],
     version => 2},
   meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag4]),
-  ?assertEqual(false, cfclient_evaluator:search_prerequisites(Prerequisites, Target1)),
+  ?assertEqual(false, ffclient_evaluator:search_prerequisites(Prerequisites, Target1)),
 
   %%-------------------- One out of three Prerequisites Match ------------------------------------------------------------
   PrerequisiteMatchesFlag5 = #{defaultServe =>
@@ -901,7 +901,7 @@ search_prerequisites_test() ->
         <<"very boring!!!!">>}],
     version => 2},
   meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag5, PrerequisiteMatchesFlag4]),
-  ?assertEqual(false, cfclient_evaluator:search_prerequisites(Prerequisites, Target1)),
+  ?assertEqual(false, ffclient_evaluator:search_prerequisites(Prerequisites, Target1)),
 
   %%-------------------- No Prerequisites Match ------------------------------------------------------------
   Target2 = #{'identifier' => <<"I_don't_exist_anywhere">>,
@@ -909,7 +909,7 @@ search_prerequisites_test() ->
     anonymous => <<"">>
   },
   meck:sequence(lru, get, 2, [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag3]),
-  ?assertEqual(false, cfclient_evaluator:search_prerequisites(Prerequisites, Target2)),
+  ?assertEqual(false, ffclient_evaluator:search_prerequisites(Prerequisites, Target2)),
   meck:unload().
 
 check_prerequisite_test() ->
@@ -957,11 +957,11 @@ check_prerequisite_test() ->
     name => <<"target_1">>,
     anonymous => <<"">>
   },
-  ?assertEqual(true, cfclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target1)),
+  ?assertEqual(true, ffclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target1)),
 
   %% Prerequisite did not match
   Target2 = #{'identifier' => <<"target_identifier_3">>,
     name => <<"target_3">>,
     anonymous => <<"">>
   },
-  ?assertEqual(false, cfclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target2)).
+  ?assertEqual(false, ffclient_evaluator:check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target2)).

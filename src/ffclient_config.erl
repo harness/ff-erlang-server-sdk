@@ -4,7 +4,7 @@
 %%% @end
 %%% Created : 04. Sep 2022 10:43 AM
 %%%-------------------------------------------------------------------
--module(cfclient_config).
+-module(ffclient_config).
 
 %% API
 -export([init/2, get_value/1, clear_config/0]).
@@ -13,17 +13,17 @@
 -define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io/api/1.0"). %% Config endpoint for Prod
 -define(DEFAULT_EVENTS_URL, "https://events.ff.harness.io/api/1.0"). %% Event endpoint for Prod
 -define(DEFAULT_CONNECTION_TIMEOUT, 10000). %% timeout in milliseconds
--define(DEFAULT_READ_TIMEOUT, 30000). %% timeout in milliseconds for reading data from CF Server
--define(DEFAULT_WRITE_TIMEOUT, 10000). %% timeout in milliseconds for writing data to CF Server
--define(DEFAULT_POLL_INTERVAL, 60000). %% interval in milliseconds for polling data from CF Server
+-define(DEFAULT_READ_TIMEOUT, 30000). %% timeout in milliseconds for reading data from ff Server
+-define(DEFAULT_WRITE_TIMEOUT, 10000). %% timeout in milliseconds for writing data to ff Server
+-define(DEFAULT_POLL_INTERVAL, 60000). %% interval in milliseconds for polling data from ff Server
 -define(DEFAULT_STREAM_ENABLED, true). %% boolean for enabling events stream
--define(DEFAULT_ANALYTICS_ENABLED, true). %% boolean for enabling analytics send to CF Server
+-define(DEFAULT_ANALYTICS_ENABLED, true). %% boolean for enabling analytics send to ff Server
 -define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000). 
 
 -spec init(ApiKey :: string(), Opts :: map()) -> ok.
 init(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
     Config = parse_options(ApiKey, Opts),
-    application:set_env(cfclient, config, Config).
+    application:set_env(ffclient, config, Config).
 
 -spec parse_options(ApiKey :: string(), Opts :: map()) -> map().
 parse_options(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
@@ -53,7 +53,7 @@ parse_options(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
 get_value(Key) when is_list(Key) ->
     get_value(list_to_atom(Key));
 get_value(Key) when is_atom(Key) ->
-    {ok, Config} = application:get_env(cfclient, config),
+    {ok, Config} = application:get_env(ffclient, config),
     maps:get(Key, Config).
 
 parse_stream_enabled(Opts) ->
@@ -155,5 +155,5 @@ parse_analytics_push_interval(Opts)  ->
 
 -spec clear_config() -> ok.
 clear_config() ->
-    application:unset_env(cfclient, config).
+    application:unset_env(ffclient, config).
 
