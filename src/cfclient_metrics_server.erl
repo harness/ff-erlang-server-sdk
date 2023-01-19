@@ -59,17 +59,22 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
 post_metrics([], []) ->
     noop;
 post_metrics(MetricsData, MetricTargetData) ->
-  AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
-  Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
-  ClusterID = cfclient_instance:get_project_value("clusterIdentifier"),
-  ClusterMap = #{cluster => ClusterID},
-  RequestConfig = #{cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("events_url")}, params => #{metricsData => MetricsData, targetData => MetricTargetData}},
-  case cfapi_metrics_api:post_metrics(ctx:new(), ClusterMap, Environment, RequestConfig) of
-    {ok, Response, _} ->
-      {ok, Response};
-    {error, Response, _} ->
-      {not_ok, Response}
-  end.
+    AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
+    Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
+    ClusterID = cfclient_instance:get_project_value("clusterIdentifier"),
+    EventsUrl = cfclient_config:get_value("events_url")},
+
+    Opts =
+    #{
+      cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => EventsUrl},
+      params => #{metricsData => MetricsData, targetData => MetricTargetData}
+     },
+
+    ClusterMap = #{cluster => ClusterID},
+    case cfapi_metrics_api:post_metrics(ctx:new(), ClusterMap, Environment, Opts) of
+        {ok, Response, _} -> {ok, Response};
+        {error, Response, _} -> {not_ok, Response}
+    end.
 
 enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, get_metrics_cache_pid()),
