@@ -4,9 +4,9 @@
 %%%
 %%% @end
 %%%-------------------------------------------------------------------
+
 -module(cfclient_instance).
 
-%% API
 -export([start/1, start/2, get_authtoken/0, get_project_value/1, stop/0]).
 
 -define(DEFAULT_OPTIONS, #{}).
