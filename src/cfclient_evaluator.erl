@@ -87,6 +87,7 @@ evaluate_flag(Flag, Target, prerequisites) ->
       end
   end;
 
+%% Evaluate target rules
 evaluate_flag(Flag, Target, target_rules) ->
   #{feature := Feature} = Flag,
   #{variationToTargetMap := VariationToTargetMap} = Flag,
