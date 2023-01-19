@@ -37,6 +37,9 @@ handle_info(_Info, State = #cfclient_metrics_server_state{analytics_push_interva
   metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
   {noreply, State}.
 
+terminate(_Reason, _State = #cfclient_metrics_server_state{}) ->
+  ok.
+
 metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) ->
   ?LOG_INFO("Gathering and sending metrics"),
   MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(millisecond), []),
@@ -220,6 +223,3 @@ reset_metrics_cache(MetricsCachePID) ->
 
 reset_metric_target_cache(MetricsTargetCachePID) ->
   lru:purge(MetricsTargetCachePID).
-
-terminate(_Reason, _State = #cfclient_metrics_server_state{}) ->
-  ok.
