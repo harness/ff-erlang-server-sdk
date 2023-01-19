@@ -1,7 +1,3 @@
-%%%-------------------------------------------------------------------
-%%% @doc
-
-%%% @end
 -module(cfclient_metrics_server).
 
 -include_lib("kernel/include/logger.hrl").
@@ -54,9 +50,9 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
   end,
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
 
-%% Don't sent a request to the API if no metrics gathered this interval
 post_metrics([], []) ->
   noop;
+
 post_metrics(MetricsData, MetricTargetData) ->
   AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
   Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
@@ -76,16 +72,18 @@ enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
 
 -spec create_metrics_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Timestamp :: integer(), Accu :: list()) -> list().
 create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Timestamp, Accu) ->
-  %% Each key is the unique evaluation mapped to its evaluation occurrence count and target
+  % Each key is the unique evaluation mapped to its evaluation occurrence count and target
   {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
   Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, Timestamp),
   create_metrics_data(Tail, MetricsCachePID, Timestamp, [Metric | Accu]);
 create_metrics_data([], _, _, Accu) ->
   Accu.
 
-%% TODO - we are passing in the target here, but so far only using the Global target per ff-server requirements.
-%% however we will want to add an option to the config to disable that global config and use the actual target.
-%% So for the moment the UniqueEvaluationTarget is unreferenced.
+% TODO: We pass in the target here, but so far only using the Global
+% target per ff-server requirements. We will, however, want to add an option to
+% the config to disable that global config and use the actual target.
+% So for the moment the UniqueEvaluationTarget is unreferenced.
+
 create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, TimeStamp) ->
   MetricAttributes = [
     #{
@@ -168,12 +166,15 @@ value_to_binary(Value) when is_list(Value) ->
 
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
-  %% We want to capture the unique evaluations which are a combination of Flag and Variation (which includes the variation value and identifier)
+  % We want to capture the unique evaluations which are a combination of Flag
+  % and Variation (which includes the variation value and identifier)
   Evaluation = #{feature_name => FlagIdentifier, variation_identifier => VariationIdentifier, variation_value => VariationValue},
-  %% In the cache, we map unique evaluations to two data points
-  %% 1. A counter so we can count how many times it has occurred.
-  %% 2. The target for the unique evaluation. At present, we use the so called Global Target when posting metrics to
-  %% FF-server, but lets cache the actual target as in the future we want to enable real target posting for when we need to debug.
+  % In the cache, we map unique evaluations to two data points:
+  % 1. A counter so we can count how many times it has occurred.
+  % 2. The target for the unique evaluation. At present, we use the so called
+  %    Global Target when posting metrics to FF-server, but lets cache the
+  %    actual target as in the future we want to enable real target posting for
+  %    when we need to debug.
   case lru:contains_or_add(MetricsCachePID, Evaluation, {1, Target}) of
     {true, _} ->
       {Counter, CachedTarget} = lru:get(MetricsCachePID, Evaluation),
