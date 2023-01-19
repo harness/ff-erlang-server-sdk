@@ -3,11 +3,21 @@
 %%%
 %%% @end
 %%%-------------------------------------------------------------------
+
 -module(cfclient_evaluator).
 
 -include_lib("kernel/include/logger.hrl").
 
--export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2, custom_attribute_to_binary/1]).
+-export(
+  [
+    bool_variation/2,
+    string_variation/2,
+    number_variation/2,
+    json_variation/2,
+    custom_attribute_to_binary/1
+  ]
+).
+
 -include("cfclient_evaluator_operators.hrl").
 
 -spec evaluate(binary(), cfclient:target()) -> {ok, binary()} | not_ok.
