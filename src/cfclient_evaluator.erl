@@ -61,10 +61,11 @@ evaluate_flag(Flag, Target, off) ->
       get_default_off_variation(Flag, maps:get(offVariation, Flag));
 
     <<"on">> ->
-      ?LOG_DEBUG("Flag ~p~n is turned on", [maps:get(feature, Flag)]),
+      ?LOG_DEBUG("Flag ~p is on", [maps:get(feature, Flag)]),
       %% Start the evaluation.
       evaluate_flag(Flag, Target, prerequisites)
   end;
+
 evaluate_flag(Flag, Target, prerequisites) ->
   case maps:get(prerequisites, Flag, []) of
     %% If no prerequisites to evaluate, go straight to target rules
