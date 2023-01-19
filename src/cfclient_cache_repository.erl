@@ -21,7 +21,7 @@ get_from_cache({Type, Identifier}, CachePID) ->
   FlagKey = format_key({Type, Identifier}),
   get(CachePID, FlagKey).
 
--spec get(CachePID :: pid(), Identifier :: binary()) -> term().
+-spec get(pid(), binary()) -> term().
 get(CachePID, FlagKey) ->
   lru:get(CachePID, FlagKey).
 
@@ -38,7 +38,7 @@ set_to_cache({Type, Identifier}, Feature,  CachePID) ->
       not_ok
   end.
 
--spec set(CachePID :: pid(), Identifier :: binary(), Value :: cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(),  Outdated :: boolean()) -> atom().
+-spec set(pid(), binary(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), boolean()) -> atom().
 set(CachePID, Identifier, Value, false) ->
   lru:add(CachePID, Identifier, Value),
   ok;
