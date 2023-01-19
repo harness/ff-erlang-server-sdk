@@ -390,7 +390,9 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
   not_ok.
 
--spec apply_percentage_rollout(Variations :: list(), BucketBy :: binary(), TargetValue :: binary(), AccumulatorIn :: integer()) -> binary() | percentage_rollout_excluded.
+
+-spec apply_percentage_rollout(Variations :: list(), binary(), binary(), integer()) ->
+  binary() | percentage_rollout_excluded.
 apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, AccumulatorIn) ->
   Percentage = AccumulatorIn + maps:get(weight, Head),
   case should_rollout(BucketBy, TargetValue, Percentage) of
