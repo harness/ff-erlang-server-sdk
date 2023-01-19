@@ -297,8 +297,7 @@ search_group_custom_rules(_, []) -> false.
 -spec is_custom_rule_match(Operator :: binary(), TargetAttribute :: binary() | list(), binary()) ->
   boolean().
 % No target attribute, don't attempt match
-is_custom_rule_match(_, <<>>, _) ->
-  false;
+is_custom_rule_match(_, <<>>, _) -> false;
 % Equal case sensitive
 is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, TargetAttribute, RuleValue) ->
   string:equal(TargetAttribute, hd(RuleValue), false);
