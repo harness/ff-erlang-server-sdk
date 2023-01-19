@@ -65,6 +65,7 @@ is_outdated({flag, Identifier}, Feature, CachePID) ->
       #{version := NewFeatureVersion} = Feature,
       OldFeatureVersion > NewFeatureVersion
   end;
+
 is_outdated({segment, Identifier}, Segment, CachePID) ->
   case get_from_cache({segment, Identifier}, CachePID) of
     undefined -> false;
@@ -88,4 +89,3 @@ set_pid(CachePID) ->
 get_pid() ->
   {ok, Pid} = application:get_env(cfclient, cachepid),
   Pid.
-
