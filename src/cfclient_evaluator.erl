@@ -122,7 +122,7 @@ evaluate_flag(Flag, Target, group_rules) ->
       ?LOG_DEBUG("Group rule matched flag ~p with target ~p", [Feature, Target]),
       get_target_or_group_variation(Flag, GroupVariationIdentifier)
   end;
-%% Default "on" variation
+% Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
   #{feature := Feature, variations := Variations, defaultServe := DefaultServe} = Flag,
   #{variation := Identifier} = DefaultServe,
