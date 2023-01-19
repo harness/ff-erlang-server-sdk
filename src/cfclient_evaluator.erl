@@ -359,14 +359,12 @@ get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, Tar
 %% If no custom attributes or none matched from previous function clause, then check if the Rule attribute is Identifier or Name so we can attempt to match on those values.
 get_attribute_value(_, RuleAttribute, TargetIdentifier, TargetName) ->
   case RuleAttribute of
-    <<"identifier">> ->
-      TargetIdentifier;
-    <<"name">> ->
-      TargetName;
+    <<"identifier">> -> TargetIdentifier;
+    <<"name">> -> TargetName;
     _ -> <<>>
   end.
 
-%%  Convert custom attributes to binary
+% Convert custom attributes to binary
 custom_attribute_to_binary(CustomAttribute) when is_binary(CustomAttribute) ->
   CustomAttribute;
 custom_attribute_to_binary(CustomAttribute) when is_atom(CustomAttribute) ->
