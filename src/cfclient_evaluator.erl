@@ -152,12 +152,14 @@ get_default_off_variation(Flag, Identifier) ->
 -spec get_target_or_group_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
   {ok, Identifier :: binary(), term()} | not_ok.
 get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
-  case get_variation(maps:get(variations, Flag), TargetVariationIdentifier) of
+  #{feature := Feature, variations := Variations} = Flag,
+  case get_variation(Variations, TargetVariationIdentifier) of
     [] ->
-      ?LOG_ERROR("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ", [maps:get(feature, Flag), TargetVariationIdentifier]),
+      ?LOG_ERROR("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ",
+                 [Feature, TargetVariationIdentifier]),
       not_ok;
-    Variation ->
-      {ok, TargetVariationIdentifier, maps:get(value, Variation)}
+  #{value := Value} ->
+      {ok, TargetVariationIdentifier, Value}
   end.
 
 
