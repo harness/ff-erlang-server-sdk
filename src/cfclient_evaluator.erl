@@ -405,8 +405,8 @@ apply_percentage_rollout([], _, _, _) -> percentage_rollout_excluded.
 
 -spec should_rollout(binary(), binary(), integer()) -> boolean().
 should_rollout(BucketBy, TargetValue, Percentage) ->
-  Hash = erlang_murmurhash:murmurhash3_32(<<TargetValue/binary,":",BucketBy/binary>>),
-  BucketID = (Hash rem 100) +1,
+  Hash = erlang_murmurhash:murmurhash3_32(<<TargetValue/binary, ":", BucketBy/binary>>),
+  BucketID = (Hash rem 100) + 1,
   (Percentage > 0) andalso (BucketID =< Percentage).
 
 
