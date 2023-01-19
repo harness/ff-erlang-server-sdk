@@ -290,10 +290,12 @@ search_group_custom_rules(Target, [Head | Tail]) ->
     true -> true;
     false -> search_group_custom_rules(Target, Tail)
   end;
+
 search_group_custom_rules(_, []) -> false.
 
 
--spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleValue :: binary()) -> true | false.
+-spec is_custom_rule_match(Operator :: binary(), TargetAttribute :: binary() | list(), binary()) ->
+  boolean().
 % No target attribute, don't attempt match
 is_custom_rule_match(_, <<>>, _) ->
   false;
