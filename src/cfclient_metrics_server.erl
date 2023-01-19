@@ -2,6 +2,8 @@
 
 -include_lib("kernel/include/logger.hrl").
 
+-include("cfclient_config.hrl").
+
 -behaviour(gen_server).
 
 -export([start_link/0, enqueue_metrics/4, set_metrics_cache_pid/1, set_metrics_target_cache_pid/1]).
