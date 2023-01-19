@@ -387,7 +387,9 @@ custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
 custom_attribute_list_elem_to_binary(Element) when is_binary(Element) ->
   Element;
 custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
-  ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
+  ?LOG_ERROR(
+    "Using strings/lists for element values in the target custom attributes list is not supported"
+  ),
   not_ok.
 
 
