@@ -110,6 +110,7 @@ evaluate_flag(Flag, Target, default_on) ->
     [] ->
       ?LOG_ERROR("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [maps:get(feature, Flag), DefaultServeIdentifier]),
       not_ok;
+
     DefaultVariation ->
       {ok, DefaultServeIdentifier, maps:get(value, DefaultVariation)}
   end.
@@ -119,6 +120,7 @@ get_default_off_variation(Flag, OffVariationIdentifier) ->
     [] ->
       ?LOG_ERROR("Off variation not found: ~p~n ", [OffVariationIdentifier]),
       not_ok;
+
     OffVariation ->
       {ok, OffVariationIdentifier, maps:get(value, OffVariation)}
   end.
@@ -180,23 +182,28 @@ evaluate_target_group_rules(Rules, Target) ->
 -spec search_rules_for_inclusion(Rules :: list(), Target :: cfclient:target()) -> binary() | excluded | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
   case is_rule_included_or_excluded(maps:get(clauses, Head), Target) of
-    excluded ->
-      excluded;
+    excluded -> excluded;
+
     included ->
       %% Check if percentage rollout applies to this rule
       case maps:get(distribution,  maps:get(serve, Head), false) of
         %% If not then return the rule's variation
-        false ->
-          maps:get(variation, maps:get(serve, Head));
+        false -> maps:get(variation, maps:get(serve, Head));
         %% Apply the percentage rollout calculation for the rule
         Distribution when Distribution /= null ->
           BucketBy = maps:get(bucketBy, Distribution),
           TargetAttributeValue = get_attribute_value(maps:get(attributes, Target, #{}), BucketBy, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
-          apply_percentage_rollout(maps:get(variations, Distribution), BucketBy, TargetAttributeValue, 0)
-
+          apply_percentage_rollout(
+            maps:get(variations, Distribution),
+            BucketBy,
+            TargetAttributeValue,
+            0
+          )
       end;
+
     _ -> search_rules_for_inclusion(Tail, Target)
   end;
+
 search_rules_for_inclusion([], _) -> not_found.
 
 -spec is_rule_included_or_excluded(Clauses :: list(), Target :: cfclient:target()) -> true | false.
