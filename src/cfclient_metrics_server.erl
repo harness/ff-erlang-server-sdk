@@ -111,11 +111,11 @@ create_metric(UniqueEvaluation, _UniqueEvaluationTarget, Count, TimeStamp) ->
      }.
 
 
-create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Accu) ->
+create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Acc) ->
   Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
       MetricTarget = create_metric_target(Target),
-      create_metric_target_data(Tail, MetricsTargetCachePID, [MetricTarget | Accu]);
-create_metric_target_data([], _, Accu) -> Accu.
+      create_metric_target_data(Tail, MetricsTargetCachePID, [MetricTarget | Acc]);
+create_metric_target_data([], _, Acc) -> Acc.
 
 create_metric_target(Target) ->
   F =
