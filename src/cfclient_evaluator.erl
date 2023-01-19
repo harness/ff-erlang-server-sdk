@@ -521,3 +521,6 @@ get_variation(Variations, Identifier) ->
   hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation, not_found)]).
 
 
+-spec identifier_matches(map(), [map()]) -> boolean().
+identifier_matches(#{identifier := Identifier}, Values) ->
+  lists:any(fun (#{identifier := I}) -> Identifier == I end, Values).
