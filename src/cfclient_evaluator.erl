@@ -456,7 +456,8 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
       )
   end.
 
--spec bool_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, boolean()} | not_ok.
+-spec bool_variation(binary(), cfclient:target()) ->
+  {ok, Identifier :: binary(), Value :: boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
