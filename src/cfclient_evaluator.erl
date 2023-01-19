@@ -241,7 +241,7 @@ is_rule_included_or_excluded([], _) -> false;
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
     ?SEGMENT_MATCH_OPERATOR ->
-      % At present there is only ever one element in values, so we get the head.
+      % At present there is only ever one element in values, so get the first one.
       GroupName = hd(maps:get(values, Head, false)),
       CachePid = cfclient_cache_repository:get_pid(),
       Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
