@@ -200,7 +200,7 @@ search_targets(_TargetIdentifier, []) -> not_found.
 evaluate_target_group_rules([], _) -> not_found;
 
 evaluate_target_group_rules(Rules, Target) ->
-  %% Sort Target Group Rules by priority - 0 is highest.
+  % Sort Target Group Rules by priority, 0 is highest.
   PrioritizedRules = lists:sort(
     fun(A, B) ->
       maps:get(priority, A) =< maps:get(priority, B)
