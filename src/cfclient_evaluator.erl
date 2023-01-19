@@ -425,13 +425,14 @@ search_prerequisites([Head | Tail], Target) ->
         %% A prerequisite has been met, so continue to check any others
         true -> search_prerequisites(Tail, Target);
         % Prerequisites are not met
-        false ->
-          false
+        false -> false
       end
   end;
+
 %% This function is only called with a non-empty list, so we can safely return true as if we've gotten here
 %% it means all previous prerequisites have been true.
 search_prerequisites([], _) -> true.
+
 
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   %% Start the evaluation
