@@ -19,8 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
-start_link() ->
-  supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link() -> supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 init([]) ->
   MaxRestarts = 1000,
