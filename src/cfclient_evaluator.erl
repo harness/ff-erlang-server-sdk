@@ -458,7 +458,8 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
       ?LOG_ERROR(
         "Could not evaluate prerequisite flag ~p",
         [PrerequisiteFlagIdentifier]
-      )
+      ),
+      false
   end.
 
 
