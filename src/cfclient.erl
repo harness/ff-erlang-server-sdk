@@ -12,9 +12,6 @@
 
 -export(
   [
-    start/1,
-    start/2,
-    stop/0,
     bool_variation/3,
     string_variation/3,
     number_variation/3,
@@ -23,6 +20,8 @@
     retrieve_segments/0
   ]
 ).
+
+-export([start/1, start/2, stop/0]).
 
 -type target() :: #{
                   identifier := binary(),
