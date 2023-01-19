@@ -270,6 +270,7 @@ search_group(custom_rules, Target, Group) ->
     false -> false
   end.
 
+
 -spec search_group_rules(Target :: binary(), GroupRules :: list() | null) -> true | false.
 search_group_rules(_, null) -> false;
 search_group_rules(TargetIdentifier, [Head | Tail]) ->
@@ -284,10 +285,8 @@ search_group_rules(_, []) -> false.
 -spec search_group_custom_rules(cfclient:target(), CustomRules :: [map()]) -> boolean().
 search_group_custom_rules(Target, null) -> false;
 search_group_custom_rules(Target, [Head | Tail]) ->
-  %% Get necessary fields from rule
-  RuleAttribute = maps:get(attribute, Head, <<>>),
-  RuleValue = maps:get(values, Head, <<>>),
-  %% Get the Target attribute
+  #{attribute := RuleAttribute, values := RuleValue, op := Op} = Head,
+  #{attributes := TargetAttributes, identifier := TargetIdentifier, name := TargetName} = Target,
   TargetAttribute = get_attribute_value(maps:get(attributes, Target, #{}), RuleAttribute, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
   case is_custom_rule_match(maps:get(op, Head), TargetAttribute, RuleValue) of
     true -> true;
