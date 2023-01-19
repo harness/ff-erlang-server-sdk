@@ -117,14 +117,21 @@ number_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
         Variation;
 
       not_ok ->
-        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+        ?LOG_ERROR(
+          "Evaluation failed for flag ~p, target ~p, returning default ~p",
+          [FlagKey, Target, Default]
+        ),
         Default
     end
   catch
-    _:_:Stacktrace ->
-      ?LOG_ERROR("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+    _:_ : Stacktrace ->
+      ?LOG_ERROR(
+        "Evaluation failed for flag ~p, target ~p, returning default ~p: ~p",
+        [FlagKey, Target, Default, Stacktrace]
+      ),
       Default
   end.
+
 
 -spec json_variation(FlagKey :: binary() | list(), Target :: target(), Default :: map()) -> map().
 json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
