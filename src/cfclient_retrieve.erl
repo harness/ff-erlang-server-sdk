@@ -40,6 +40,7 @@ retrieve_segments(Context, ClientConfig) ->
     {ok, Segments, _} ->
       [cfclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Segments],
       ok;
+
     {error, Response, _} ->
       ?LOG_ERROR("Error retrieving segments: ~p", [Response]),
       not_ok
