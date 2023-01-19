@@ -501,7 +501,7 @@ json_variation(FlagIdentifier, Target) ->
         {ok, VariationIdentifier, jsx:decode(Variation, [])}
       catch
         error : badarg ->
-          ?LOG_ERROR("Error when decoding Json variation. Not returning variation for: ~p~n", [Variation]),
+          ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
           not_ok
       end;
 
