@@ -136,20 +136,15 @@ number_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
 -spec json_variation(binary() | list(), target(), map()) -> map().
 json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   json_variation(list_to_binary(FlagKey), Target, Default);
-json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+
+json_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:json_variation(FlagKey, SanitisedTarget) of
+    case cfclient_evaluator:json_variation(FlagKey, Target) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, jsx:encode(Variation)),
+        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, Target, VariationIdentifier, jsx:encode(Variation)),
         Variation;
+
       not_ok ->
         ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
         Default
