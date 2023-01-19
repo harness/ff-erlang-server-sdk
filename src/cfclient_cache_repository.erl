@@ -13,7 +13,9 @@
 -type flag() :: {flag, Identifier :: binary()}.
 -type segment() :: {segment, Identifier :: binary()}.
 
-% @doc Get a flag or segment from the cache.
+% TODO export types?
+
+% @doc Get flag or segment from cache.
 -spec get_from_cache(flag() | segment(), CachePID :: pid()) -> cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() | undefined.
 get_from_cache({Type, Identifier}, CachePID) ->
   FlagKey = format_key({Type, Identifier}),
@@ -23,8 +25,7 @@ get_from_cache({Type, Identifier}, CachePID) ->
 get(CachePID, FlagKey) ->
   lru:get(CachePID, FlagKey).
 
-%% @doc Places a flag or segment into the cache with the new value
-%% @end
+% @doc Place flag or segment into cache with new value
 -spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> atom().
 set_to_cache({Type, Identifier}, Feature,  CachePID) ->
   IsOutdated = is_outdated({Type, Identifier}, Feature, CachePID),
