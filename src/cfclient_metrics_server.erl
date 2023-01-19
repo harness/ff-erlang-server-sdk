@@ -117,6 +117,8 @@ create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID
       create_metric_target_data(Tail, MetricsTargetCachePID, [MetricTarget | Acc]);
 create_metric_target_data([], _, Acc) -> Acc.
 
+
+-spec create_metric_target(cfclient:target()) -> map().
 create_metric_target(Target) ->
   F =
     fun(K, V, AccIn) ->
