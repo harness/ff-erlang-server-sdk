@@ -79,15 +79,20 @@ string_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
       {ok, VariationIdentifier, Variation} ->
         enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, Target, VariationIdentifier, list_to_binary(Variation)),
         Variation;
+
       not_ok ->
-        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n",
-                   [FlagKey, Target, Default]),
+        ?LOG_ERROR(
+          "Evaluation failed for flag ~p, target ~p, returning default ~p",
+          [FlagKey, Target, Default]
+        ),
         Default
     end
   catch
-    _:_:Stacktrace ->
-      ?LOG_ERROR("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n",
-                 [FlagKey, Target, Stacktrace, Default]),
+    _:_ : Stacktrace ->
+      ?LOG_ERROR(
+        "Evaluation failed for flag ~p, target ~p, returning default ~p: ~p",
+        [FlagKey, Target, Default, Stacktrace]
+      ),
       Default
   end.
 
