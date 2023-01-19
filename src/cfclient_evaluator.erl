@@ -67,7 +67,6 @@ evaluate_flag(Flag, Target, off) ->
 
 evaluate_flag(Flag, Target, prerequisites) ->
   case maps:get(prerequisites, Flag, []) of
-    %% If no prerequisites to evaluate, go straight to target rules
     [] ->
       evaluate_flag(Flag, Target, target_rules);
 
