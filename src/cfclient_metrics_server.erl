@@ -4,6 +4,8 @@
 %%% @end
 -module(cfclient_metrics_server).
 
+-include_lib("kernel/include/logger.hrl").
+
 -behaviour(gen_server).
 
 -export([start_link/0, enqueue_metrics/4, set_metrics_cache_pid/1, set_metrics_target_cache_pid/1]).
@@ -35,19 +37,19 @@ handle_info(_Info, State = #cfclient_metrics_server_state{analytics_push_interva
   {noreply, State}.
 
 metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) ->
-  logger:info("Gathering and sending analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
+  ?LOG_INFO("Gathering and sending analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
   MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(millisecond), []),
   MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
   case post_metrics(MetricsData, MetricTargetData) of
     {ok, Response} ->
-      logger:info("Successfully posted metric to ff-server: ~p~n: ", [Response]),
+      ?LOG_INFO("Successfully posted metric to ff-server: ~p~n: ", [Response]),
       reset_metrics_cache(MetricsCachePID),
       reset_metric_target_cache(MetricTargetCachePID);
     noop ->
-      logger:info("No metrics to post for this Analytics interval"),
+      ?LOG_INFO("No metrics to post for this Analytics interval"),
       noop;
     {not_ok, Response} ->
-      logger:error("Error recieved from ff-server when posting metrics: ~p~n", [Response]),
+      ?LOG_ERROR("Error recieved from ff-server when posting metrics: ~p~n", [Response]),
       not_ok
   end,
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
@@ -196,7 +198,7 @@ set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
           lru:add(MetricsTargetCachePID, Identifier, Target)
       end;
     <<"true">> ->
-      logger:debug("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
+      ?LOG_DEBUG("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
       noop
   end.
 
