@@ -122,16 +122,15 @@ evaluate_flag(Flag, Target, group_rules) ->
   end;
 %% Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
-  ?LOG_DEBUG("Returning default 'on' variation for Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
-  DefaultServe = maps:get(defaultServe, Flag),
-  DefaultServeIdentifier = maps:get(variation, DefaultServe),
-  case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
+  #{feature := Feature, variations := Variations, defaultServe := DefaultServe} = Flag,
+  #{variation := DefaultServeIdentifier} = DefaultServe,
+  ?LOG_DEBUG("Returning default 'on' variation for flag ~p, target ~p", [Feature, Target]),
+  case get_variation(Variations, DefaultServeIdentifier) of
     [] ->
       ?LOG_ERROR("Default variation not found for flag ~p, identifier ~p", [Feature, Identifier]),
       not_ok;
 
-    DefaultVariation ->
-      {ok, DefaultServeIdentifier, maps:get(value, DefaultVariation)}
+      #{value := Value} -> {ok, DefaultServeIdentifier, Value}
   end.
 
 get_default_off_variation(Flag, OffVariationIdentifier) ->
