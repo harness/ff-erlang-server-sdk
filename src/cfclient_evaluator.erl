@@ -178,7 +178,7 @@ search_variation_map(TargetIdentifier, [Head | Tail]) ->
   end;
 search_variation_map(_TargetIdentifier, []) -> not_found.
 
--spec search_targets(TargetIdentifier :: binary(), Targets :: list()) -> found | not_found.
+-spec search_targets(binary(), list()) -> found | not_found.
 search_targets(TargetIdentifier, [Head | Tail]) ->
   SearchResult = maps:get(identifier, Head, <<>>),
   if
@@ -188,7 +188,7 @@ search_targets(TargetIdentifier, [Head | Tail]) ->
   end;
 search_targets(_TargetIdentifier, []) -> not_found.
 
--spec evaluate_target_group_rules(Rules :: list(), Target :: cfclient:target()) -> binary() | excluded | not_found.
+-spec evaluate_target_group_rules(list(), cfclient:target()) -> binary() | excluded | not_found.
 %% If no rules to evaluate return the Target variation
 evaluate_target_group_rules([], _) ->
   not_found;
