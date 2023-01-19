@@ -11,7 +11,6 @@
 
 -include("cfclient_config.hrl").
 
-%% API
 -export([init/2, get_value/1, clear_config/0]).
 
 % Config defaults
