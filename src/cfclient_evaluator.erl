@@ -380,12 +380,10 @@ custom_attribute_to_binary(CustomAttribute) when is_list(CustomAttribute) ->
   end.
 
 % Convert custom rule array elements to binary
-custom_attribute_list_elem_to_binary(Element) when is_atom(Element) ->
-  atom_to_binary(Element);
+custom_attribute_list_elem_to_binary(Element) when is_atom(Element) -> atom_to_binary(Element);
 custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
   list_to_binary(mochinum:digits(Element));
-custom_attribute_list_elem_to_binary(Element) when is_binary(Element) ->
-  Element;
+custom_attribute_list_elem_to_binary(Element) when is_binary(Element) -> Element;
 custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   ?LOG_ERROR(
     "Using strings/lists for element values in the target custom attributes list is not supported"
@@ -398,11 +396,10 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
 apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, AccumulatorIn) ->
   Percentage = AccumulatorIn + maps:get(weight, Head),
   case should_rollout(BucketBy, TargetValue, Percentage) of
-    true ->
-      maps:get(variation, Head);
-    false ->
-      apply_percentage_rollout(Tail, BucketBy, TargetValue, Percentage)
+    true -> maps:get(variation, Head);
+    false -> apply_percentage_rollout(Tail, BucketBy, TargetValue, Percentage)
   end;
+
 apply_percentage_rollout([], _, _, _) -> percentage_rollout_excluded.
 
 -spec should_rollout(BucketBy :: binary(), TargetValue ::binary(), integer()) -> boolean().
