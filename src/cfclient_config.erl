@@ -174,5 +174,4 @@ parse_analytics_push_interval(Opts)  ->
     end.
 
 -spec clear_config() -> ok.
-clear_config() ->
-    application:unset_env(cfclient, config).
+clear_config() -> application:unset_env(cfclient, config).
