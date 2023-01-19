@@ -87,7 +87,7 @@ evaluate_flag(Flag, Target, prerequisites) ->
       end
   end;
 
-%% Evaluate target rules
+% Evaluate target rules
 evaluate_flag(Flag, Target, target_rules) ->
   #{feature := Feature} = Flag,
   #{variationToTargetMap := VariationToTargetMap} = Flag,
@@ -104,6 +104,7 @@ evaluate_flag(Flag, Target, target_rules) ->
       get_target_or_group_variation(Flag, TargetVariationIdentifier)
   end;
 
+% Evaluate group rules
 evaluate_flag(Flag, Target, group_rules) ->
   #{feature := Feature} = Flag,
   ?LOG_DEBUG("Evaluating Group rules for flag ~p, target ~p", [Feature, Target]),
