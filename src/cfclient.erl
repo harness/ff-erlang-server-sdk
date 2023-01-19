@@ -5,6 +5,8 @@
 %%%-------------------------------------------------------------------
 -module(cfclient).
 
+-include_lib("kernel/include/logger.hrl").
+
 %% API
 -export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, stop/0, number_variation/3, json_variation/3]).
 
@@ -43,12 +45,12 @@ bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
         enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, atom_to_binary(Variation)),
         Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, SanitisedTarget, Default]),
+        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, SanitisedTarget, Default]),
         Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, Target, Stacktrace, Default]),
+      ?LOG_ERROR("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, Target, Stacktrace, Default]),
       Default
   end.
 
@@ -70,12 +72,12 @@ string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
         enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(Variation)),
         Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
         Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+      ?LOG_ERROR("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
       Default
   end.
 
@@ -97,12 +99,12 @@ number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
         enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(mochinum:digits(Variation))),
         Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
         Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+      ?LOG_ERROR("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
       Default
   end.
 
@@ -124,21 +126,21 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
         enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, jsx:encode(Variation)),
         Variation;
       not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
         Default
     end
   catch
     _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+      ?LOG_ERROR("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
       Default
   end.
 
 -spec enqueue_metrics(IsAnalyticsEnabled :: boolean(), FlagIdentifier :: binary(), Target :: target(), VariationIdentifier :: binary(), VariationValue :: binary()) -> atom().
 enqueue_metrics(true, FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
-  logger:debug("Analytics is enabled. Passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
+  ?LOG_DEBUG("Analytics is enabled. Passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
   cfclient_metrics_server:enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue);
 enqueue_metrics(false, FlagIdentifier, Target, _, VariationValue) ->
-  logger:debug("Analytics not enabled, not passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
+  ?LOG_DEBUG("Analytics not enabled, not passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
   ok.
 
 -spec retrieve_flags() -> ok.
