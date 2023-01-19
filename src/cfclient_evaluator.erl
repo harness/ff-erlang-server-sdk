@@ -456,12 +456,12 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
       )
   end.
 
+
 -spec bool_variation(binary(), cfclient:target()) ->
   {ok, Identifier :: binary(), Value :: boolean()} | not_ok.
 bool_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
-      %% TODO - don't think we need to convert to list here. Just compare binaries.
       {ok, VariationIdentifier, binary_to_list(Variation) == "true"};
     not_ok -> not_ok
   end.
