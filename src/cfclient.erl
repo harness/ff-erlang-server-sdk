@@ -39,6 +39,10 @@ start(ApiKey) ->
 start(ApiKey, Options) ->
   cfclient_instance:start(ApiKey, Options).
 
+-spec stop() -> ok.
+stop() ->
+  cfclient_instance:stop().
+
 % TODO: why is this not boolean?
 -spec bool_variation(binary() | string(), target(), binary()) -> binary().
 bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
@@ -191,6 +195,7 @@ retrieve_flags() ->
   ClientConfig = {RequestConfig, Environment},
   cfclient_retrieve:retrieve_flags(ctx:new(), ClientConfig).
 
+
 -spec retrieve_segments() -> ok.
 retrieve_segments() ->
   AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
@@ -200,9 +205,6 @@ retrieve_segments() ->
   ClientConfig = {RequestConfig, Environment},
   cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
 
--spec stop() -> ok.
-stop() ->
-  cfclient_instance:stop().
 
 % Convert target identifier to binary, as users can provide it as a string,
 % binary, or atom, but client API works in binary.
