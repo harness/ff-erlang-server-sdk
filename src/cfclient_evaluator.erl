@@ -179,7 +179,8 @@ evaluate_target_group_rules(Rules, Target) ->
   %% Check if a target is included or excluded from the rules.
   search_rules_for_inclusion(PrioritizedRules, Target).
 
--spec search_rules_for_inclusion(Rules :: list(), Target :: cfclient:target()) -> binary() | excluded | not_found.
+
+-spec search_rules_for_inclusion(list(), cfclient:target()) -> binary() | excluded | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
   case is_rule_included_or_excluded(maps:get(clauses, Head), Target) of
     excluded -> excluded;
