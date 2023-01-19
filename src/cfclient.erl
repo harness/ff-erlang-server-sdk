@@ -206,3 +206,16 @@ target_name_to_binary(TargetName) when is_list(TargetName) ->
 -spec stop() -> ok.
 stop() ->
   cfclient_instance:stop().
+
+% Convert target identifier to binary, as users can provide it as a string,
+% binary, or atom, but client API works in binary.
+normalize_target(#{identifier := Identifier} = Target) when is_binary(Identifier) -> Target;
+
+normalize_target(#{identifier := Identifier} = Target) ->
+  Target#{identifier := to_binary(Identifier)};
+
+normalize_target(Target) -> maps:put(identifier, <<>>, Target).
+
+to_binary(Value) when is_binary(Value) -> Value;
+to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
+to_binary(Value) when is_list(Value) -> list_to_binary(Value).
