@@ -18,6 +18,18 @@
   ]
 ).
 
+-type rule() :: #{
+                priority := non_neg_integer(),
+                clauses := list(),
+                serve => map(),
+                op => binary(),
+                values => list(),
+                excluded => list(),
+                included => list()
+              }.
+-type feature() :: cfapi_feature_config:cfapi_feature_config().
+-type segment() :: cfapi_segment:cfapi_segment().
+
 -include("cfclient_evaluator_operators.hrl").
 
 -spec evaluate(binary(), cfclient:target()) -> {ok, binary()} | not_ok.
