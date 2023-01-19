@@ -492,7 +492,8 @@ number_variation(FlagIdentifier, Target) ->
   end.
 
 
--spec json_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, map()} | not_ok.
+-spec json_variation(binary(), cfclient:target()) ->
+  {ok, Identifier :: binary(), Value :: map()} | not_ok.
 json_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
