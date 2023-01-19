@@ -40,7 +40,8 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
     {ok, Response} ->
       ?LOG_INFO("Posted metrics: ~p", [Response]),
       reset_metrics_cache(MetricsCachePID),
-      reset_metric_target_cache(MetricTargetCachePID);
+      reset_metric_target_cache(MetricTargetCachePID),
+      ok;
     noop ->
       ?LOG_INFO("No metrics to post"),
       noop;
