@@ -32,7 +32,8 @@
 
 -include("cfclient_evaluator_operators.hrl").
 
--spec evaluate(binary(), cfclient:target()) -> {ok, binary()} | not_ok.
+-spec evaluate(binary(), cfclient:target()) ->
+    {ok, binary()} | not_ok.
 evaluate(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
@@ -53,7 +54,8 @@ evaluate(FlagIdentifier, Target) ->
   feature() | segment(),
   cfclient:target(),
   default_on | group_rules | off | prerequisites | target_rules
-) -> {ok, binary()} | not_ok.
+) ->
+  {ok, binary()} | not_ok.
 % Evaluate for off state
 evaluate_flag(Flag, Target, off) ->
   #{feature := Feature} = Flag,
@@ -62,6 +64,7 @@ evaluate_flag(Flag, Target, off) ->
     <<"off">> ->
       ?LOG_DEBUG("Flag ~p is off, returning default 'off' variation", [Feature]),
       get_default_off_variation(Flag, maps:get(offVariation, Flag));
+
     <<"on">> ->
       ?LOG_DEBUG("Flag ~p~n is turned on", [maps:get(feature, Flag)]),
       %% Start the evaluation.
