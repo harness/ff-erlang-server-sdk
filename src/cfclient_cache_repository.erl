@@ -3,6 +3,7 @@
 %%% LRU Repository for Flag and Segment configuration
 %%% @end
 %%%-------------------------------------------------------------------
+
 -module(cfclient_cache_repository).
 
 -include_lib("kernel/include/logger.hrl").
@@ -67,6 +68,7 @@ is_outdated({segment, Identifier}, Segment, CachePID) ->
 
   end.
 
+% Create binary key from flag or segment
 -spec format_key(flag() | segment()) -> binary().
 format_key({flag, Identifier}) ->
   <<"flags/", Identifier/binary>>;
