@@ -67,7 +67,8 @@ bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
       Default
   end.
 
--spec string_variation(FlagKey :: binary() | list(), Target :: target(), Default :: binary()) -> binary().
+
+-spec string_variation(binary() | list(), target(), binary()) -> binary().
 string_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   string_variation(list_to_binary(FlagKey), Target, Default);
 string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
