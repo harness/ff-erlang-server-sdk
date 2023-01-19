@@ -5,6 +5,8 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_cache_repository).
 
+-include_lib("kernel/include/logger.hrl").
+
 -export([get_from_cache/2, set_to_cache/3, set_pid/1, get_pid/0]).
 
 -type flag() :: {flag, Identifier :: binary()}.
@@ -29,9 +31,9 @@ set_to_cache({Type, Identifier}, Feature,  CachePID) ->
   FlagKey = format_key({Type, Identifier}),
   case set(CachePID, FlagKey, Feature, IsOutdated) of
     ok ->
-      logger:debug("Updated ~p~n Type with ~p~n Identifier:", [Type, Identifier]);
+      ?LOG_DEBUG("Updated ~p~n Type with ~p~n Identifier:", [Type, Identifier]);
     not_ok ->
-      logger:error("Did not update cache: requested ~p~n was outdated. Identifier: ~p~n", [Type, Identifier]),
+      ?LOG_ERROR("Did not update cache: requested ~p~n was outdated. Identifier: ~p~n", [Type, Identifier]),
       not_ok
   end.
 
