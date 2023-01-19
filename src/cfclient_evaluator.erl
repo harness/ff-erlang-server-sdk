@@ -236,6 +236,7 @@ search_rules_for_inclusion([], _) -> not_found.
 
 
 -spec is_rule_included_or_excluded([map()], cfclient:target()) -> included | excluded | false.
+is_rule_included_or_excluded([], _) -> false;
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
     ?SEGMENT_MATCH_OPERATOR ->
@@ -245,8 +246,7 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
       Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
       search_group(excluded, Target, Group);
     _ -> is_rule_included_or_excluded(Tail, Target)
-  end;
-is_rule_included_or_excluded([], _) -> false.
+  end.
 
 % Parses Group Rules for the different rule types.
 -spec search_group(RuleType :: excluded | included | custom_rules, cfclient:target(), map()) ->
