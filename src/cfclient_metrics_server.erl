@@ -6,11 +6,14 @@
 
 -behaviour(gen_server).
 
--export([start_link/0, enqueue_metrics/4, set_metrics_cache_pid/1, set_metrics_target_cache_pid/1]).
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
+-export([enqueue_metrics/4, set_metrics_cache_pid/1, set_metrics_target_cache_pid/1]).
+
+-export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
+
 -include("cfclient_metrics_attributes.hrl").
 
 -define(SERVER, ?MODULE).
+
 -record(cfclient_metrics_server_state, {analytics_push_interval, metrics_cache_pid, metric_target_cache_pid}).
 
 start_link() ->
