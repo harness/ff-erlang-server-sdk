@@ -133,6 +133,8 @@ evaluate_flag(Flag, Target, default_on) ->
       #{value := Value} -> {ok, Identifier, Value}
   end.
 
+-spec get_default_off_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
+  {ok, Identifier :: binary(), Value :: term()} | not_ok.
 get_default_off_variation(Flag, Identifier) ->
   #{variations := Variations} = Flag,
   case get_variation(Variations, Identifier) of
