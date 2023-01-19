@@ -31,7 +31,7 @@
                   attributes := #{atom() := binary() | atom() | list()}
                 }.
 
--spec start(ApiKey :: string()) -> ok.
+-spec start(string()) -> ok.
 start(ApiKey) ->
   start(ApiKey, #{}).
 
