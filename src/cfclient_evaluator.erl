@@ -208,7 +208,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
 search_rules_for_inclusion([], _) -> not_found.
 
 
--spec is_rule_included_or_excluded(Clauses :: list(), Target :: cfclient:target()) -> true | false.
+-spec is_rule_included_or_excluded(list(), cfclient:target()) -> true | false.
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
     ?SEGMENT_MATCH_OPERATOR ->
@@ -221,8 +221,8 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
   end;
 is_rule_included_or_excluded([], _) -> false.
 
-%% Parses Group Rules for the different rule types.
--spec search_group(RuleType :: atom(), Target :: binary(), Group :: map()) -> included | excluded | false.
+% Parses Group Rules for the different rule types.
+-spec search_group(atom(), binary(), map()) -> included | excluded | false.
 search_group(excluded, Target, Group) ->
   TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(excluded, Group, [])) of
