@@ -160,8 +160,8 @@ set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue
     {true, _} ->
       {Counter, CachedTarget} = lru:get(MetricsCachePID, Evaluation),
       lru:add(MetricsCachePID, Evaluation, {Counter + 1, CachedTarget});
-    {false, _} ->
-      noop
+
+    {false, _} -> noop
   end.
 
 -spec set_to_metric_target_cache(Target :: cfclient:target(), MetricsTargetCachePID :: pid()) -> atom().
