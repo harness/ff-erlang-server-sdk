@@ -7,6 +7,8 @@
 
 -module(cfclient_retrieve).
 
+-include_lib("kernel/include/logger.hrl").
+
 -export([retrieve_flags/2, retrieve_segments/2]).
 
 -export_type([client_config/0]).
@@ -26,7 +28,7 @@ retrieve_flags(Context, ClientConfig) ->
       [cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Feature)}, Feature, CachePID) || Feature <- Features],
       ok;
     {error, Response, _} ->
-      logger:error("Error when retrieving Flags from Server. Error response: ~p~n", [Response]),
+      ?LOG_ERROR("Error when retrieving Flags from Server. Error response: ~p~n", [Response]),
       not_ok
   end.
 
@@ -41,7 +43,7 @@ retrieve_segments(Context, ClientConfig) ->
       [cfclient_cache_repository:set_to_cache({segment, maps:get(identifier, Segment)}, Segment, CachePID) || Segment <- Segments],
       ok;
     {error, Response, _} ->
-      logger:error("Error when retrieving Segments from Server. Error response: ~p~n", [Response]),
+      ?LOG_ERROR("Error when retrieving Segments from Server. Error response: ~p~n", [Response]),
       not_ok
   end.
 
