@@ -409,7 +409,8 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
   BucketID = (Hash rem 100) +1,
   (Percentage > 0) andalso (BucketID =< Percentage).
 
--spec search_prerequisites(Prerequisites :: list(), Target :: binary()) -> boolean().
+
+-spec search_prerequisites(Prerequisites :: list(), binary()) -> boolean().
 search_prerequisites([Head | Tail], Target) ->
   PrerequisiteFlagIdentifier = maps:get(feature, Head),
   CachePid = cfclient_cache_repository:get_pid(),
