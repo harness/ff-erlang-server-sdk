@@ -504,6 +504,7 @@ json_variation(FlagIdentifier, Target) ->
           ?LOG_ERROR("Error when decoding Json variation. Not returning variation for: ~p~n", [Variation]),
           not_ok
       end;
+
     not_ok -> not_ok
   end.
 
