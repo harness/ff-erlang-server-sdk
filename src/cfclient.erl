@@ -24,12 +24,12 @@
   ]
 ).
 
--type target() ::
-#{identifier := binary(),
-name := binary(),
-anonymous => boolean(),
-attributes := #{atom() := binary() | atom() | list()}
-}.
+-type target() :: #{
+                  identifier := binary(),
+                  name := binary(),
+                  anonymous => boolean(),
+                  attributes := #{atom() := binary() | atom() | list()}
+                }.
 
 -spec start(ApiKey :: string()) -> ok.
 start(ApiKey) ->
