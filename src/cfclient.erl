@@ -191,8 +191,13 @@ retrieve_flags() ->
   AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
   Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
   ClusterID = list_to_binary(cfclient_instance:get_project_value("clusterIdentifier")),
-  RequestConfig = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("config_url")},  params => #{cluster => ClusterID }},
-  ClientConfig = {RequestConfig, Environment},
+  ConfigUrl = cfclient_config:get_value("config_url"),
+  Opts =
+    #{
+      cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => ConfigUrl},
+      params => #{cluster => ClusterID}
+    },
+  ClientConfig = {Opts, Environment},
   cfclient_retrieve:retrieve_flags(ctx:new(), ClientConfig).
 
 
