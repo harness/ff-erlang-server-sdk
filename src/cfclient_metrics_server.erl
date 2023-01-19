@@ -33,7 +33,7 @@ handle_info(_Info, State = #cfclient_metrics_server_state{analytics_push_interva
   {noreply, State}.
 
 metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) ->
-  ?LOG_INFO("Gathering and sending analytics with interval : ~p seconds", [AnalyticsPushInterval / 1000]),
+  ?LOG_INFO("Gathering and sending metrics"),
   MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(millisecond), []),
   MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
   case post_metrics(MetricsData, MetricTargetData) of
@@ -42,6 +42,7 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
       reset_metrics_cache(MetricsCachePID),
       reset_metric_target_cache(MetricTargetCachePID),
       ok;
+
     noop ->
       ?LOG_INFO("No metrics to post"),
       noop;
