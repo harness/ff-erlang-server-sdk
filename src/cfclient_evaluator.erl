@@ -123,14 +123,14 @@ evaluate_flag(Flag, Target, group_rules) ->
 %% Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
   #{feature := Feature, variations := Variations, defaultServe := DefaultServe} = Flag,
-  #{variation := DefaultServeIdentifier} = DefaultServe,
+  #{variation := Identifier} = DefaultServe,
   ?LOG_DEBUG("Returning default 'on' variation for flag ~p, target ~p", [Feature, Target]),
-  case get_variation(Variations, DefaultServeIdentifier) of
+  case get_variation(Variations, Identifier) of
     [] ->
       ?LOG_ERROR("Default variation not found for flag ~p, identifier ~p", [Feature, Identifier]),
       not_ok;
 
-      #{value := Value} -> {ok, DefaultServeIdentifier, Value}
+      #{value := Value} -> {ok, Identifier, Value}
   end.
 
 get_default_off_variation(Flag, OffVariationIdentifier) ->
