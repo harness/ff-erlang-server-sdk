@@ -18,7 +18,7 @@
 -type client_config() :: {EnvironmentID :: binary(), BearerToken :: binary(), ClusterID :: binary()}.
 
 % @doc Retrieve all features from FF API and store them to cache.
--spec retrieve_flags(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
+-spec retrieve_flags(ctx:t(), client_config()) -> ok | not_ok.
 retrieve_flags(Context, ClientConfig) ->
   CachePID = cfclient_cache_repository:get_pid(),
   {Optional, EnvironmentID} = ClientConfig,
@@ -32,7 +32,7 @@ retrieve_flags(Context, ClientConfig) ->
   end.
 
 % @doc Retrieve all segments from FF API and store them to cache.
--spec retrieve_segments(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
+-spec retrieve_segments(ctx:t(), client_config()) -> ok | not_ok.
 retrieve_segments(Context, ClientConfig) ->
   CachePID = cfclient_cache_repository:get_pid(),
   {Optional, EnvironmentID} = ClientConfig,
