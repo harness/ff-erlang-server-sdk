@@ -17,8 +17,7 @@
 %% where consumers get to say what the interface should be.
 -type client_config() :: {EnvironmentID :: binary(), BearerToken :: binary(), ClusterID :: binary()}.
 
-%% @doc Retrieve all features from the FF API and store them to cache.
-%% @end
+% @doc Retrieve all features from FF API and store them to cache.
 -spec retrieve_flags(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_flags(Context, ClientConfig) ->
   CachePID = cfclient_cache_repository:get_pid(),
@@ -32,8 +31,7 @@ retrieve_flags(Context, ClientConfig) ->
       not_ok
   end.
 
-%% @doc Retrieve all segments from the FF API and store them to cache.
-%% @end
+% @doc Retrieve all segments from FF API and store them to cache.
 -spec retrieve_segments(Context :: ctx:t(), ClientConfig :: client_config()) -> ok | not_ok.
 retrieve_segments(Context, ClientConfig) ->
   CachePID = cfclient_cache_repository:get_pid(),
