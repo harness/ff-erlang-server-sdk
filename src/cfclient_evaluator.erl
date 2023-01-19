@@ -434,6 +434,7 @@ search_prerequisites([Head | Tail], Target) ->
 search_prerequisites([], _) -> true.
 
 
+-spec check_prerequisite(feature(), binary(), feature(), cfclient:target()) -> boolean().
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   %% Start the evaluation
   case evaluate_flag(PrerequisiteFlag, Target, off) of
