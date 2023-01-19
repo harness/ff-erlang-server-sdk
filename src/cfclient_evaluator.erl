@@ -375,7 +375,9 @@ custom_attribute_to_binary(Value) when is_list(Value) ->
     case io_lib:char_list(Value) of
         % If user supplies a string/list then log an error as not supported input
         true ->
-            ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
+            ?LOG_ERROR(
+                "Using strings/lists for element values in the target custom attributes list is not supported"
+            ),
             not_ok;
 
         false ->
