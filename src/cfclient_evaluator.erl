@@ -442,7 +442,7 @@ search_prerequisites([], _) -> true.
 -spec check_prerequisite(feature(), binary(), feature(), cfclient:target()) -> boolean().
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   case evaluate_flag(PrerequisiteFlag, Target, off) of
-    {ok, VariationIdentifier, _VariationValue} ->
+    {ok, VariationIdentifier, _} ->
       ?LOG_DEBUG(
         "Prerequisite flag ~p has variation ~p, target ~p",
         [PrerequisiteFlagIdentifier, VariationIdentifier, Target]
