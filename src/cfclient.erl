@@ -39,6 +39,7 @@ start(ApiKey) ->
 start(ApiKey, Options) ->
   cfclient_instance:start(ApiKey, Options).
 
+% TODO: why is this not boolean?
 -spec bool_variation(binary() | string(), target(), binary()) -> binary().
 bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   bool_variation(list_to_binary(FlagKey), Target, Default);
