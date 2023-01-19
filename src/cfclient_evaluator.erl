@@ -50,7 +50,7 @@ evaluate(FlagIdentifier, Target) ->
   cfclient:target(),
   default_on | group_rules | off | prerequisites | target_rules
 ) ->
-  {ok, binary()} | not_ok.
+  {ok, Identifier :: binary(), Value :: term()} | not_ok.
 % Evaluate for off state
 evaluate_flag(Flag, Target, off) ->
   #{feature := Feature} = Flag,
