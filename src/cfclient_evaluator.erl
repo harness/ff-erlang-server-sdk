@@ -5,6 +5,8 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_evaluator).
 
+-include_lib("kernel/include/logger.hrl").
+
 -export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2, custom_attribute_to_binary/1]).
 -include("cfclient_evaluator_operators.hrl").
 
@@ -13,7 +15,7 @@ evaluate(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
     undefined ->
-      logger:error("Flag not found in cache: ~p~n", [FlagIdentifier]),
+      ?LOG_ERROR("Flag not found in cache: ~p~n", [FlagIdentifier]),
       not_ok;
     Flag ->
       case evaluate_flag(Flag, Target, off) of
@@ -30,10 +32,10 @@ evaluate_flag(Flag, Target, off) ->
   State = maps:get(state, Flag),
   case State of
     <<"off">> ->
-      logger:debug("Flag ~p~n is turned off. Returning default 'off' variation", [maps:get(feature, Flag)]),
+      ?LOG_DEBUG("Flag ~p~n is turned off. Returning default 'off' variation", [maps:get(feature, Flag)]),
       get_default_off_variation(Flag, maps:get(offVariation, Flag));
     <<"on">> ->
-      logger:debug("Flag ~p~n is turned on", [maps:get(feature, Flag)]),
+      ?LOG_DEBUG("Flag ~p~n is turned on", [maps:get(feature, Flag)]),
       %% Start the evaluation.
       evaluate_flag(Flag, Target, prerequisites)
   end;
@@ -48,7 +50,7 @@ evaluate_flag(Flag, Target, prerequisites) ->
       case search_prerequisites(Prerequisites, Target) of
         %% Prerequisites met so we can continue evaluating
         true ->
-          logger:debug("All prerequisites met for Flag ~p~n with Target ~p~n", [Flag, Target]),
+          ?LOG_DEBUG("All prerequisites met for Flag ~p~n with Target ~p~n", [Flag, Target]),
           evaluate_flag(Flag, Target, target_rules);
         %% Prerequisites not met so return off variation
         false ->
@@ -57,39 +59,39 @@ evaluate_flag(Flag, Target, prerequisites) ->
   end;
 %% Evaluate for target rules
 evaluate_flag(Flag, Target, target_rules) ->
-  logger:debug("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
+  ?LOG_DEBUG("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
   case evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target) of
     not_found ->
-      logger:debug("Target rule did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      ?LOG_DEBUG("Target rule did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
       %% Check group rules
       evaluate_flag(Flag, Target, group_rules);
     TargetVariationIdentifier ->
-      logger:debug("Target rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      ?LOG_DEBUG("Target rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
       %% Return both variation identifier and not just the value, because prerequisites compares on variation identifier
       get_target_or_group_variation(Flag, TargetVariationIdentifier)
   end;
 %% Evaluate for group rules
 evaluate_flag(Flag, Target, group_rules) ->
-  logger:debug("Evaluating Group rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
+  ?LOG_DEBUG("Evaluating Group rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
   case evaluate_target_group_rules(maps:get(rules, Flag), Target) of
     not_found ->
-      logger:debug("Group rules did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      ?LOG_DEBUG("Group rules did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
       evaluate_flag(Flag, Target, default_on);
     excluded ->
-      logger:debug("Target ~p~n has been excluded via group rule for Flag ~p~n", [Target, maps:get(feature, Flag)]),
+      ?LOG_DEBUG("Target ~p~n has been excluded via group rule for Flag ~p~n", [Target, maps:get(feature, Flag)]),
       evaluate_flag(Flag, Target, default_on);
     GroupVariationIdentifier ->
-      logger:debug("Group rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      ?LOG_DEBUG("Group rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
       get_target_or_group_variation(Flag, GroupVariationIdentifier)
   end;
 %% Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
-  logger:debug("Returning default 'on' variation for Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+  ?LOG_DEBUG("Returning default 'on' variation for Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
   DefaultServe = maps:get(defaultServe, Flag),
   DefaultServeIdentifier = maps:get(variation, DefaultServe),
   case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
     [] ->
-      logger:error("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [maps:get(feature, Flag), DefaultServeIdentifier]),
+      ?LOG_ERROR("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [maps:get(feature, Flag), DefaultServeIdentifier]),
       not_ok;
     DefaultVariation ->
       {ok, DefaultServeIdentifier, maps:get(value, DefaultVariation)}
@@ -98,7 +100,7 @@ evaluate_flag(Flag, Target, default_on) ->
 get_default_off_variation(Flag, OffVariationIdentifier) ->
   case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
     [] ->
-      logger:error("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+      ?LOG_ERROR("Off variation not found: ~p~n ", [OffVariationIdentifier]),
       not_ok;
     OffVariation ->
       {ok, OffVariationIdentifier, maps:get(value, OffVariation)}
@@ -107,7 +109,7 @@ get_default_off_variation(Flag, OffVariationIdentifier) ->
 get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
   case get_variation(maps:get(variations, Flag), TargetVariationIdentifier) of
     [] ->
-      logger:error("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ", [maps:get(feature, Flag), TargetVariationIdentifier]),
+      ?LOG_ERROR("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ", [maps:get(feature, Flag), TargetVariationIdentifier]),
       not_ok;
     Variation ->
       {ok, TargetVariationIdentifier, maps:get(value, Variation)}
@@ -318,7 +320,7 @@ custom_attribute_to_binary(CustomAttribute) when is_list(CustomAttribute) ->
   case io_lib:char_list(CustomAttribute) of
     %% If user supplies a string/list then log an error as not supported input
     true ->
-      logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
+      ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
       not_ok;
     false ->
       [custom_attribute_list_elem_to_binary(X) || X <- CustomAttribute]
@@ -333,7 +335,7 @@ custom_attribute_list_elem_to_binary(Element) when is_binary(Element) ->
   Element;
 %% If user supplies a string/list then log an error as not supported input
 custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
-  logger:error("Using strings/lists for element values in the target custom attributes list is not supported"),
+  ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
   not_ok.
 
 -spec apply_percentage_rollout(Variations :: list(), BucketBy :: binary(), TargetValue :: binary(), AccumulatorIn :: integer()) -> binary() | percentage_rollout_excluded.
@@ -360,7 +362,7 @@ search_prerequisites([Head | Tail], Target) ->
   %% Get the prerequisite flag from the cache so we can evaluate it
   case cfclient_cache_repository:get_from_cache({flag, PrerequisiteFlagIdentifier}, CachePid) of
     undefined ->
-      logger:error("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [PrerequisiteFlagIdentifier]),
+      ?LOG_ERROR("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [PrerequisiteFlagIdentifier]),
       false;
     PrerequisiteFlag ->
       case check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Head, Target) of
@@ -380,12 +382,12 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
   %% Start the evaluation
   case evaluate_flag(PrerequisiteFlag, Target, off) of
     {ok, VariationIdentifier, _VariationValue} ->
-      logger:debug("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteFlagIdentifier, VariationIdentifier, Target]),
+      ?LOG_DEBUG("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n", [PrerequisiteFlagIdentifier, VariationIdentifier, Target]),
       PrerequisiteVariations = maps:get(variations, Prerequisite),
-      logger:debug("Prerequisite Flag ~p~n should have the variations ~p~n", [PrerequisiteFlagIdentifier, PrerequisiteVariations]),
+      ?LOG_DEBUG("Prerequisite Flag ~p~n should have the variations ~p~n", [PrerequisiteFlagIdentifier, PrerequisiteVariations]),
       lists:member(VariationIdentifier, PrerequisiteVariations);
     not_ok ->
-      logger:error("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n", [PrerequisiteFlagIdentifier])
+      ?LOG_ERROR("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n", [PrerequisiteFlagIdentifier])
   end.
 
 -spec bool_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, boolean()} | not_ok.
@@ -426,7 +428,7 @@ json_variation(FlagIdentifier, Target) ->
         {ok, VariationIdentifier, jsx:decode(Variation, [])}
       catch
         error:badarg ->
-          logger:error("Error when decoding Json variation. Not returning variation for: ~p~n", [Variation]),
+          ?LOG_ERROR("Error when decoding Json variation. Not returning variation for: ~p~n", [Variation]),
           not_ok
       end;
     not_ok -> not_ok
