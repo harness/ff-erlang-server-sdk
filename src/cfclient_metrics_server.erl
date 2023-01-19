@@ -86,50 +86,30 @@ create_metrics_data([], _, _, Accu) ->
 % target per ff-server requirements. We will, however, want to add an option to
 % the config to disable that global config and use the actual target.
 % So for the moment the UniqueEvaluationTarget is unreferenced.
+create_metric(UniqueEvaluation, _UniqueEvaluationTarget, Count, TimeStamp) ->
+    #{feature_name := FeatureName, variation_value := VariationValue,
+      variation_identifier := VariationId} = UniqueEvaluation,
 
-create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, TimeStamp) ->
-  MetricAttributes = [
-    #{
-      key => ?FEATURE_IDENTIFIER_ATTRIBUTE,
-      value => maps:get(feature_name, UniqueEvaluation)
-    },
-    #{
-      key => ?FEATURE_NAME_ATTRIBUTE,
-      value => maps:get(feature_name, UniqueEvaluation)
-    },
-    #{
-      key => ?TARGET_ATTRIBUTE,
-      value => ?TARGET_GLOBAL_IDENTIFIER
-    },
-    #{
-      key => ?VARIATION_IDENTIFIER_ATTRIBUTE,
-      value => maps:get(variation_identifier, UniqueEvaluation)
-    },
-    #{
-      key => ?VARIATION_VALUE_ATTRIBUTE,
-      value => maps:get(variation_value, UniqueEvaluation)
-    },
-    #{
-      key => ?SDK_VERSION_ATTRIBUTE,
-      value => ?SDK_VERSION_ATTRIBUTE_VALUE
-    },
-    #{
-      key => ?SDK_TYPE_ATTRIBUTE,
-      value => ?SDK_TYPE_ATTRIBUTE_VALUE
-    },
-    #{
-      key => ?SDK_LANGUAGE_ATTRIBUTE,
-      value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE
-    }
-  ],
+    MetricAttributes =
+    [
+     #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => FeatureName},
+     #{key => ?FEATURE_NAME_ATTRIBUTE, value => FeatureName},
+     #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
+     #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => VariationId},
+     #{key => ?VARIATION_VALUE_ATTRIBUTE, value => VariationValue},
+     #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
+     #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
+     #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
+    ],
 
-  #{
-    timestamp => TimeStamp,
-    count => Count,
-    %% Camel case to honour the API.
-    metricsType => ?METRICS_TYPE,
-    attributes => MetricAttributes
-  }.
+    #{
+      timestamp => TimeStamp,
+      count => Count,
+      %% Camel case to honour the API.
+      metricsType => ?METRICS_TYPE,
+      attributes => MetricAttributes
+     }.
+
 
 create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Accu) ->
   Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
