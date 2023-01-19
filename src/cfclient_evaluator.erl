@@ -56,10 +56,11 @@ evaluate(FlagIdentifier, Target) ->
 ) -> {ok, binary()} | not_ok.
 % Evaluate for off state
 evaluate_flag(Flag, Target, off) ->
+  #{feature := Feature} = Flag,
   State = maps:get(state, Flag),
   case State of
     <<"off">> ->
-      ?LOG_DEBUG("Flag ~p~n is turned off. Returning default 'off' variation", [maps:get(feature, Flag)]),
+      ?LOG_DEBUG("Flag ~p is off, returning default 'off' variation", [Feature]),
       get_default_off_variation(Flag, maps:get(offVariation, Flag));
     <<"on">> ->
       ?LOG_DEBUG("Flag ~p~n is turned on", [maps:get(feature, Flag)]),
