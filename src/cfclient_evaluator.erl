@@ -482,10 +482,12 @@ string_variation(FlagIdentifier, Target) ->
 number_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
-      try {ok, VariationIdentifier, binary_to_float(Variation)}
+      try
+        {ok, VariationIdentifier, binary_to_float(Variation)}
       catch
-        error:badarg -> {ok, VariationIdentifier, binary_to_integer(Variation)}
+        error : badarg -> {ok, VariationIdentifier, binary_to_integer(Variation)}
       end;
+
     not_ok -> not_ok
   end.
 
