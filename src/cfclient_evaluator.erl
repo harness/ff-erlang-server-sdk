@@ -466,6 +466,7 @@ bool_variation(FlagIdentifier, Target) ->
     not_ok -> not_ok
   end.
 
+
 -spec string_variation(binary(), cfclient:target()) ->
   {ok, Identifier :: binary(), Value :: string()} | not_ok.
 string_variation(FlagIdentifier, Target) ->
@@ -476,7 +477,8 @@ string_variation(FlagIdentifier, Target) ->
   end.
 
 
--spec number_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, number()} | not_ok.
+-spec number_variation(binary(), cfclient:target()) ->
+  {ok, Identifier :: binary(), Value :: number()} | not_ok.
 number_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
