@@ -278,7 +278,7 @@ search_group_rules(TargetIdentifier, [Head | Tail]) ->
   end;
 search_group_rules(_, []) -> false.
 
--spec search_group_custom_rules(Target :: binary(), CustomRules :: list()) -> true | false.
+-spec search_group_custom_rules(cfclient:target(), CustomRules :: [map()]) -> boolean().
 search_group_custom_rules(Target, null) -> false;
 search_group_custom_rules(Target, [Head | Tail]) ->
   %% Get necessary fields from rule
