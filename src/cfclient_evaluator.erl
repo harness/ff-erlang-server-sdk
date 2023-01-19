@@ -283,7 +283,6 @@ search_group_rules(TargetIdentifier, [Head | Tail]) ->
 search_group_rules(_, []) -> false.
 
 -spec search_group_custom_rules(cfclient:target(), CustomRules :: [map()]) -> boolean().
-search_group_custom_rules(Target, null) -> false;
 search_group_custom_rules(Target, [Head | Tail]) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Head,
   #{attributes := TargetAttributes, identifier := TargetIdentifier, name := TargetName} = Target,
