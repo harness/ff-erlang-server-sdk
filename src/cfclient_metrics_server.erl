@@ -152,8 +152,13 @@ value_to_binary(Value) when is_list(Value) ->
 -spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
 set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
   % We want to capture the unique evaluations which are a combination of Flag
-  % and Variation (which includes the variation value and identifier)
-  Evaluation = #{feature_name => FlagIdentifier, variation_identifier => VariationIdentifier, variation_value => VariationValue},
+  % and Variation (which includes the variation value and identifier).
+  Evaluation =
+    #{
+      feature_name => FlagIdentifier,
+      variation_identifier => VariationIdentifier,
+      variation_value => VariationValue
+    },
   % In the cache, we map unique evaluations to two data points:
   % 1. A counter so we can count how many times it has occurred.
   % 2. The target for the unique evaluation. At present, we use the so called
