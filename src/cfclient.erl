@@ -58,7 +58,7 @@ bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
         Default
     end
   catch
-    _:_:Stacktrace ->
+    _:_ : Stacktrace ->
       ?LOG_ERROR(
         "Evaluation error for flag: ~p, target ~p, returning default ~p: ~p",
         [FlagKey, Target, Default, Stacktrace]
