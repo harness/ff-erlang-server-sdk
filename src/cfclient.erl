@@ -59,7 +59,10 @@ bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
     end
   catch
     _:_:Stacktrace ->
-      ?LOG_ERROR("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, Target, Stacktrace, Default]),
+      ?LOG_ERROR(
+        "Evaluation error for flag: ~p, target ~p, returning default ~p: ~p",
+        [FlagKey, Target, Default, Stacktrace]
+      ),
       Default
   end.
 
