@@ -176,7 +176,7 @@ search_variation_map(TargetIdentifier, [Head | Tail]) ->
       Variation;
     true -> search_variation_map(TargetIdentifier, Tail)
   end;
-search_variation_map(_TargetIdentifier, []) -> not_found.
+search_variation_map(_, []) -> not_found.
 
 -spec search_targets(binary(), list()) -> found | not_found.
 search_targets(TargetIdentifier, [Head | Tail]) ->
