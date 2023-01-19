@@ -214,7 +214,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
 
     included ->
       %% Check if percentage rollout applies to this rule
-      case maps:get(distribution,  maps:get(serve, Head), false) of
+      case maps:get(distribution, maps:get(serve, Head), false) of
         %% If not then return the rule's variation
         false -> maps:get(variation, maps:get(serve, Head));
         %% Apply the percentage rollout calculation for the rule
