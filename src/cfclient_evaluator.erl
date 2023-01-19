@@ -247,7 +247,8 @@ is_rule_included_or_excluded([Head | Tail], Target) ->
 is_rule_included_or_excluded([], _) -> false.
 
 % Parses Group Rules for the different rule types.
--spec search_group(atom(), binary(), map()) -> included | excluded | false.
+-spec search_group(RuleType :: excluded | included | custom_rules, cfclient:target(), map()) ->
+  included | excluded | false.
 search_group(excluded, Target, Group) ->
   TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(excluded, Group, [])) of
