@@ -133,11 +133,11 @@ evaluate_flag(Flag, Target, default_on) ->
       #{value := Value} -> {ok, Identifier, Value}
   end.
 
-get_default_off_variation(Flag, OffVariationIdentifier) ->
+get_default_off_variation(Flag, Identifier) ->
   #{variations := Variations} = Flag,
-  case get_variation(Variations, OffVariationIdentifier) of
+  case get_variation(Variations, Identifier) of
     [] ->
-      ?LOG_ERROR("Off variation not found: ~p~n ", [OffVariationIdentifier]),
+      ?LOG_ERROR("Off variation not found: ~p~n ", [Identifier]),
       not_ok;
 
     OffVariation ->
