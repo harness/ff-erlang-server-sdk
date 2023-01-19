@@ -40,7 +40,7 @@
 
 -define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000).
 
--spec init(ApiKey :: string(), Opts :: map()) -> ok.
+-spec init(string(), map() | list()) -> ok.
 init(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
     Config = parse_options(ApiKey, Opts),
     application:set_env(cfclient, config, Config).
