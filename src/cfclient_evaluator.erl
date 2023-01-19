@@ -337,7 +337,7 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(Targ
     end,
   Search(TargetAttribute).
 
--spec get_attribute_value(TargetCustomAttributes :: map(), RuleAttribute :: binary(), TargetIdentifier :: binary(), TargetName :: binary()) -> binary() | <<>>.
+-spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
 %% Start with custom attributes if there are any
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName) when map_size(TargetCustomAttributes) > 0 ->
   %% Check if the rule attribute matches any of the custom attributes (Rule attribute needs to be converted to atom which is the format
