@@ -35,7 +35,7 @@
 start(ApiKey) ->
   start(ApiKey, #{}).
 
--spec start(ApiKey :: string(), Options :: map()) -> ok.
+-spec start(string(), map()) -> ok.
 start(ApiKey, Options) ->
   cfclient_instance:start(ApiKey, Options).
 
