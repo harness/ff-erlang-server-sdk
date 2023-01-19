@@ -1,8 +1,10 @@
 %%%-------------------------------------------------------------------
 %%% @doc
-%%% Pull Feature and Target configuration from the Feature Flags API and store them to an LRU cache.
+%%% Pull Feature and Target configuration from Feature Flags API and store
+%%% them to cache.
 %%% @end
 %%%-------------------------------------------------------------------
+
 -module(cfclient_retrieve).
 
 -export([retrieve_flags/2, retrieve_segments/2]).
