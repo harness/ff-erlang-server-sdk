@@ -120,27 +120,18 @@ create_metric_target_data([], _, Acc) -> Acc.
 
 -spec create_metric_target(cfclient:target()) -> map().
 create_metric_target(Target) ->
-  F =
-    fun(K, V, AccIn) ->
-      Attribute = cfclient_evaluator:custom_attribute_to_binary(V),
-      [#{key => K, value => Attribute} | AccIn]
-    end,
+    Attributes = target_attributes_to_metrics(Target),
+    #{identifier := Id} = Target,
+    Name = maps:get(name, Target, Id),
+    #{identifier => Id, name => Name, attributes => Attributes}.
 
-  Attributes = case is_map_key(attributes, Target) of
-                 true ->
-                   maps:fold(F, [], maps:get(attributes, Target));
-                 false ->
-                   []
-               end,
+-spec target_attributes_to_metrics(cfclient:target()) -> [map()].
+target_attributes_to_metrics(#{attributes := Values}) ->
+    maps:map(fun target_attribute_to_metric/2, Values).
 
-  Identifier = maps:get(identifier, Target),
-  Name = maps:get(name, Target, Identifier),
-
-  #{
-    identifier => Identifier,
-    name => Name,
-    attributes => Attributes
-  }.
+-spec target_attribute_to_metric(binary(), term()) -> map().
+target_attribute_to_metric(K, V) ->
+    #{key => K, value => cfclient_evaluator:custom_attribute_to_binary(V)}.
 
 value_to_binary(Value) when is_binary(Value) ->
   Value;
