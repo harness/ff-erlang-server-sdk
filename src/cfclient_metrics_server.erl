@@ -55,8 +55,7 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
 
 -spec post_metrics(list(), list()) -> {ok, term()} | noop.
 post_metrics([], []) ->
-  noop;
-
+    noop;
 post_metrics(MetricsData, MetricTargetData) ->
   AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
   Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
