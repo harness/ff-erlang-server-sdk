@@ -155,8 +155,10 @@ get_target_or_group_variation(Flag, Identifier) ->
   #{feature := Feature, variations := Variations} = Flag,
   case get_variation(Variations, Identifier) of
     [] ->
-      ?LOG_ERROR("Target matched on rule for Flag ~p~n but Variation with Identifier: ~p~n not found ",
-                 [Feature, Identifier]),
+      ?LOG_ERROR(
+        "Target matched rule for flag ~p but variation with identifier ~p not found",
+        [Feature, Identifier]
+      ),
       not_ok;
   #{value := Value} ->
       {ok, TargetVariationIdentifier, Value}
