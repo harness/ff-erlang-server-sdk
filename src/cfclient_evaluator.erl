@@ -417,7 +417,7 @@ search_prerequisites([Head | Tail], Target) ->
   %% Get the prerequisite flag from the cache so we can evaluate it
   case cfclient_cache_repository:get_from_cache({flag, Identifier}, CachePid) of
     undefined ->
-      ?LOG_ERROR("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [Identifier]),
+      ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
       false;
     PrerequisiteFlag ->
       case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
