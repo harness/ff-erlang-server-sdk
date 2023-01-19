@@ -134,7 +134,8 @@ evaluate_flag(Flag, Target, default_on) ->
   end.
 
 get_default_off_variation(Flag, OffVariationIdentifier) ->
-  case get_variation(maps:get(variations, Flag), OffVariationIdentifier) of
+  #{variations := Variations} = Flag,
+  case get_variation(Variations, OffVariationIdentifier) of
     [] ->
       ?LOG_ERROR("Off variation not found: ~p~n ", [OffVariationIdentifier]),
       not_ok;
