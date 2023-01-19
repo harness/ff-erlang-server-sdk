@@ -287,8 +287,9 @@ search_group_custom_rules(Target, null) -> false;
 search_group_custom_rules(Target, [Head | Tail]) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Head,
   #{attributes := TargetAttributes, identifier := TargetIdentifier, name := TargetName} = Target,
-  TargetAttribute = get_attribute_value(maps:get(attributes, Target, #{}), RuleAttribute, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
-  case is_custom_rule_match(maps:get(op, Head), TargetAttribute, RuleValue) of
+  TargetAttribute =
+    get_attribute_value(TargetAttributes, RuleAttribute, TargetIdentifier, TargetName),
+  case is_custom_rule_match(Op, TargetAttribute, RuleValue) of
     true -> true;
     false -> search_group_custom_rules(Target, Tail)
   end;
