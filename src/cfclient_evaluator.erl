@@ -268,22 +268,26 @@ search_group_custom_rules(_, []) -> false.
 
 
 -spec is_custom_rule_match(Operator :: atom(), TargetAttribute :: binary(), RuleValue :: binary()) -> true | false.
-%% No target attribute so don't attempt match
+% No target attribute, don't attempt match
 is_custom_rule_match(_, <<>>, _) ->
   false;
-%% Equal sensitive
+% Equal case sensitive
 is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, TargetAttribute, RuleValue) ->
   string:equal(TargetAttribute, hd(RuleValue), false);
-%% Equal
+
+% Equal case insensitive
 is_custom_rule_match(?EQUAL_OPERATOR, TargetAttribute, RuleValue) ->
   string:equal(TargetAttribute, hd(RuleValue), true);
-%% Starts with
+
+% Starts with
 is_custom_rule_match(?STARTS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
   string:find(TargetAttribute, hd(RuleValue)) =:= TargetAttribute;
-%% Ends with
+
+% Ends with
 is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
   Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(binary_to_list(hd(RuleValue)))}),
   string:equal(Suffix, RuleValue, false);
+
 %% Contains
 is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
   binary:match(TargetAttribute, hd(RuleValue)) /= nomatch;
