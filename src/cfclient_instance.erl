@@ -7,6 +7,8 @@
 
 -module(cfclient_instance).
 
+-include_lib("kernel/include/logger.hrl").
+
 -export([start/1, start/2, get_authtoken/0, get_project_value/1, stop/0]).
 
 -define(DEFAULT_OPTIONS, #{}).
@@ -26,8 +28,8 @@ start(ApiKey) ->
 
 -spec start(ApiKey :: string(), Options :: map()) -> ok | not_ok.
 start(ApiKey, Options) ->
-  logger:info("Starting Client"),
-  logger:info("Initializing Config"),
+  ?LOG_INFO("Starting Client"),
+  ?LOG_INFO("Initializing Config"),
   cfclient_config:init(ApiKey, Options),
   case connect(ApiKey) of
     {ok, AuthToken} ->
@@ -49,7 +51,7 @@ connect(ApiKey) ->
       application:set_env(cfclient, authtoken, AuthToken),
       {ok, AuthToken};
     {error, Response, _} ->
-      logger:error("Error when authorising API Key. Error response: ~p~n", [Response]),
+      ?LOG_ERROR("Error when authorising API Key. Error response: ~p~n", [Response]),
       {not_ok, Response}
   end.
 
@@ -75,7 +77,7 @@ get_project_value(Key) ->
 
 -spec stop() -> ok | {error, not_found, term()}.
 stop() ->
-  logger:debug("Stopping client"),
+  ?LOG_DEBUG("Stopping client"),
   stop_children(supervisor:which_children(?PARENTSUP)),
   unset_application_environment(application:get_all_env(cfclient)).
 
