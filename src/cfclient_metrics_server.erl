@@ -73,14 +73,14 @@ enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, get_metrics_cache_pid()),
   set_to_metric_target_cache(Target, get_metric_target_cache_pid()).
 
--spec create_metrics_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Timestamp :: integer(), Accu :: list()) -> list().
-create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Timestamp, Accu) ->
+-spec create_metrics_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Timestamp :: integer(), Acc :: list()) -> list().
+create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Timestamp, Acc) ->
   % Each key is the unique evaluation mapped to its evaluation occurrence count and target
   {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
   Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, Timestamp),
-  create_metrics_data(Tail, MetricsCachePID, Timestamp, [Metric | Accu]);
-create_metrics_data([], _, _, Accu) ->
-  Accu.
+  create_metrics_data(Tail, MetricsCachePID, Timestamp, [Metric | Acc]);
+create_metrics_data([], _, _, Acc) ->
+  Acc.
 
 % TODO: We pass in the target here, but so far only using the Global
 % target per ff-server requirements. We will, however, want to add an option to
