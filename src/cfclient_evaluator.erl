@@ -75,11 +75,12 @@ evaluate_flag(Flag, Target, prerequisites) ->
 
     Prerequisites ->
       case search_prerequisites(Prerequisites, Target) of
-        %% Prerequisites met so we can continue evaluating
+        % Prerequisites met, continue evaluating
         true ->
           % Prerequisites met, continue evaluating
           ?LOG_DEBUG("All prerequisites met for flag ~p, target ~p", [Flag, Target]),
           evaluate_flag(Flag, Target, target_rules);
+
         false ->
           % Prerequisites not met
           get_default_off_variation(Flag, maps:get(offVariation, Flag))
