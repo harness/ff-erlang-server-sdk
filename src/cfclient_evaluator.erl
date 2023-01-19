@@ -86,26 +86,27 @@ evaluate_flag(Flag, Target, prerequisites) ->
           % Prerequisites met, continue evaluating
           ?LOG_DEBUG("All prerequisites met for flag ~p, target ~p", [Flag, Target]),
           evaluate_flag(Flag, Target, target_rules);
-        %% Prerequisites not met so return off variation
         false ->
+          % Prerequisites not met
           get_default_off_variation(Flag, maps:get(offVariation, Flag))
       end
   end;
 
 evaluate_flag(Flag, Target, target_rules) ->
-  ?LOG_DEBUG("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
+  #{feature := Feature} = Flag,
+  ?LOG_DEBUG("Evaluating target rule for flag ~p, target ~p", [Feature, Target]),
   case evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target) of
     not_found ->
-      ?LOG_DEBUG("Target rule did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
-      %% Check group rules
+      ?LOG_DEBUG("Target rule did not match flag ~p, target ~p", [Feature, Target]),
       evaluate_flag(Flag, Target, group_rules);
 
     TargetVariationIdentifier ->
-      ?LOG_DEBUG("Target rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
-      %% Return both variation identifier and not just the value, because prerequisites compares on variation identifier
+      ?LOG_DEBUG("Target rule matched flag ~p with target ~p", [Feature, Target]),
+      %% Return both variation identifier and not just the value, because
+      %% prerequisites compares on variation identifier
       get_target_or_group_variation(Flag, TargetVariationIdentifier)
   end;
-%% Evaluate for group rules
+
 evaluate_flag(Flag, Target, group_rules) ->
   #{feature := Feature} = Flag,
   ?LOG_DEBUG("Evaluating Group rules for flag ~p, target ~p", [Feature, Target]),
