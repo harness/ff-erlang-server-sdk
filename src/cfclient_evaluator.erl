@@ -314,7 +314,11 @@ is_custom_rule_match(?STARTS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
 
 % Ends with
 is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
-  Suffix = binary:part(TargetAttribute, {byte_size(TargetAttribute), -length(binary_to_list(hd(RuleValue)))}),
+  Suffix =
+    binary:part(
+      TargetAttribute,
+      {byte_size(TargetAttribute), - length(binary_to_list(hd(RuleValue)))}
+    ),
   string:equal(Suffix, RuleValue, false);
 
 %% Contains
