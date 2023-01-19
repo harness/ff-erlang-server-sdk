@@ -94,8 +94,9 @@ evaluate_flag(Flag, Target, prerequisites) ->
 
 evaluate_flag(Flag, Target, target_rules) ->
   #{feature := Feature} = Flag,
+  #{variationToTargetMap := VariationToTargetMap} = Flag,
   ?LOG_DEBUG("Evaluating target rule for flag ~p, target ~p", [Feature, Target]),
-  case evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target) of
+  case evaluate_target_rule(VariationToTargetMap, Target) of
     not_found ->
       ?LOG_DEBUG("Target rule did not match flag ~p, target ~p", [Feature, Target]),
       evaluate_flag(Flag, Target, group_rules);
