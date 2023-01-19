@@ -374,18 +374,18 @@ custom_attribute_to_binary(CustomAttribute) when is_list(CustomAttribute) ->
     true ->
       ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
       not_ok;
+
     false ->
       [custom_attribute_list_elem_to_binary(X) || X <- CustomAttribute]
   end.
 
-%% Convert custom rule array elements to binary
+% Convert custom rule array elements to binary
 custom_attribute_list_elem_to_binary(Element) when is_atom(Element) ->
   atom_to_binary(Element);
 custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
   list_to_binary(mochinum:digits(Element));
 custom_attribute_list_elem_to_binary(Element) when is_binary(Element) ->
   Element;
-%% If user supplies a string/list then log an error as not supported input
 custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
   not_ok.
