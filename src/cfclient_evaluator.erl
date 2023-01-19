@@ -52,7 +52,7 @@ evaluate(FlagIdentifier, Target) ->
 -spec evaluate_flag(
   feature() | segment(),
   cfclient:target(),
-  atom()
+  default_on | group_rules | off | prerequisites | target_rules
 ) -> {ok, binary()} | not_ok.
 % Evaluate for off state
 evaluate_flag(Flag, Target, off) ->
