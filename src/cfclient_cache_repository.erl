@@ -8,6 +8,8 @@
 
 -include_lib("kernel/include/logger.hrl").
 
+-include("cfclient_config.hrl").
+
 -export([get_from_cache/2, set_to_cache/3, set_pid/1, get_pid/0]).
 
 -type flag() :: {flag, Identifier :: binary()}.
