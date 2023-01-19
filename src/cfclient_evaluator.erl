@@ -158,7 +158,8 @@ get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
   end.
 
 
--spec evaluate_target_rule(VariationMap :: cfapi_variation_map:cfapi_variation_map(), Target :: cfclient:target()) -> binary() | not_found.
+-spec evaluate_target_rule([cfapi_variation_map:cfapi_variation_map()], cfclient:target()) ->
+  binary() | not_found.
 evaluate_target_rule(VariationMap, Target) when VariationMap /= null, Target /= null ->
   TargetIdentifier = maps:get(identifier, Target, <<>>),
   search_variation_map(TargetIdentifier, VariationMap);
