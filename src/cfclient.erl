@@ -51,6 +51,7 @@ bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
       {ok, VariationIdentifier, Variation} ->
         enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, Target, VariationIdentifier, atom_to_binary(Variation)),
         Variation;
+
       not_ok ->
         ?LOG_ERROR(
           "Evaluation failed for flag ~p, target ~p, returning default ~p",
@@ -96,7 +97,8 @@ string_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
       Default
   end.
 
--spec number_variation(FlagKey :: binary() | list(), Target :: target(), Default :: number()) -> number().
+
+-spec number_variation(binary() | list(), target(), number()) -> number().
 number_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   number_variation(list_to_binary(FlagKey), Target, Default);
 number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
