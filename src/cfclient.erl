@@ -163,8 +163,12 @@ enqueue_metrics(true, FlagIdentifier, Target, VariationIdentifier, VariationValu
       ),
 
   cfclient_metrics_server:enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue);
+
 enqueue_metrics(false, FlagIdentifier, Target, _, VariationValue) ->
-  ?LOG_DEBUG("Analytics not enabled, not passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
+  ?LOG_DEBUG(
+    "Analytics disabled: flag ~p, target ~p, variation ~p",
+    [FlagIdentifier, Target, VariationValue]
+  ),
   ok.
 
 -spec retrieve_flags() -> ok.
