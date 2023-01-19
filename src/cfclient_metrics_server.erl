@@ -53,6 +53,7 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
   end,
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
 
+-spec post_metrics(list(), list()) -> {ok, term()} | noop.
 post_metrics([], []) ->
   noop;
 
