@@ -137,11 +137,11 @@ get_default_off_variation(Flag, Identifier) ->
   #{variations := Variations} = Flag,
   case get_variation(Variations, Identifier) of
     [] ->
-      ?LOG_ERROR("Off variation not found: ~p~n ", [Identifier]),
+      ?LOG_ERROR("Off variation not found: ~p", [Identifier]),
       not_ok;
 
     OffVariation ->
-      {ok, OffVariationIdentifier, maps:get(value, OffVariation)}
+      {ok, Identifier, maps:get(value, OffVariation)}
   end.
 
 get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
