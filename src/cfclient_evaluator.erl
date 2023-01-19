@@ -166,7 +166,8 @@ evaluate_target_rule(VariationMap, Target) when VariationMap /= null, Target /= 
 
 evaluate_target_rule(_, _) -> not_found.
 
--spec search_variation_map(TargetIdentifier :: binary(), VariationMap :: list()) -> binary() | not_found.
+-spec search_variation_map(binary(), [cfapi_variation_map:cfapi_variation_map()]) ->
+  binary() | not_found.
 search_variation_map(TargetIdentifier, [Head | Tail]) ->
   Targets = maps:get(targets, Head),
   Result = search_targets(TargetIdentifier, Targets),
