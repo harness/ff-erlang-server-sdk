@@ -6,6 +6,8 @@
 %%%-------------------------------------------------------------------
 -module(cfclient_config).
 
+-include_lib("kernel/include/logger.hrl").
+
 %% API
 -export([init/2, get_value/1, clear_config/0]).
 
@@ -59,63 +61,63 @@ get_value(Key) when is_atom(Key) ->
 parse_stream_enabled(Opts) ->
     case maps:get(stream_enabled, Opts, not_found) of
         not_found ->
-            logger:debug("stream_enabled key not provided in client config, using default value: ~p~n", [?DEFAULT_STREAM_ENABLED]),
+            ?LOG_DEBUG("stream_enabled key not provided in client config, using default value: ~p~n", [?DEFAULT_STREAM_ENABLED]),
             ?DEFAULT_STREAM_ENABLED;
         StreamEnabled ->
-            logger:debug("stream_enabled is: ~p~n", [StreamEnabled]),
+            ?LOG_DEBUG("stream_enabled is: ~p~n", [StreamEnabled]),
             StreamEnabled
     end.
 
 parse_poll_interval(Opts) ->
     case maps:get(poll_interval, Opts, not_found) of
         not_found ->
-            logger:debug("poll_interval key not provided in client config, using default value: ~p~n", [?DEFAULT_POLL_INTERVAL]),
+            ?LOG_DEBUG("poll_interval key not provided in client config, using default value: ~p~n", [?DEFAULT_POLL_INTERVAL]),
             ?DEFAULT_POLL_INTERVAL;
         PollInterval when PollInterval < 60000 ->
-            logger:error("poll_interval is ~p seconds but must not be lower than 60 seconds. Using default value ~pn: ", [?DEFAULT_POLL_INTERVAL]),
+            ?LOG_ERROR("poll_interval is ~p seconds but must not be lower than 60 seconds. Using default value ~pn: ", [?DEFAULT_POLL_INTERVAL]),
             ?DEFAULT_POLL_INTERVAL;
         PollInterval when PollInterval >= 60000 ->
-            logger:debug("poll_interval is: ~p~n", [PollInterval]),
+            ?LOG_DEBUG("poll_interval is: ~p~n", [PollInterval]),
             PollInterval
     end.
 
 parse_write_timeout(Opts) ->
     case maps:get(write_timeout, Opts, not_found) of
         not_found ->
-            logger:debug("write_timeout key not provided in client config, using default value: ~p~n", [?DEFAULT_WRITE_TIMEOUT]),
+            ?LOG_DEBUG("write_timeout key not provided in client config, using default value: ~p~n", [?DEFAULT_WRITE_TIMEOUT]),
             ?DEFAULT_WRITE_TIMEOUT;
         WriteTimeout ->
-            logger:debug("write_timeout is: ~p~n", [WriteTimeout]),
+            ?LOG_DEBUG("write_timeout is: ~p~n", [WriteTimeout]),
             WriteTimeout
     end.
 
 parse_read_timeout(Opts) ->
     case maps:get(read_timeout, Opts, not_found) of
         not_found ->
-            logger:debug("read_timeout key not provided in client config, using default value: ~p~n", [?DEFAULT_READ_TIMEOUT]),
+            ?LOG_DEBUG("read_timeout key not provided in client config, using default value: ~p~n", [?DEFAULT_READ_TIMEOUT]),
             ?DEFAULT_READ_TIMEOUT;
         ReadTimeout ->
-            logger:debug("read_timeout is: ~p~n", [ReadTimeout]),
+            ?LOG_DEBUG("read_timeout is: ~p~n", [ReadTimeout]),
             ReadTimeout
     end.
 
 parse_connection_timeout(Opts) ->
     case maps:get(connection_timeout, Opts, not_found) of
         not_found ->
-            logger:debug("connection_timeout key not provided in client config, using default value: ~p~n", [?DEFAULT_CONNECTION_TIMEOUT]),
+            ?LOG_DEBUG("connection_timeout key not provided in client config, using default value: ~p~n", [?DEFAULT_CONNECTION_TIMEOUT]),
             ?DEFAULT_CONNECTION_TIMEOUT;
         ConnectionTimeout ->
-            logger:debug("connection_timeout is: ~p~n", [ConnectionTimeout]),
+            ?LOG_DEBUG("connection_timeout is: ~p~n", [ConnectionTimeout]),
             ConnectionTimeout
     end.
 
 parse_events_url(Opts) ->
     case maps:get(events_url, Opts, not_found) of
         not_found ->
-            logger:debug("events_url key not provided in client config, using default value: ~p~n", [?DEFAULT_EVENTS_URL]),
+            ?LOG_DEBUG("events_url key not provided in client config, using default value: ~p~n", [?DEFAULT_EVENTS_URL]),
             string:trim(?DEFAULT_EVENTS_URL, trailing, "/");
         EventsUrl ->
-            logger:debug("events_url is: ~p~n", [EventsUrl]),
+            ?LOG_DEBUG("events_url is: ~p~n", [EventsUrl]),
             string:trim(EventsUrl, trailing, "/")
     end.
 
@@ -123,33 +125,33 @@ parse_events_url(Opts) ->
 parse_config_url(Opts) ->
     case maps:get(config_url, Opts, not_found) of
         not_found ->
-            logger:debug("config_url key not provided in client config, using default value: ~p~n", [?DEFAULT_CONFIG_URL]),
+            ?LOG_DEBUG("config_url key not provided in client config, using default value: ~p~n", [?DEFAULT_CONFIG_URL]),
             string:trim(?DEFAULT_CONFIG_URL, trailing, "/");
         ConfigUrl ->
-            logger:debug("config_url is: ~p~n", [ConfigUrl]),
+            ?LOG_DEBUG("config_url is: ~p~n", [ConfigUrl]),
             string:trim(ConfigUrl, trailing, "/")
     end.
 
 parse_analytics_enabled(Opts) ->
     case maps:get(analytics_enabled, Opts, not_found) of
         not_found ->
-            logger:debug("analytics_enabled key not provided in client config, using default value: ~p~n", [?DEFAULT_ANALYTICS_ENABLED]),
+            ?LOG_DEBUG("analytics_enabled key not provided in client config, using default value: ~p~n", [?DEFAULT_ANALYTICS_ENABLED]),
             ?DEFAULT_ANALYTICS_ENABLED;
         AnalyticsEnabled ->
-            logger:debug("analytics_enabled is: ~p~n", [AnalyticsEnabled]),
+            ?LOG_DEBUG("analytics_enabled is: ~p~n", [AnalyticsEnabled]),
             AnalyticsEnabled
     end.
 
 parse_analytics_push_interval(Opts)  ->
     case maps:get(analytics_push_interval, Opts, not_found) of
         not_found ->
-            logger:debug("analytics_push_interval key not provided in client config, using default value: ~p~n", [?DEFAULT_ANALYTICS_PUSH_INTERVAL]),
+            ?LOG_DEBUG("analytics_push_interval key not provided in client config, using default value: ~p~n", [?DEFAULT_ANALYTICS_PUSH_INTERVAL]),
             ?DEFAULT_ANALYTICS_PUSH_INTERVAL;
         PushInterval when PushInterval < 60000->
-            logger:error("Analytics push interval is ~p seconds but must not be lower than 60 seconds. Using default value ~pn: ", [?DEFAULT_ANALYTICS_PUSH_INTERVAL]),
+            ?LOG_ERROR("Analytics push interval is ~p seconds but must not be lower than 60 seconds. Using default value ~pn: ", [?DEFAULT_ANALYTICS_PUSH_INTERVAL]),
             ?DEFAULT_ANALYTICS_PUSH_INTERVAL;
         PushInterval when PushInterval >= 60000 ->
-            logger:debug("analytics_push_interval is: ~p~n", [PushInterval]),
+            ?LOG_DEBUG("analytics_push_interval is: ~p~n", [PushInterval]),
             PushInterval
     end.
 
