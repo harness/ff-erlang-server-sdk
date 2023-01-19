@@ -10,7 +10,12 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    cfclient_sup:start_link().
+  {ok, ApiKey} = application:get_env(cfclient, api_key),
+  {ok, Config} = application:get_env(cfclient, config, []),
+  cfclient_sup:start_link([{api_key, ApiKey}, {config, Config}]).
 
-stop(_State) ->
-    cfclient:close().
+
+stop(_State) -> ok.
+
+% TODO: does not exist
+% cfclient:close().
