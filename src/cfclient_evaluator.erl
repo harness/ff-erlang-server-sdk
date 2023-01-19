@@ -235,7 +235,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
 search_rules_for_inclusion([], _) -> not_found.
 
 
--spec is_rule_included_or_excluded(list(), cfclient:target()) -> true | false.
+-spec is_rule_included_or_excluded([map()], cfclient:target()) -> included | excluded | false.
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
     ?SEGMENT_MATCH_OPERATOR ->
