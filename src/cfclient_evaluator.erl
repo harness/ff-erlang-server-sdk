@@ -232,17 +232,13 @@ search_group(excluded, Target, Group) ->
 search_group(included, Target, Group) ->
   TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
-    true ->
-      included;
-    false ->
-      search_group(custom_rules, Target, Group)
+    true -> included;
+    false -> search_group(custom_rules, Target, Group)
   end;
 search_group(custom_rules, Target, Group) ->
   case search_group_custom_rules(Target, maps:get(rules, Group, [])) of
-    true ->
-      included;
-    false ->
-      false
+    true -> included;
+    false -> false
   end.
 
 -spec search_group_rules(Target :: binary(), GroupRules :: list() | null) -> true | false.
@@ -265,10 +261,8 @@ search_group_custom_rules(Target, [Head | Tail]) ->
   %% Get the Target attribute
   TargetAttribute = get_attribute_value(maps:get(attributes, Target, #{}), RuleAttribute, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
   case is_custom_rule_match(maps:get(op, Head), TargetAttribute, RuleValue) of
-    true ->
-      true;
-    false ->
-      search_group_custom_rules(Target, Tail)
+    true -> true;
+    false -> search_group_custom_rules(Target, Tail)
   end;
 search_group_custom_rules(_, []) -> false.
 
