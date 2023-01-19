@@ -71,27 +71,23 @@ bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
 -spec string_variation(binary() | list(), target(), binary()) -> binary().
 string_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   string_variation(list_to_binary(FlagKey), Target, Default);
-string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+
+string_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:string_variation(FlagKey, SanitisedTarget) of
+    case cfclient_evaluator:string_variation(FlagKey, Target) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(Variation)),
+        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, Target, VariationIdentifier, list_to_binary(Variation)),
         Variation;
       not_ok ->
-        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+        ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n",
+                   [FlagKey, Target, Default]),
         Default
     end
   catch
     _:_:Stacktrace ->
-      ?LOG_ERROR("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+      ?LOG_ERROR("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n",
+                 [FlagKey, Target, Stacktrace, Default]),
       Default
   end.
 
