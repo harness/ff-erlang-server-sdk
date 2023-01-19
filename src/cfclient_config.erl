@@ -4,6 +4,7 @@
 %%% @end
 %%% Created : 04. Sep 2022 10:43 AM
 %%%-------------------------------------------------------------------
+
 -module(cfclient_config).
 
 -include_lib("kernel/include/logger.hrl").
@@ -11,16 +12,33 @@
 %% API
 -export([init/2, get_value/1, clear_config/0]).
 
-%% Config defaults
--define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io/api/1.0"). %% Config endpoint for Prod
--define(DEFAULT_EVENTS_URL, "https://events.ff.harness.io/api/1.0"). %% Event endpoint for Prod
--define(DEFAULT_CONNECTION_TIMEOUT, 10000). %% timeout in milliseconds
--define(DEFAULT_READ_TIMEOUT, 30000). %% timeout in milliseconds for reading data from CF Server
--define(DEFAULT_WRITE_TIMEOUT, 10000). %% timeout in milliseconds for writing data to CF Server
--define(DEFAULT_POLL_INTERVAL, 60000). %% interval in milliseconds for polling data from CF Server
--define(DEFAULT_STREAM_ENABLED, true). %% boolean for enabling events stream
--define(DEFAULT_ANALYTICS_ENABLED, true). %% boolean for enabling analytics send to CF Server
--define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000). 
+% Config defaults
+
+% Config endpoint for Prod
+-define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io/api/1.0").
+
+% Config endpoint for Prod
+-define(DEFAULT_EVENTS_URL, "https://events.ff.harness.io/api/1.0").
+
+% Event endpoint for Prod
+-define(DEFAULT_CONNECTION_TIMEOUT, 10000).
+
+% Timeout in milliseconds for reading data from CF Server
+-define(DEFAULT_READ_TIMEOUT, 30000).
+
+% Timeout in milliseconds for writing data to CF Server
+-define(DEFAULT_WRITE_TIMEOUT, 10000).
+
+% Interval in milliseconds for polling data from CF Server
+-define(DEFAULT_POLL_INTERVAL, 60000).
+
+% Boolean for enabling events stream
+-define(DEFAULT_STREAM_ENABLED, true).
+
+% Boolean for enabling analytics send to CF Server
+-define(DEFAULT_ANALYTICS_ENABLED, true).
+
+-define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000).
 
 -spec init(ApiKey :: string(), Opts :: map()) -> ok.
 init(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
@@ -158,4 +176,3 @@ parse_analytics_push_interval(Opts)  ->
 -spec clear_config() -> ok.
 clear_config() ->
     application:unset_env(cfclient, config).
-
