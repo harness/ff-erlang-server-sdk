@@ -133,7 +133,7 @@ number_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
   end.
 
 
--spec json_variation(FlagKey :: binary() | list(), Target :: target(), Default :: map()) -> map().
+-spec json_variation(binary() | list(), target(), map()) -> map().
 json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   json_variation(list_to_binary(FlagKey), Target, Default);
 json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
