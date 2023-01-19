@@ -111,7 +111,8 @@ evaluate_flag(Flag, Target, target_rules) ->
 evaluate_flag(Flag, Target, group_rules) ->
   #{feature := Feature} = Flag,
   ?LOG_DEBUG("Evaluating Group rules for flag ~p, target ~p", [Feature, Target]),
-  case evaluate_target_group_rules(maps:get(rules, Flag), Target) of
+  #{rules := Rules} = Flag,
+  case evaluate_target_group_rules(Rules, Target) of
     not_found ->
       ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Feature, Target]),
       evaluate_flag(Flag, Target, default_on);
