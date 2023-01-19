@@ -340,13 +340,14 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(Targ
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName)
   when map_size(TargetCustomAttributes) > 0 ->
-  %% Check if the rule attribute matches any of the custom attributes (Rule attribute needs to be converted to atom which is the format
-  %% of custom attribute keys.
+    % Check if rule attribute matches custom attributes.
+    % Custom attribute keys are atoms
   RuleAttributeAsAtom = binary_to_atom(RuleAttribute),
   case maps:is_key(RuleAttributeAsAtom, TargetCustomAttributes) of
     true ->
-      %% Rule values are always bitstrings, so we need to convert the Target custom attribute values to bitstrings.
+      %% Rule values are binaries
       custom_attribute_to_binary(maps:get(RuleAttributeAsAtom, TargetCustomAttributes));
+
     false ->
       get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
   end;
