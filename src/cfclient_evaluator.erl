@@ -160,8 +160,7 @@ get_target_or_group_variation(Flag, Identifier) ->
         [Feature, Identifier]
       ),
       not_ok;
-  #{value := Value} ->
-      {ok, TargetVariationIdentifier, Value}
+  #{value := Value} -> {ok, Identifier, Value}
   end.
 
 
