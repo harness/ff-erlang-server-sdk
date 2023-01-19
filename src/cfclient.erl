@@ -194,20 +194,6 @@ retrieve_segments() ->
   ClientConfig = {RequestConfig, Environment},
   cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
 
-target_identifier_to_binary(TargetIdentifier) when is_binary(TargetIdentifier) ->
-  TargetIdentifier;
-target_identifier_to_binary(TargetIdentifier) when is_atom(TargetIdentifier) ->
-  atom_to_binary(TargetIdentifier);
-target_identifier_to_binary(TargetIdentifier) when is_list(TargetIdentifier) ->
-  list_to_binary(TargetIdentifier).
-
-target_name_to_binary(TargetName) when is_binary(TargetName) ->
-  TargetName;
-target_name_to_binary(TargetName) when is_atom(TargetName) ->
-  atom_to_binary(TargetName);
-target_name_to_binary(TargetName) when is_list(TargetName) ->
-  list_to_binary(TargetName).
-
 -spec stop() -> ok.
 stop() ->
   cfclient_instance:stop().
