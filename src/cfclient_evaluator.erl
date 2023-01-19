@@ -10,7 +10,7 @@
 -export([bool_variation/2, string_variation/2, number_variation/2, json_variation/2, custom_attribute_to_binary/1]).
 -include("cfclient_evaluator_operators.hrl").
 
--spec evaluate(FlagIdentifier :: binary(), Target :: cfclient:target()) -> {ok, binary()} | not_ok.
+-spec evaluate(binary(), cfclient:target()) -> {ok, binary()} | not_ok.
 evaluate(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
@@ -26,7 +26,7 @@ evaluate(FlagIdentifier, Target) ->
       end
   end.
 
--spec evaluate_flag(Flag :: binary(), Target :: cfclient:target(), EvaluationStep :: atom()) -> {ok, binary()} | not_ok.
+-spec evaluate_flag(feature() | segment(), cfclient:target(), atom()) -> {ok, binary()} | not_ok.
 % Evaluate for off state
 evaluate_flag(Flag, Target, off) ->
   State = maps:get(state, Flag),
