@@ -510,7 +510,7 @@ json_variation(FlagIdentifier, Target) ->
 
 
 %% TODO - refactor using recursion so can exit upon condition.
--spec get_variation(list(), binary()) -> binary() | [].
+-spec get_variation([map()], binary()) -> binary() | [].
 get_variation(Variations, Identifier) ->
   hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation, not_found)]).
 
