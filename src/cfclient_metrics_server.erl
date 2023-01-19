@@ -79,8 +79,8 @@ post_metrics(MetricsData, MetricTargetData) ->
         {error, Response, _} -> {not_ok, Response}
     end.
 
-enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
-  set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, get_metrics_cache_pid()),
+enqueue_metrics(FlagId, Target, VariationId, VariationValue) ->
+  set_to_metrics_cache(FlagId, Target, VariationId, VariationValue, get_metrics_cache_pid()),
   set_to_metric_target_cache(Target, get_metric_target_cache_pid()).
 
 -spec create_metrics_data(MetricsCacheKeys :: list(), pid(), integer(), list()) -> list().
