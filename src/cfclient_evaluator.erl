@@ -145,6 +145,8 @@ get_default_off_variation(Flag, Identifier) ->
       #{value := Value} -> {ok, Identifier, Value}
   end.
 
+-spec get_target_or_group_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
+  {ok, Identifier :: binary(), term()} | not_ok.
 get_target_or_group_variation(Flag, TargetVariationIdentifier) ->
   case get_variation(maps:get(variations, Flag), TargetVariationIdentifier) of
     [] ->
