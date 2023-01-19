@@ -59,8 +59,10 @@ evaluate_flag(Flag, Target, prerequisites) ->
     %% If no prerequisites to evaluate, go straight to target rules
     [] ->
       evaluate_flag(Flag, Target, target_rules);
+
     null ->
       evaluate_flag(Flag, Target, target_rules);
+
     Prerequisites ->
       case search_prerequisites(Prerequisites, Target) of
         %% Prerequisites met so we can continue evaluating
@@ -72,7 +74,7 @@ evaluate_flag(Flag, Target, prerequisites) ->
           get_default_off_variation(Flag, maps:get(offVariation, Flag))
       end
   end;
-%% Evaluate for target rules
+
 evaluate_flag(Flag, Target, target_rules) ->
   ?LOG_DEBUG("Evaluating Target rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
   case evaluate_target_rule(maps:get(variationToTargetMap, Flag), Target) of
