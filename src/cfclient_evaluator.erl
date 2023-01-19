@@ -438,15 +438,22 @@ search_prerequisites([], _) -> true.
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   case evaluate_flag(PrerequisiteFlag, Target, off) of
     {ok, VariationIdentifier, _VariationValue} ->
-      ?LOG_DEBUG("Prerequisite Flag ~p~n has variation ~p~n for Target ~p~n",
-                 [PrerequisiteFlagIdentifier, VariationIdentifier, Target]),
+      ?LOG_DEBUG(
+        "Prerequisite flag ~p has variation ~p, target ~p",
+        [PrerequisiteFlagIdentifier, VariationIdentifier, Target]
+      ),
       PrerequisiteVariations = maps:get(variations, Prerequisite),
-      ?LOG_DEBUG("Prerequisite Flag ~p~n should have the variations ~p~n",
-                 [PrerequisiteFlagIdentifier, PrerequisiteVariations]),
+      ?LOG_DEBUG(
+        "Prerequisite flag ~p should have variations ~p",
+        [PrerequisiteFlagIdentifier, PrerequisiteVariations]
+      ),
       lists:member(VariationIdentifier, PrerequisiteVariations);
+
     not_ok ->
-      ?LOG_ERROR("Returning false for prerequisite check: couldn't evaluate prerequisite flag: ~p~n",
-                 [PrerequisiteFlagIdentifier])
+      ?LOG_ERROR(
+        "Could not evaluate prerequisite flag ~p",
+        [PrerequisiteFlagIdentifier]
+      )
   end.
 
 -spec bool_variation(Identifier :: binary(), Target :: cfclient:target()) -> {ok, boolean()} | not_ok.
