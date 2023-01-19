@@ -365,21 +365,21 @@ get_attribute_value(_, RuleAttribute, TargetIdentifier, TargetName) ->
   end.
 
 % Convert custom attributes to binary
-custom_attribute_to_binary(CustomAttribute) when is_binary(CustomAttribute) ->
-  CustomAttribute;
-custom_attribute_to_binary(CustomAttribute) when is_atom(CustomAttribute) ->
-  atom_to_binary(CustomAttribute);
-custom_attribute_to_binary(CustomAttribute) when is_number(CustomAttribute) ->
-  list_to_binary(mochinum:digits(CustomAttribute));
-custom_attribute_to_binary(CustomAttribute) when is_list(CustomAttribute) ->
-  case io_lib:char_list(CustomAttribute) of
-    %% If user supplies a string/list then log an error as not supported input
-    true ->
-      ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
-      not_ok;
+custom_attribute_to_binary(Value) when is_binary(Value) ->
+    Value;
+custom_attribute_to_binary(Value) when is_atom(Value) ->
+    atom_to_binary(Value);
+custom_attribute_to_binary(Value) when is_number(Value) ->
+    list_to_binary(mochinum:digits(Value));
+custom_attribute_to_binary(Value) when is_list(Value) ->
+    case io_lib:char_list(Value) of
+        % If user supplies a string/list then log an error as not supported input
+        true ->
+            ?LOG_ERROR("Using strings/lists for element values in the target custom attributes list is not supported"),
+            not_ok;
 
-    false ->
-      [custom_attribute_list_elem_to_binary(X) || X <- CustomAttribute]
+        false ->
+            [custom_attribute_list_elem_to_binary(X) || X <- Value]
   end.
 
 % Convert custom rule array elements to binary
