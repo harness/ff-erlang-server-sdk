@@ -73,7 +73,7 @@ enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, get_metrics_cache_pid()),
   set_to_metric_target_cache(Target, get_metric_target_cache_pid()).
 
--spec create_metrics_data(MetricsCacheKeys :: list(), MetricsCachePID :: pid(), Timestamp :: integer(), Acc :: list()) -> list().
+-spec create_metrics_data(MetricsCacheKeys :: list(), pid(), integer(), list()) -> list().
 create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Timestamp, Acc) ->
   % Each key is the unique evaluation mapped to its evaluation occurrence count and target
   {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
