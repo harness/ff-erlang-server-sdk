@@ -412,15 +412,15 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
 
 -spec search_prerequisites(Prerequisites :: list(), binary()) -> boolean().
 search_prerequisites([Head | Tail], Target) ->
-  PrerequisiteFlagIdentifier = maps:get(feature, Head),
+  Identifier = maps:get(feature, Head),
   CachePid = cfclient_cache_repository:get_pid(),
   %% Get the prerequisite flag from the cache so we can evaluate it
-  case cfclient_cache_repository:get_from_cache({flag, PrerequisiteFlagIdentifier}, CachePid) of
+  case cfclient_cache_repository:get_from_cache({flag, Identifier}, CachePid) of
     undefined ->
-      ?LOG_ERROR("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [PrerequisiteFlagIdentifier]),
+      ?LOG_ERROR("Returning false for prerequisite check: Flag has prerequisites but prerequisite could not be found in cache: ~p~n", [Identifier]),
       false;
     PrerequisiteFlag ->
-      case check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Head, Target) of
+      case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
         %% A prerequisite has been met, so continue to check any others
         true ->
           search_prerequisites(Tail, Target);
