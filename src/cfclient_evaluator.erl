@@ -325,8 +325,7 @@ is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
 is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
   binary:match(TargetAttribute, hd(RuleValue)) /= nomatch;
 
-
-%% In - we don't get the head of RuleValue here as `In` can have multiple values
+% In - we don't get the head of RuleValue here as `In` can have multiple values
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(TargetAttribute) ->
   lists:member(TargetAttribute, RuleValue);
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
