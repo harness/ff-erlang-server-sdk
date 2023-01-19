@@ -62,7 +62,6 @@ evaluate_flag(Flag, Target, off) ->
 
     <<"on">> ->
       ?LOG_DEBUG("Flag ~p is on", [maps:get(feature, Flag)]),
-      %% Start the evaluation.
       evaluate_flag(Flag, Target, prerequisites)
   end;
 
