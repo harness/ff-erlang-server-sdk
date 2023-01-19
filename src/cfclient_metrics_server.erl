@@ -79,8 +79,8 @@ create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Timestamp, Acc) 
   {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
   Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, Timestamp),
   create_metrics_data(Tail, MetricsCachePID, Timestamp, [Metric | Acc]);
-create_metrics_data([], _, _, Acc) ->
-  Acc.
+
+create_metrics_data([], _, _, Acc) -> Acc.
 
 % TODO: We pass in the target here, but so far only using the Global
 % target per ff-server requirements. We will, however, want to add an option to
