@@ -40,13 +40,8 @@ evaluate(FlagIdentifier, Target) ->
     undefined ->
       ?LOG_ERROR("Flag not found in cache: ~p", [FlagIdentifier]),
       not_ok;
-    Flag ->
-      case evaluate_flag(Flag, Target, off) of
-        {ok, VariationIdentifier, VariationValue} ->
-          {ok, VariationIdentifier, VariationValue};
-        not_ok ->
-          not_ok
-      end
+
+    Flag -> evaluate_flag(Flag, Target, off)
   end.
 
 
