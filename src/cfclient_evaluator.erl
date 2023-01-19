@@ -207,6 +207,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
 
 search_rules_for_inclusion([], _) -> not_found.
 
+
 -spec is_rule_included_or_excluded(Clauses :: list(), Target :: cfclient:target()) -> true | false.
 is_rule_included_or_excluded([Head | Tail], Target) ->
   case maps:get(op, Head, false) of
@@ -225,10 +226,8 @@ is_rule_included_or_excluded([], _) -> false.
 search_group(excluded, Target, Group) ->
   TargetIdentifier = maps:get(identifier, Target, <<>>),
   case search_group_rules(TargetIdentifier, maps:get(excluded, Group, [])) of
-    true ->
-      excluded;
-    false ->
-      search_group(included, Target, Group)
+    true -> excluded;
+    false -> search_group(included, Target, Group)
   end;
 search_group(included, Target, Group) ->
   TargetIdentifier = maps:get(identifier, Target, <<>>),
