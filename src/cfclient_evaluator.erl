@@ -169,11 +169,11 @@ evaluate_target_rule(_, _) -> not_found.
 -spec search_variation_map(binary(), [cfapi_variation_map:cfapi_variation_map()]) ->
   binary() | not_found.
 search_variation_map(TargetIdentifier, [Head | Tail]) ->
-  Targets = maps:get(targets, Head),
+  #{variation := Variation, targets := Targets} = Head,
   Result = search_targets(TargetIdentifier, Targets),
   if
     Result == found ->
-      maps:get(variation, Head);
+      Variation;
     true -> search_variation_map(TargetIdentifier, Tail)
   end;
 search_variation_map(_TargetIdentifier, []) -> not_found.
