@@ -155,7 +155,7 @@ json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
       Default
   end.
 
--spec enqueue_metrics(IsAnalyticsEnabled :: boolean(), FlagIdentifier :: binary(), Target :: target(), VariationIdentifier :: binary(), VariationValue :: binary()) -> atom().
+-spec enqueue_metrics(IsAnalyticsEnabled :: boolean(), binary(), target(), binary(), binary()) -> atom().
 enqueue_metrics(true, FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   ?LOG_DEBUG("Analytics is enabled. Passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
   cfclient_metrics_server:enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue);
