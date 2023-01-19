@@ -38,7 +38,7 @@ evaluate(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
     undefined ->
-      ?LOG_ERROR("Flag not found in cache: ~p~n", [FlagIdentifier]),
+      ?LOG_ERROR("Flag not found in cache: ~p", [FlagIdentifier]),
       not_ok;
     Flag ->
       case evaluate_flag(Flag, Target, off) of
@@ -129,7 +129,6 @@ evaluate_flag(Flag, Target, default_on) ->
   DefaultServeIdentifier = maps:get(variation, DefaultServe),
   case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
     [] ->
-      ?LOG_ERROR("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [maps:get(feature, Flag), DefaultServeIdentifier]),
       ?LOG_ERROR("Default variation not found for flag ~p, identifier ~p", [Feature, Identifier]),
       not_ok;
 
