@@ -18,7 +18,9 @@
 % TODO export types?
 
 % @doc Get flag or segment from cache.
--spec get_from_cache(flag() | segment(), CachePID :: pid()) -> cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() | undefined.
+-spec get_from_cache(flag() | segment(), pid()) ->
+    cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() |
+    undefined.
 get_from_cache({Type, Identifier}, CachePID) ->
   FlagKey = format_key({Type, Identifier}),
   get(CachePID, FlagKey).
