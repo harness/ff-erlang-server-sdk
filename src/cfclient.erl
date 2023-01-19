@@ -110,7 +110,13 @@ number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:number_variation(FlagKey, SanitisedTarget) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(mochinum:digits(Variation))),
+        enqueue_metrics(
+          cfclient_config:get_value(analytics_enabled),
+          FlagKey,
+          SanitisedTarget,
+          VariationIdentifier,
+          list_to_binary(mochinum:digits(Variation))
+        ),
         Variation;
       not_ok ->
         ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
