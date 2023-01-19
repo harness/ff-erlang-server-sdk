@@ -47,11 +47,15 @@ set(CachePID, Identifier, Value, false) ->
 set(_, _, _, true) ->
   not_ok.
 
--spec is_outdated(flag() | segment(),cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), CachePID :: pid()) -> boolean().
+-spec is_outdated(
+  flag() | segment(),
+  cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), pid()
+) ->
+  boolean().
 is_outdated({flag, Identifier}, Feature, CachePID) ->
   case get_from_cache({flag, Identifier}, CachePID) of
-    undefined ->
-      false;
+    undefined -> false;
+
     OldFeature ->
       #{version := OldFeatureVersion} = OldFeature,
       #{version := NewFeatureVersion} = Feature,
@@ -59,21 +63,18 @@ is_outdated({flag, Identifier}, Feature, CachePID) ->
   end;
 is_outdated({segment, Identifier}, Segment, CachePID) ->
   case get_from_cache({segment, Identifier}, CachePID) of
-    undefined ->
-      false;
+    undefined -> false;
+
     OldSegment ->
       #{version := OldSegmentVersion} = OldSegment,
       #{version := NewSegmentVersion} = Segment,
       OldSegmentVersion > NewSegmentVersion
-
   end.
 
 % Create binary key from flag or segment
 -spec format_key(flag() | segment()) -> binary().
-format_key({flag, Identifier}) ->
-  <<"flags/", Identifier/binary>>;
-format_key({segment, Identifier}) ->
-  <<"segments/", Identifier/binary>>.
+format_key({flag, Identifier}) -> <<"flags/", Identifier/binary>>;
+format_key({segment, Identifier}) -> <<"segments/", Identifier/binary>>.
 
 -spec set_pid(CachePID :: pid()) -> ok.
 set_pid(CachePID) ->
