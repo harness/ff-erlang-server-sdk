@@ -38,14 +38,15 @@ metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) -
   MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
   case post_metrics(MetricsData, MetricTargetData) of
     {ok, Response} ->
-      ?LOG_INFO("Successfully posted metric to ff-server: ~p~n: ", [Response]),
+      ?LOG_INFO("Posted metrics: ~p", [Response]),
       reset_metrics_cache(MetricsCachePID),
       reset_metric_target_cache(MetricTargetCachePID);
     noop ->
-      ?LOG_INFO("No metrics to post for this Analytics interval"),
+      ?LOG_INFO("No metrics to post"),
       noop;
+
     {not_ok, Response} ->
-      ?LOG_ERROR("Error recieved from ff-server when posting metrics: ~p~n", [Response]),
+      ?LOG_ERROR("Error posting metrics: ~p", [Response]),
       not_ok
   end,
   erlang:send_after(AnalyticsPushInterval, self(), trigger).
