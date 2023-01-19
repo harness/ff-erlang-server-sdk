@@ -7,6 +7,8 @@
 
 -include_lib("kernel/include/logger.hrl").
 
+-include("cfclient_config.hrl").
+
 %% API
 -export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, stop/0, number_variation/3, json_variation/3]).
 
