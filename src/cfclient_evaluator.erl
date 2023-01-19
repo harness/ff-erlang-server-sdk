@@ -429,8 +429,8 @@ search_prerequisites([Head | Tail], Target) ->
       end
   end;
 
-%% This function is only called with a non-empty list, so we can safely return true as if we've gotten here
-%% it means all previous prerequisites have been true.
+% This function is only called with a non-empty list, so we can safely return
+% true as it means all previous prerequisites have been true.
 search_prerequisites([], _) -> true.
 
 
