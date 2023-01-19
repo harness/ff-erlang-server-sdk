@@ -101,26 +101,21 @@ string_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
 -spec number_variation(binary() | list(), target(), number()) -> number().
 number_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   number_variation(list_to_binary(FlagKey), Target, Default);
-number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+
+number_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:number_variation(FlagKey, SanitisedTarget) of
+    case cfclient_evaluator:number_variation(FlagKey, Target) of
       {ok, VariationIdentifier, Variation} ->
         enqueue_metrics(
           cfclient_config:get_value(analytics_enabled),
           FlagKey,
-          SanitisedTarget,
+          Target,
           VariationIdentifier,
           list_to_binary(mochinum:digits(Variation))
         ),
         Variation;
+
       not_ok ->
         ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
         Default
