@@ -99,6 +99,7 @@ evaluate_flag(Flag, Target, target_rules) ->
       ?LOG_DEBUG("Target rule did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
       %% Check group rules
       evaluate_flag(Flag, Target, group_rules);
+
     TargetVariationIdentifier ->
       ?LOG_DEBUG("Target rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
       %% Return both variation identifier and not just the value, because prerequisites compares on variation identifier
@@ -106,16 +107,19 @@ evaluate_flag(Flag, Target, target_rules) ->
   end;
 %% Evaluate for group rules
 evaluate_flag(Flag, Target, group_rules) ->
-  ?LOG_DEBUG("Evaluating Group rules for Flag ~p~n and Target ~p~n", [maps:get(feature, Flag), Target]),
+  #{feature := Feature} = Flag,
+  ?LOG_DEBUG("Evaluating Group rules for flag ~p, target ~p", [Feature, Target]),
   case evaluate_target_group_rules(maps:get(rules, Flag), Target) of
     not_found ->
-      ?LOG_DEBUG("Group rules did not match on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Feature, Target]),
       evaluate_flag(Flag, Target, default_on);
+
     excluded ->
-      ?LOG_DEBUG("Target ~p~n has been excluded via group rule for Flag ~p~n", [Target, maps:get(feature, Flag)]),
+      ?LOG_DEBUG("Group rules excluded flag ~p, target ~p", [Feature, Target]),
       evaluate_flag(Flag, Target, default_on);
+
     GroupVariationIdentifier ->
-      ?LOG_DEBUG("Group rule matched on Flag ~p~n with Target ~p~n", [maps:get(feature, Flag), Target]),
+      ?LOG_DEBUG("Group rule matched flag ~p with target ~p", [Feature, Target]),
       get_target_or_group_variation(Flag, GroupVariationIdentifier)
   end;
 %% Default "on" variation
@@ -126,6 +130,7 @@ evaluate_flag(Flag, Target, default_on) ->
   case get_variation(maps:get(variations, Flag), DefaultServeIdentifier) of
     [] ->
       ?LOG_ERROR("Default variation for Flag ~p~n with Identifier ~p~n was not found ", [maps:get(feature, Flag), DefaultServeIdentifier]),
+      ?LOG_ERROR("Default variation not found for flag ~p, identifier ~p", [Feature, Identifier]),
       not_ok;
 
     DefaultVariation ->
