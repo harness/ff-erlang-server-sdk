@@ -42,21 +42,13 @@ start(ApiKey, Options) ->
 -spec bool_variation(binary() | string(), target(), binary()) -> binary().
 bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   bool_variation(list_to_binary(FlagKey), Target, Default);
-bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  %% Users can provide TargetIdentifiers as lists (strings), binary or atoms so sanitise them to be binary as the Client API
-  %% works in binary.
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+
+bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:bool_variation(FlagKey, SanitisedTarget) of
+    case cfclient_evaluator:bool_variation(FlagKey, Target) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, atom_to_binary(Variation)),
+        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, Target, VariationIdentifier, atom_to_binary(Variation)),
         Variation;
       not_ok ->
         ?LOG_ERROR("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, SanitisedTarget, Default]),
