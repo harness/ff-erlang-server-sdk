@@ -419,11 +419,11 @@ search_prerequisites([Head | Tail], Target) ->
     undefined ->
       ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
       false;
+
     PrerequisiteFlag ->
       case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
         %% A prerequisite has been met, so continue to check any others
-        true ->
-          search_prerequisites(Tail, Target);
+        true -> search_prerequisites(Tail, Target);
         %% We return false if prerequisites are not met
         false ->
           false
