@@ -8,24 +8,43 @@
 
 -export([retrieve_flags/3, retrieve_segments/3]).
 
-% @doc Retrieve all features from FF API.
--spec retrieve_flags(ctx:t(), binary(), map()) -> {ok, list()} | {error, Reason :: term()}.
-retrieve_flags(Ctx, Environment, Opts) ->
-  case cfapi_client_api:get_feature_config(Ctx, Environment, Opts) of
-    {ok, Values, _} ->
-      {ok, Values};
+-type flag() :: cfapi_feature_config:cfapi_feature_config().
+-type segment() :: cfapi_segment:cfapi_segment().
 
-    {error, Reason, _} ->
-      {error, Reason}
-  end.
+% @doc Retrieve all features from FF API.
+-spec retrieve_flags(map()) -> {ok, [flag()]} | {error, Reason :: term()}.
+retrieve_flags(Config) ->
+    #{auth_token := AuthToken, project := Project, config_url := ConfigUrl} = Config,
+    #{environment := Env, clusterIdentifier := Cluster} = Project,
+    Opts =
+    #{
+      cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => ConfigUrl},
+      params => #{cluster => Cluster}
+     },
+
+    case cfapi_client_api:get_feature_config(Ctx, Env, Opts) of
+        {ok, Values, _} ->
+            {ok, Values};
+
+        {error, Reason, _} ->
+            {error, Reason}
+    end.
+
 
 % @doc Retrieve all segments from FF API.
--spec retrieve_segments(ctx:t(), binary(), map()) -> {ok, [cfapi_segment:cfapi_segment()]} | {error, Reason :: term()}.
-retrieve_segments(Ctx, Environment, Opts) ->
-  case cfapi_client_api:get_all_segments(Ctx, Environment, Opts) of
-    {ok, Values, _} ->
-      {ok, Values};
+-spec retrieve_segments(map()) -> {ok, [segment()]} | {error, Reason :: term()}.
+retrieve_segments(Config) ->
+    #{auth_token := AuthToken, project := Project, config_url := ConfigUrl} = Config,
+    #{environment := Env, clusterIdentifier := Cluster} = Project,
+    Opts =
+    #{
+      cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => ConfigUrl},
+      params => #{cluster => Cluster}
+     },
+    case cfapi_client_api:get_all_segments(Ctx, Env, Opts) of
+        {ok, Values} ->
+            {ok, Values};
 
-    {error, Reason, _} ->
-      {error, Reason}
-  end.
+        {error, Reason, _} ->
+            {error, Reason}
+    end.
