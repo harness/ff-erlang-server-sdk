@@ -806,7 +806,7 @@ is_rule_included_or_excluded_test() ->
   %% Mock LRU Cache
   meck:new(cfclient_ets),
   %% Excluded %%
-  meck:expect(lru, get, fun (CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
+  meck:expect(cfclient_ets, get, fun (_, <<"segments/target_group_1">>) -> CachedGroup end),
   ?assertEqual(excluded, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTarget)),
   ?assertEqual(excluded, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTargetB)),
   %% Included %%
