@@ -50,7 +50,7 @@ evaluate(FlagIdentifier, Target) ->
   cfclient:target(),
   default_on | group_rules | off | prerequisites | target_rules
 ) ->
-  {ok, Identifier :: binary(), Value :: term()} | not_ok.
+  {ok, Identifier :: binary(), Value :: term()} | {error, atom()}.
 % Evaluate for off state
 evaluate_flag(Flag, Target, off) ->
   #{feature := Feature} = Flag,
@@ -128,39 +128,40 @@ evaluate_flag(Flag, Target, default_on) ->
   #{variation := Identifier} = DefaultServe,
   ?LOG_DEBUG("Returning default 'on' variation for flag ~p, target ~p", [Feature, Target]),
   case get_variation(Variations, Identifier) of
-    [] ->
+    {error, not_found} ->
       ?LOG_ERROR("Default variation not found for flag ~p, identifier ~p", [Feature, Identifier]),
-      not_ok;
+      {error, not_found};
 
-      #{value := Value} -> {ok, Identifier, Value}
+    {ok, #{value := Value}} -> {ok, Identifier, Value}
   end.
 
 
 -spec get_default_off_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
-  {ok, Identifier :: binary(), Value :: term()} | not_ok.
+  {ok, Identifier :: binary(), Value :: term()} | {error, not_found}.
 get_default_off_variation(Flag, Identifier) ->
   #{variations := Variations} = Flag,
   case get_variation(Variations, Identifier) of
-    [] ->
+    {error, not_found} ->
       ?LOG_ERROR("Off variation not found: ~p", [Identifier]),
-      not_ok;
+      {error, not_found};
 
-      #{value := Value} -> {ok, Identifier, Value}
+    {ok, #{value := Value}} -> {ok, Identifier, Value}
   end.
 
 
 -spec get_target_or_group_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
-  {ok, Identifier :: binary(), term()} | not_ok.
+  {ok, Identifier :: binary(), term()} | {error, not_found}.
 get_target_or_group_variation(Flag, Identifier) ->
   #{feature := Feature, variations := Variations} = Flag,
   case get_variation(Variations, Identifier) of
-    [] ->
+    {error, not_found} ->
       ?LOG_ERROR(
         "Target matched rule for flag ~p but variation with identifier ~p not found",
         [Feature, Identifier]
       ),
-      not_ok;
-  #{value := Value} -> {ok, Identifier, Value}
+      {error, not_found};
+
+    {ok, #{value := Value}} -> {ok, Identifier, Value}
   end.
 
 
@@ -464,27 +465,25 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
 
 
 -spec bool_variation(binary(), cfclient:target()) ->
-  {ok, Identifier :: binary(), Value :: boolean()} | not_ok.
+  {ok, Identifier :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
 bool_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
-    {ok, VariationIdentifier, Variation} ->
-      {ok, VariationIdentifier, binary_to_list(Variation) == "true"};
-    not_ok -> not_ok
+    {ok, VariationIdentifier, <<"true">>} -> {ok, VariationIdentifier, true};
+    {error, Reason} -> {error, Reason}
   end.
 
 
 -spec string_variation(binary(), cfclient:target()) ->
-  {ok, Identifier :: binary(), Value :: string()} | not_ok.
+  {ok, Identifier :: binary(), Value :: string()} | {error, Reason :: atom()}.
 string_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
-    {ok, VariationIdentifier, Variation} ->
-      {ok, VariationIdentifier, binary_to_list(Variation)};
-    not_ok -> not_ok
+    {ok, VariationIdentifier, Variation} -> {ok, VariationIdentifier, binary_to_list(Variation)};
+    {error, Reason} -> {error, Reason}
   end.
 
 
 -spec number_variation(binary(), cfclient:target()) ->
-  {ok, Identifier :: binary(), Value :: number()} | not_ok.
+  {ok, Identifier :: binary(), Value :: number()} | {error, Reason :: atom()}.
 number_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
@@ -494,12 +493,12 @@ number_variation(FlagIdentifier, Target) ->
         error : badarg -> {ok, VariationIdentifier, binary_to_integer(Variation)}
       end;
 
-    not_ok -> not_ok
+    {error, Reason} -> {error, Reason}
   end.
 
 
 -spec json_variation(binary(), cfclient:target()) ->
-  {ok, Identifier :: binary(), Value :: map()} | not_ok.
+  {ok, Identifier :: binary(), Value :: map()} | {error, Reason :: atom()}.
 json_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
@@ -508,18 +507,17 @@ json_variation(FlagIdentifier, Target) ->
       catch
         error : badarg ->
           ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
-          not_ok
+          {error, json_decode}
       end;
 
-    not_ok -> not_ok
+    {error, Reason} -> {error, Reason}
   end.
 
 
-%% TODO - refactor using recursion so can exit upon condition.
--spec get_variation([map()], binary()) -> binary() | [].
-get_variation(Variations, Identifier) ->
-  hd([Variation || Variation <- Variations, Identifier == maps:get(identifier, Variation, not_found)]).
-
+-spec get_variation([map()], binary()) -> {ok, map()} | {error, not_found}.
+get_variation([], _Identifier) -> {error, not_found};
+get_variation([#{identifier := Identifier} = Head | _Tail], Identifier) -> {ok, Head};
+get_variation([_Head | Tail], Identifier) -> get_variation(Tail, Identifier).
 
 -spec identifier_matches(map(), [map()]) -> boolean().
 identifier_matches(#{identifier := Identifier}, Values) ->
