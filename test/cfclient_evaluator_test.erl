@@ -89,7 +89,7 @@ variations_test() ->
   %%-------------------- Bool Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off()
@@ -179,7 +179,7 @@ variations_test() ->
   %%-------------------- String Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_off()
@@ -436,7 +436,7 @@ variations_test() ->
     {ok, <<"Serve_it">>, #{<<"serveIt">> => <<"yes">>}},
     cfclient_evaluator:json_variation(<<"My_JSON_flag">>, ExistingTargetA)
   ),
-  meck:unload(lru).
+  meck:unload(cfclient_ets).
 
 
 evaluate_target_rule_test() ->
@@ -801,7 +801,7 @@ is_rule_included_or_excluded_test() ->
       version => 10
     },
   %% Mock LRU Cache
-  meck:new(lru),
+  meck:new(cfclient_ets),
   %% Excluded %%
   meck:expect(lru, get, fun (CacheName, <<"segments/target_group_1">>) -> CachedGroup end),
   ?assertEqual(excluded, cfclient_evaluator:is_rule_included_or_excluded(Clauses, ExcludedTarget)),
@@ -830,7 +830,7 @@ is_rule_included_or_excluded_test() ->
     false,
     cfclient_evaluator:is_rule_included_or_excluded(Clauses, CustomRulesNotIncludedB)
   ),
-  meck:unload(lru).
+  meck:unload(cfclient_ets).
 
 
 search_group_custom_rule_test() ->
@@ -1293,7 +1293,7 @@ percentage_rollout_test() ->
   %%-------------------- 50/50 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) ->
@@ -1308,7 +1308,7 @@ percentage_rollout_test() ->
   %%-------------------- 100/0 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) ->
@@ -1322,7 +1322,7 @@ percentage_rollout_test() ->
   %%-------------------- 0/100 ------------------------------------------------------------
   cfclient_cache_repository:set_pid(self()),
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) ->
@@ -1380,7 +1380,7 @@ search_prerequisites_test() ->
   %% Mock calls to the cache to return the above three Prerequisite flags
   cfclient_cache_repository:set_pid(self()),
   meck:sequence(
-    lru,
+    cfclient_ets,
     get,
     2,
     [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag3]
@@ -1431,7 +1431,7 @@ search_prerequisites_test() ->
       version => 2
     },
   meck:sequence(
-    lru,
+    cfclient_ets,
     get,
     2,
     [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag4]
@@ -1479,7 +1479,7 @@ search_prerequisites_test() ->
       version => 2
     },
   meck:sequence(
-    lru,
+    cfclient_ets,
     get,
     2,
     [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag5, PrerequisiteMatchesFlag4]
@@ -1488,7 +1488,7 @@ search_prerequisites_test() ->
   %%-------------------- No Prerequisites Match ------------------------------------------------------------
   Target2 = #{identifier => <<"I_don't_exist_anywhere">>, name => <<"123">>, anonymous => <<"">>},
   meck:sequence(
-    lru,
+    cfclient_ets,
     get,
     2,
     [PrerequisiteMatchesFlag1, PrerequisiteMatchesFlag2, PrerequisiteMatchesFlag3]
