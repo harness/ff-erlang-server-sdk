@@ -33,7 +33,7 @@
 -include("cfclient_evaluator_operators.hrl").
 
 -spec evaluate(binary(), cfclient:target()) ->
-  {ok, Identifier :: binary(), Value :: term()} | not_ok.
+  {ok, Identifier :: binary(), Value :: term()} | {error, unknown_flag}.
 evaluate(FlagIdentifier, Target) ->
   CachePid = cfclient_cache_repository:get_pid(),
   case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
