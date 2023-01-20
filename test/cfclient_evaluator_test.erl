@@ -573,12 +573,12 @@ search_variation_map_test() ->
   %% Found %%
   ?assertEqual(
     <<"false">>,
-    cfclient_evaluator:search_variation_map(<<"target_identifier_2">>, VariationMap)
+    cfclient_evaluator:search_variation_map(VariationMap, <<"target_identifier_2">>)
   ),
   %% Not Found %%
   ?assertEqual(
     not_found,
-    cfclient_evaluator:search_variation_map(<<"target_identifier_33333">>, VariationMap)
+    cfclient_evaluator:search_variation_map(VariationMap, <<"target_identifier_33333">>)
   ),
   %%-------------------- Multiple targets --------------------
   VariationMap2 =
@@ -600,16 +600,16 @@ search_variation_map_test() ->
   %% Found %%
   ?assertEqual(
     <<"true">>,
-    cfclient_evaluator:search_variation_map(<<"target_identifier_2">>, VariationMap2)
+    cfclient_evaluator:search_variation_map(VariationMap2, <<"target_identifier_2">>)
   ),
   ?assertEqual(
     <<"true">>,
-    cfclient_evaluator:search_variation_map(<<"target_identifier_1">>, VariationMap2)
+    cfclient_evaluator:search_variation_map(VariationMap2, <<"target_identifier_1">>)
   ),
   %% Not Found %%
   ?assertEqual(
     not_found,
-    cfclient_evaluator:search_variation_map(<<"target_identifier_9999">>, VariationMap2)
+    cfclient_evaluator:search_variation_map(VariationMap2, <<"target_identifier_9999">>)
   ).
 
 
@@ -883,9 +883,9 @@ search_group_custom_rule_test() ->
     #{identifier => <<"target_test_3">>, name => <<"target_name_1">>, anonymous => <<"">>},
   TargetNoAttributes3 =
     #{identifier => <<"target_t2323">>, name => <<"target_name_1">>, anonymous => <<"">>},
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes1, Rules)),
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes2, Rules)),
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetNoAttributes3, Rules)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(Rules, TargetNoAttributes1)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(Rules, TargetNoAttributes2)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(Rules, TargetNoAttributes3)),
   %% Target with custom attributes
   TargetWithAttributes1 =
     #{
@@ -901,8 +901,8 @@ search_group_custom_rule_test() ->
       anonymous => <<"">>,
       attributes => #{preference => <<"marketing">>}
     },
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetWithAttributes1, Rules)),
-  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(TargetWithAttributes2, Rules)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(Rules, TargetWithAttributes1)),
+  ?assertEqual(true, cfclient_evaluator:search_group_custom_rules(Rules, TargetWithAttributes2)),
   %%-------------------- No Match --------------------
   %% Target no custom attributes
   NoMatch1 = #{identifier => <<"target_asdasd">>, name => <<"target_test_3">>, anonymous => <<"">>},
@@ -910,9 +910,9 @@ search_group_custom_rule_test() ->
     #{identifier => <<"target_$$$">>, name => <<"target_name_2323424">>, anonymous => <<"">>},
   NoMatch3 =
     #{identifier => <<"target_12234">>, name => <<"target_name_2222">>, anonymous => <<"">>},
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch1, Rules)),
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch2, Rules)),
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch3, Rules)),
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(Rules, NoMatch1)),
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(Rules, NoMatch2)),
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(Rules, NoMatch3)),
   %% Target with custom attributes
   NoMatch4 =
     #{
@@ -928,8 +928,8 @@ search_group_custom_rule_test() ->
       anonymous => <<"">>,
       attributes => #{preference => <<"no_marketing">>}
     },
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch4, Rules)),
-  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(NoMatch5, Rules)).
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(Rules, NoMatch4)),
+  ?assertEqual(false, cfclient_evaluator:search_group_custom_rules(Rules, NoMatch5)).
 
 
 is_custom_rule_match_test() ->
