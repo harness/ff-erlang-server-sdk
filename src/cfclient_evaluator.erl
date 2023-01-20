@@ -35,13 +35,12 @@
 -spec evaluate(binary(), cfclient:target()) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, unknown_flag}.
 evaluate(FlagIdentifier, Target) ->
-  CachePid = cfclient_cache_repository:get_pid(),
-  case cfclient_cache_repository:get_from_cache({flag, FlagIdentifier}, CachePid) of
-    undefined ->
+  case cfclient_cache_repository:get_value({flag, FlagIdentifier}) of
+    {error, undefined} ->
       ?LOG_ERROR("Flag not found in cache: ~p", [FlagIdentifier]),
-      not_ok;
+      {error, unknown_flag};
 
-    Flag -> evaluate_flag(Flag, Target, off)
+    {ok, Flag} -> evaluate_flag(Flag, Target, off)
   end.
 
 
@@ -52,45 +51,47 @@ evaluate(FlagIdentifier, Target) ->
 ) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, atom()}.
 % Evaluate for off state
+evaluate_flag(#{state := <<"off">>} = Flag, _Target, off) ->
+  #{feature := Feature, offVariation := OffVariation} = Flag,
+  ?LOG_DEBUG("Flag ~p is off, returning default 'off' variation", [Feature]),
+  get_default_off_variation(Flag, OffVariation);
+
+evaluate_flag(#{state := <<"on">>} = Flag, Target, off) ->
+  ?LOG_DEBUG("Flag ~p is on", [maps:get(feature, Flag)]),
+  evaluate_flag(Flag, Target, prerequisites);
+
+% TODO: type mismatch with state, which is declared as a map, match any state here
 evaluate_flag(Flag, Target, off) ->
   #{feature := Feature} = Flag,
-  State = maps:get(state, Flag),
-  case State of
-    <<"off">> ->
-      ?LOG_DEBUG("Flag ~p is off, returning default 'off' variation", [Feature]),
-      get_default_off_variation(Flag, maps:get(offVariation, Flag));
+  ?LOG_WARNING("Skipping off check for ~p", [Feature]),
+  evaluate_flag(Flag, Target, prerequisites);
 
-    <<"on">> ->
-      ?LOG_DEBUG("Flag ~p is on", [maps:get(feature, Flag)]),
-      evaluate_flag(Flag, Target, prerequisites)
+evaluate_flag(#{prerequisites := []} = Flag, Target, prerequisites) ->
+  evaluate_flag(Flag, Target, target_rules);
+
+evaluate_flag(#{prerequisites := Prerequisites} = Flag, Target, prerequisites) ->
+  case search_prerequisites(Prerequisites, Target) of
+    true ->
+      % Prerequisites met, continue evaluating
+      ?LOG_DEBUG("All prerequisites met for flag ~p, target ~p", [Flag, Target]),
+      evaluate_flag(Flag, Target, target_rules);
+
+    _ ->
+      % Prerequisites not met
+      get_default_off_variation(Flag, maps:get(offVariation, Flag))
   end;
 
 evaluate_flag(Flag, Target, prerequisites) ->
-  case maps:get(prerequisites, Flag, []) of
-    [] ->
-      evaluate_flag(Flag, Target, target_rules);
-
-    null ->
-      evaluate_flag(Flag, Target, target_rules);
-
-    Prerequisites ->
-      case search_prerequisites(Prerequisites, Target) of
-        % Prerequisites met, continue evaluating
-        true ->
-          % Prerequisites met, continue evaluating
-          ?LOG_DEBUG("All prerequisites met for flag ~p, target ~p", [Flag, Target]),
-          evaluate_flag(Flag, Target, target_rules);
-
-        false ->
-          % Prerequisites not met
-          get_default_off_variation(Flag, maps:get(offVariation, Flag))
-      end
-  end;
+  evaluate_flag(Flag, Target, target_rules);
 
 % Evaluate target rules
-evaluate_flag(Flag, Target, target_rules) ->
+evaluate_flag(#{variationToTargetMap := []} = Flag, Target, target_rules) ->
   #{feature := Feature} = Flag,
-  #{variationToTargetMap := VariationToTargetMap} = Flag,
+  ?LOG_DEBUG("No target rules for flag ~p, target ~p", [Feature, Target]),
+  evaluate_flag(Flag, Target, group_rules);
+
+evaluate_flag(#{variationToTargetMap := VariationToTargetMap} = Flag, Target, target_rules) ->
+  #{feature := Feature} = Flag,
   ?LOG_DEBUG("Evaluating target rule for flag ~p, target ~p", [Feature, Target]),
   case evaluate_target_rule(VariationToTargetMap, Target) of
     not_found ->
@@ -104,11 +105,18 @@ evaluate_flag(Flag, Target, target_rules) ->
       get_target_or_group_variation(Flag, TargetVariationIdentifier)
   end;
 
+evaluate_flag(Flag, Target, target_rules) ->
+  #{feature := Feature} = Flag,
+  ?LOG_DEBUG("No target rules for flag ~p, target ~p", [Feature, Target]),
+  evaluate_flag(Flag, Target, group_rules);
+
 % Evaluate group rules
-evaluate_flag(Flag, Target, group_rules) ->
+evaluate_flag(#{rules := []} = Flag, Target, group_rules) ->
+  evaluate_flag(Flag, Target, default_on);
+
+evaluate_flag(#{rules := Rules} = Flag, Target, group_rules) ->
   #{feature := Feature} = Flag,
   ?LOG_DEBUG("Evaluating Group rules for flag ~p, target ~p", [Feature, Target]),
-  #{rules := Rules} = Flag,
   case evaluate_target_group_rules(Rules, Target) of
     not_found ->
       ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Feature, Target]),
@@ -122,6 +130,9 @@ evaluate_flag(Flag, Target, group_rules) ->
       ?LOG_DEBUG("Group rule matched flag ~p with target ~p", [Feature, Target]),
       get_target_or_group_variation(Flag, GroupVariationIdentifier)
   end;
+
+evaluate_flag(Flag, Target, group_rules) -> evaluate_flag(Flag, Target, default_on);
+
 % Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
   #{feature := Feature, variations := Variations, defaultServe := DefaultServe} = Flag,
@@ -167,33 +178,22 @@ get_target_or_group_variation(Flag, Identifier) ->
 
 -spec evaluate_target_rule([cfapi_variation_map:cfapi_variation_map()], cfclient:target()) ->
   binary() | not_found.
-evaluate_target_rule(VariationMap, Target) when VariationMap /= null, Target /= null ->
-  TargetIdentifier = maps:get(identifier, Target, <<>>),
-  search_variation_map(TargetIdentifier, VariationMap);
+evaluate_target_rule(VariationMap, #{identifier := Identifier}) ->
+  search_variation_map(VariationMap, Identifier);
 
 evaluate_target_rule(_, _) -> not_found.
 
--spec search_variation_map(binary(), [cfapi_variation_map:cfapi_variation_map()]) ->
+-spec search_variation_map([cfapi_variation_map:cfapi_variation_map()], binary()) ->
   binary() | not_found.
-search_variation_map(TargetIdentifier, [Head | Tail]) ->
+search_variation_map([Head | Tail], Identifier) ->
   #{variation := Variation, targets := Targets} = Head,
-  Result = search_targets(TargetIdentifier, Targets),
-  if
-    Result == found ->
-      Variation;
-    true -> search_variation_map(TargetIdentifier, Tail)
+  case lists:any(fun (#{identifier := I}) -> Identifier == I end, Targets) of
+    true -> Variation;
+    _ -> search_variation_map(Tail, Identifier)
   end;
-search_variation_map(_, []) -> not_found.
 
--spec search_targets(binary(), list()) -> found | not_found.
-search_targets(TargetIdentifier, [Head | Tail]) ->
-  SearchResult = maps:get(identifier, Head, <<>>),
-  if
-    SearchResult == TargetIdentifier ->
-      found;
-    true -> search_targets(TargetIdentifier, Tail)
-  end;
-search_targets(_TargetIdentifier, []) -> not_found.
+search_variation_map([], _) -> not_found.
+
 
 -spec evaluate_target_group_rules(Rules :: [map()], cfclient:target()) ->
   binary() | excluded | not_found.
@@ -221,7 +221,8 @@ search_rules_for_inclusion([Head | Tail], Target) ->
         %% Apply the percentage rollout calculation for the rule
         Distribution when Distribution /= null ->
           BucketBy = maps:get(bucketBy, Distribution),
-          TargetAttributeValue = get_attribute_value(maps:get(attributes, Target, #{}), BucketBy, maps:get(identifier, Target, <<>>), maps:get(name, Target, <<>>)),
+          #{attributes := Attributes, identifier := Identifier, name := Name} = Target,
+          TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Identifier, Name),
           apply_percentage_rollout(
             maps:get(variations, Distribution),
             BucketBy,
@@ -239,62 +240,55 @@ search_rules_for_inclusion([], _) -> not_found.
 -spec is_rule_included_or_excluded([map()], cfclient:target()) -> included | excluded | false.
 is_rule_included_or_excluded([], _) -> false;
 
-is_rule_included_or_excluded([Head | Tail], Target) ->
-  case maps:get(op, Head, false) of
-    ?SEGMENT_MATCH_OPERATOR ->
-      % At present there is only ever one element in values, so get the first one.
-      #{values := [GroupName | _Rest]} = Head,
-      CachePid = cfclient_cache_repository:get_pid(),
-      Group = cfclient_cache_repository:get_from_cache({segment, GroupName}, CachePid),
-      search_group(excluded, Target, Group);
-    _ -> is_rule_included_or_excluded(Tail, Target)
-  end.
+is_rule_included_or_excluded([#{op := ?SEGMENT_MATCH_OPERATOR} = Head | _Tail], Target) ->
+  % At present there is only ever one element in values, so get the first one.
+  #{values := [GroupName | _Rest]} = Head,
+  {ok, Group} = cfclient_cache_repository:get_value({segment, GroupName}),
+  search_group(excluded, Target, Group);
+
+is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excluded(Tail, Target).
 
 % Parses Group Rules for the different rule types.
 -spec search_group(RuleType :: excluded | included | custom_rules, cfclient:target(), map()) ->
   included | excluded | false.
-search_group(excluded, Target, Group) ->
-  TargetIdentifier = maps:get(identifier, Target, <<>>),
-  case search_group_rules(TargetIdentifier, maps:get(excluded, Group, [])) of
+search_group(excluded, Target, #{excluded := []} = Group) -> search_group(included, Target, Group);
+
+search_group(excluded, Target, #{excluded := Values} = Group) ->
+  case identifier_matches(Target, Values) of
     true -> excluded;
     false -> search_group(included, Target, Group)
   end;
-search_group(included, Target, Group) ->
-  TargetIdentifier = maps:get(identifier, Target, <<>>),
-  case search_group_rules(TargetIdentifier, maps:get(included, Group, [])) of
+
+search_group(included, Target, #{included := []} = Group) ->
+  search_group(custom_rules, Target, Group);
+
+search_group(included, Target, #{included := Values} = Group) ->
+  case identifier_matches(Target, Values) of
     true -> included;
     false -> search_group(custom_rules, Target, Group)
   end;
-search_group(custom_rules, Target, Group) ->
-  case search_group_custom_rules(Target, maps:get(rules, Group, [])) of
+
+search_group(custom_rules, _Target, #{rules := []}) -> false;
+
+search_group(custom_rules, Target, #{rules := Values}) ->
+  case search_group_custom_rules(Values, Target) of
     true -> included;
     false -> false
   end.
 
 
--spec search_group_rules(Target :: binary(), GroupRules :: list() | null) -> true | false.
-search_group_rules(_, null) -> false;
-search_group_rules(TargetIdentifier, [Head | Tail]) ->
-  ListTargetIdentifier = maps:get(identifier, Head, <<>>),
-  if
-    TargetIdentifier == ListTargetIdentifier ->
-      true;
-    true -> search_group_rules(TargetIdentifier, Tail)
-  end;
-search_group_rules(_, []) -> false.
-
--spec search_group_custom_rules(cfclient:target(), CustomRules :: [map()]) -> boolean().
-search_group_custom_rules(Target, [Head | Tail]) ->
+-spec search_group_custom_rules(CustomRules :: [map()], cfclient:target()) -> boolean().
+search_group_custom_rules([Head | Tail], Target) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Head,
   #{attributes := TargetAttributes, identifier := TargetIdentifier, name := TargetName} = Target,
   TargetAttribute =
     get_attribute_value(TargetAttributes, RuleAttribute, TargetIdentifier, TargetName),
   case is_custom_rule_match(Op, TargetAttribute, RuleValue) of
     true -> true;
-    false -> search_group_custom_rules(Target, Tail)
+    false -> search_group_custom_rules(Tail, Target)
   end;
 
-search_group_custom_rules(_, []) -> false.
+search_group_custom_rules([], _) -> false.
 
 
 -spec is_custom_rule_match(Operator :: binary(), TargetAttribute :: binary() | list(), binary()) ->
@@ -324,46 +318,42 @@ is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
 
 %% Contains
 is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
-  binary:match(TargetAttribute, hd(RuleValue)) /= nomatch;
+  binary:match(TargetAttribute, hd(RuleValue)) /= nomatch.
 
-% In - we don't get the head of RuleValue here as `In` can have multiple values
-is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(TargetAttribute) ->
-  lists:member(TargetAttribute, RuleValue);
-is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
-  Search =
-    fun
-      F([Head | Tail]) ->
-        case lists:member(Head, RuleValue) of
-          true ->
-            true;
-          false ->
-            F(Tail)
-        end;
-      F([]) -> false
-    end,
-  Search(TargetAttribute).
+% TODO: seems impossible now
+% % In - we don't get the head of RuleValue here as `In` can have multiple values
+% is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(TargetAttribute) ->
+%   lists:member(TargetAttribute, RuleValue);
+% is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
+%   Search =
+%     fun
+%       F([Head | Tail]) ->
+%         case lists:member(Head, RuleValue) of
+%           true ->
+%             true;
+%           false ->
+%             F(Tail)
+%         end;
+%       F([]) -> false
+%     end,
+%   Search(TargetAttribute).
 
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName)
   when map_size(TargetCustomAttributes) > 0 ->
     % Check if rule attribute matches custom attributes.
     % Custom attribute keys are atoms
-  RuleAttributeAsAtom = binary_to_atom(RuleAttribute),
-  case maps:is_key(RuleAttributeAsAtom, TargetCustomAttributes) of
-    true ->
-      %% Rule values are binaries
-      custom_attribute_to_binary(maps:get(RuleAttributeAsAtom, TargetCustomAttributes));
+    case maps:find(binary_to_atom(RuleAttribute), TargetCustomAttributes) of
+        {ok, Value} ->
+            %% Rule values are binaries
+            custom_attribute_to_binary(Value);
 
-    false ->
-      get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
-  end;
-%% If no custom attributes or none matched from previous function clause, then check if the Rule attribute is Identifier or Name so we can attempt to match on those values.
-get_attribute_value(_, RuleAttribute, TargetIdentifier, TargetName) ->
-  case RuleAttribute of
-    <<"identifier">> -> TargetIdentifier;
-    <<"name">> -> TargetName;
-    _ -> <<>>
-  end.
+        error ->
+            get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
+    end;
+get_attribute_value(_, <<"identifier">>, Identifier, _) -> Identifier;
+get_attribute_value(_, <<"name">>, _, Name) -> Name;
+get_attribute_value(_, _, _, _) -> <<>>.
 
 % Convert custom attributes to binary
 custom_attribute_to_binary(Value) when is_binary(Value) ->
@@ -419,14 +409,13 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
 -spec search_prerequisites(Prerequisites :: list(), binary()) -> boolean().
 search_prerequisites([Head | Tail], Target) ->
   Identifier = maps:get(feature, Head),
-  CachePid = cfclient_cache_repository:get_pid(),
   % Get prerequisite from cache
-  case cfclient_cache_repository:get_from_cache({flag, Identifier}, CachePid) of
-    undefined ->
+  case cfclient_cache_repository:get_value({flag, Identifier}) of
+    {error, undefined} ->
       ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
       false;
 
-    PrerequisiteFlag ->
+    {ok, PrerequisiteFlag} ->
       case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
         %% A prerequisite has been met, so continue to check any others
         true -> search_prerequisites(Tail, Target);
@@ -455,10 +444,10 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
       ),
       lists:member(VariationIdentifier, PrerequisiteVariations);
 
-    not_ok ->
+    {error, Reason} ->
       ?LOG_ERROR(
-        "Could not evaluate prerequisite flag ~p",
-        [PrerequisiteFlagIdentifier]
+        "Could not evaluate prerequisite flag ~p: ~p",
+        [PrerequisiteFlagIdentifier, Reason]
       ),
       false
   end.
