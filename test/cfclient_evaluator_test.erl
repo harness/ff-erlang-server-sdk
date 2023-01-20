@@ -83,9 +83,9 @@ variations_test() ->
       anonymous => <<"">>,
       attributes => <<"">>
     },
-  %% Mock LRU Cache
-  meck:new(lru),
-  meck:expect(cfclient_cache_repository, get_pid, fun () -> self() end),
+
+  meck:new(cfclient_ets),
+  % meck:expect(cfclient_cache_repository, get_pid, fun () -> self() end),
   %%-------------------- Bool Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(
@@ -101,7 +101,7 @@ variations_test() ->
   ),
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"flags/My_boolean_flag">>) ->
@@ -120,7 +120,7 @@ variations_test() ->
   ),
   %%%%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -163,7 +163,7 @@ variations_test() ->
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -192,7 +192,7 @@ variations_test() ->
   %%%%%%%% Flag is on with a single target %%%%%%%%
   %% Target found
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -245,7 +245,7 @@ variations_test() ->
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -261,7 +261,7 @@ variations_test() ->
   %%-------------------- Number Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_off()
@@ -273,7 +273,7 @@ variations_test() ->
   ),
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -294,7 +294,7 @@ variations_test() ->
   ),
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -337,7 +337,7 @@ variations_test() ->
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -353,7 +353,7 @@ variations_test() ->
   %%-------------------- JSON Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_off() end
   ),
@@ -363,7 +363,7 @@ variations_test() ->
   ),
   %%%%%%%% Flag is on with a single target %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -382,7 +382,7 @@ variations_test() ->
   ),
   %%%%%% Flag is on - no targets - but Groups %%%%%%%%
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
@@ -423,7 +423,7 @@ variations_test() ->
   %%%%%%%% Flag is on - no targets or groups %%%%%%%%
   %% Default on variation
   meck:expect(
-    lru,
+    cfclient_ets,
     get,
     fun
       (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
