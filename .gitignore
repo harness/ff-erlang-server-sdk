@@ -24,5 +24,6 @@ deps
 _build/
 _checkouts/
 
+*.coverdata
 
 temp*
