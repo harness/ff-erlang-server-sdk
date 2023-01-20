@@ -92,7 +92,7 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off()
+      (_, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off()
     end
   ),
   ?assertEqual(
@@ -104,7 +104,7 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"flags/My_boolean_flag">>) ->
+      (_, <<"flags/My_boolean_flag">>) ->
         cfclient_evaluator_test_data:boolean_flag_single_target()
     end
   ),
@@ -123,9 +123,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_boolean_flag">>) ->
+      (_, <<"flags/My_boolean_flag">>) ->
         cfclient_evaluator_test_data:boolean_flag_group_only()
     end
   ),
@@ -166,9 +166,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_boolean_flag">>) ->
+      (_, <<"flags/My_boolean_flag">>) ->
         cfclient_evaluator_test_data:boolean_flag_no_targets_or_groups()
     end
   ),
@@ -182,7 +182,7 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_off()
+      (_, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_off()
     end
   ),
   ?assertEqual(
@@ -195,9 +195,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_string_flag">>) ->
+      (_, <<"flags/My_string_flag">>) ->
         cfclient_evaluator_test_data:string_flag_target_and_groups()
     end
   ),
@@ -248,9 +248,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_string_flag">>) ->
+      (_, <<"flags/My_string_flag">>) ->
         cfclient_evaluator_test_data:string_flag_no_targets_or_groups()
     end
   ),
@@ -264,7 +264,8 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_off()
+      (_, <<"flags/My_cool_number_flag">>) ->
+        cfclient_evaluator_test_data:number_flag_off()
     end
   ),
   ?assertEqual(
@@ -276,9 +277,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_cool_number_flag">>) ->
+      (_, <<"flags/My_cool_number_flag">>) ->
         cfclient_evaluator_test_data:number_flag_only_targets()
     end
   ),
@@ -297,9 +298,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_cool_number_flag">>) ->
+      (_, <<"flags/My_cool_number_flag">>) ->
         cfclient_evaluator_test_data:number_flag_only_groups()
     end
   ),
@@ -340,9 +341,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_cool_number_flag">>) ->
+      (_, <<"flags/My_cool_number_flag">>) ->
         cfclient_evaluator_test_data:number_flag_no_targets_or_groups()
     end
   ),
@@ -355,7 +356,7 @@ variations_test() ->
   meck:expect(
     cfclient_ets,
     get,
-    fun (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_off() end
+    fun (_, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_off() end
   ),
   ?assertEqual(
     {ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}},
@@ -366,8 +367,10 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-      (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_targets()
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+
+      (_, <<"flags/My_JSON_flag">>) ->
+        cfclient_evaluator_test_data:json_flag_only_targets()
     end
   ),
   %% Target found
@@ -385,8 +388,8 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-      (CacheName, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_groups()
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_groups()
     end
   ),
   %% Target excluded
@@ -426,9 +429,9 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
+      (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
 
-      (CacheName, <<"flags/My_JSON_flag">>) ->
+      (_, <<"flags/My_JSON_flag">>) ->
         cfclient_evaluator_test_data:json_flag_no_targets_or_groups()
     end
   ),
@@ -1296,10 +1299,10 @@ percentage_rollout_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) ->
+      (_, <<"segments/target_group_1">>) ->
         cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
-      (CacheName, <<"flags/My_boolean_flag">>) ->
+      (_, <<"flags/My_boolean_flag">>) ->
         cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
     end
   ),
@@ -1311,10 +1314,10 @@ percentage_rollout_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) ->
+      (_, <<"segments/target_group_1">>) ->
         cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
-      (CacheName, <<"flags/My_boolean_flag">>) ->
+      (_, <<"flags/My_boolean_flag">>) ->
         cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
     end
   ),
@@ -1325,10 +1328,10 @@ percentage_rollout_test() ->
     cfclient_ets,
     get,
     fun
-      (CacheName, <<"segments/target_group_1">>) ->
+      (_, <<"segments/target_group_1">>) ->
         cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
-      (CacheName, <<"flags/My_boolean_flag">>) ->
+      (_, <<"flags/My_boolean_flag">>) ->
         cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
     end
   ),
