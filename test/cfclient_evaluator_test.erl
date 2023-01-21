@@ -83,7 +83,6 @@ variations_test() ->
       anonymous => <<"">>,
       attributes => <<"">>
     },
-
   meck:new(cfclient_ets),
   % meck:expect(cfclient_cache_repository, get_pid, fun () -> self() end),
   %%-------------------- Bool Variation --------------------
@@ -91,9 +90,7 @@ variations_test() ->
   meck:expect(
     cfclient_ets,
     get,
-    fun
-      (_, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off()
-    end
+    fun (_, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off() end
   ),
   ?assertEqual(
     {ok, <<"false">>, false},
@@ -104,8 +101,7 @@ variations_test() ->
     cfclient_ets,
     get,
     fun
-      (_, <<"flags/My_boolean_flag">>) ->
-        cfclient_evaluator_test_data:boolean_flag_single_target()
+      (_, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_single_target()
     end
   ),
   %% Target found
@@ -124,9 +120,7 @@ variations_test() ->
     get,
     fun
       (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-
-      (_, <<"flags/My_boolean_flag">>) ->
-        cfclient_evaluator_test_data:boolean_flag_group_only()
+      (_, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_group_only()
     end
   ),
   %% Target excluded
@@ -181,9 +175,7 @@ variations_test() ->
   meck:expect(
     cfclient_ets,
     get,
-    fun
-      (_, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_off()
-    end
+    fun (_, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_off() end
   ),
   ?assertEqual(
     {ok, <<"Dont_serve_it">>, "don't serve it"},
@@ -263,10 +255,7 @@ variations_test() ->
   meck:expect(
     cfclient_ets,
     get,
-    fun
-      (_, <<"flags/My_cool_number_flag">>) ->
-        cfclient_evaluator_test_data:number_flag_off()
-    end
+    fun (_, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_off() end
   ),
   ?assertEqual(
     {ok, <<"Serve_a_zero_int">>, 0},
@@ -299,9 +288,7 @@ variations_test() ->
     get,
     fun
       (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-
-      (_, <<"flags/My_cool_number_flag">>) ->
-        cfclient_evaluator_test_data:number_flag_only_groups()
+      (_, <<"flags/My_cool_number_flag">>) -> cfclient_evaluator_test_data:number_flag_only_groups()
     end
   ),
   %% Target excluded
@@ -368,9 +355,7 @@ variations_test() ->
     get,
     fun
       (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-
-      (_, <<"flags/My_JSON_flag">>) ->
-        cfclient_evaluator_test_data:json_flag_only_targets()
+      (_, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_only_targets()
     end
   ),
   %% Target found
@@ -430,9 +415,7 @@ variations_test() ->
     get,
     fun
       (_, <<"segments/target_group_1">>) -> cfclient_evaluator_test_data:target_group();
-
-      (_, <<"flags/My_JSON_flag">>) ->
-        cfclient_evaluator_test_data:json_flag_no_targets_or_groups()
+      (_, <<"flags/My_JSON_flag">>) -> cfclient_evaluator_test_data:json_flag_no_targets_or_groups()
     end
   ),
   ?assertEqual(
