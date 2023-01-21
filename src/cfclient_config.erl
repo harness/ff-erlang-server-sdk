@@ -12,9 +12,9 @@
 -include("cfclient_config.hrl").
 
 -export([init/2, get_value/1, clear_config/0]).
+-export([defaults/0, normalize/1, get_config/0, parse_jwt/1]).
 
 % Config defaults
-
 % Config endpoint for Prod
 -define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io/api/1.0").
 
