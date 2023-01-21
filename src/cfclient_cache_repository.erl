@@ -10,82 +10,63 @@
 
 -include("cfclient_config.hrl").
 
--export([get_from_cache/2, set_to_cache/3, set_pid/1, get_pid/0]).
+-export([get_value/1, set_value/2, cache_flag/1, cache_segment/1]).
 
--type flag() :: {flag, Identifier :: binary()}.
--type segment() :: {segment, Identifier :: binary()}.
+-type flag() :: cfapi_feature_config:cfapi_feature_config().
+-type segment() :: cfapi_segment:cfapi_segment().
 
-% TODO export types?
+% @doc Get Flag or Segment from cache.
+-spec get_value({flag, binary()} | {segment, binary()}) ->
+  {ok, flag() | segment()} | {error, undefined}.
+get_value({Type, Identifier}) ->
+  Key = format_key({Type, Identifier}),
+  case cfclient_ets:get(?CACHE_TABLE, Key) of
+    undefined -> {error, undefined};
+    Value -> {ok, Value}
+  end.
 
-% @doc Get flag or segment from cache.
--spec get_from_cache(flag() | segment(), pid()) ->
-    cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() |
-    undefined.
-get_from_cache({Type, Identifier}, CachePID) ->
-  FlagKey = format_key({Type, Identifier}),
-  get(CachePID, FlagKey).
-
--spec get(pid(), binary()) -> term().
-get(CachePID, FlagKey) ->
-  lru:get(CachePID, FlagKey).
 
 % @doc Place flag or segment into cache with new value
--spec set_to_cache(flag() | segment(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment() , CachePID :: pid()) -> atom().
-set_to_cache({Type, Identifier}, Feature,  CachePID) ->
-  IsOutdated = is_outdated({Type, Identifier}, Feature, CachePID),
-  FlagKey = format_key({Type, Identifier}),
-  case set(CachePID, FlagKey, Feature, IsOutdated) of
-    ok ->
-      ?LOG_DEBUG("Updated ~p~n Type with ~p~n Identifier:", [Type, Identifier]);
-    not_ok ->
-      ?LOG_ERROR("Did not update cache: requested ~p~n was outdated. Identifier: ~p~n", [Type, Identifier]),
-      not_ok
+-spec set_value({flag, binary()} | {segment, binary()}, flag() | segment()) ->
+  ok | {error, outdated}.
+set_value({Type, Identifier}, Value) ->
+  % TODO: set expiration
+  case is_outdated({Type, Identifier}, Value) of
+    true ->
+      % This should not happen
+      ?LOG_ERROR("Outdated type ~p, identifier ~p", [Type, Identifier]),
+      {error, outdated};
+
+    false ->
+      Key = format_key({Type, Identifier}),
+      true = ets:insert(?CACHE_TABLE, {Key, Value}),
+      ?LOG_DEBUG("Cached type ~p, identifier ~p", [Type, Identifier]),
+      ok
   end.
 
--spec set(pid(), binary(), cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), boolean()) -> atom().
-set(CachePID, Identifier, Value, false) ->
-  lru:add(CachePID, Identifier, Value),
-  ok;
-%% Don't place in cache if outdated. Note: if this happens we treat is as an error state as
-%% it should not happen, so log an error to the user.
-set(_, _, _, true) ->
-  not_ok.
 
--spec is_outdated(
-  flag() | segment(),
-  cfapi_feature_config:cfapi_feature_config() | cfapi_segment:cfapi_segment(), pid()
-) ->
-  boolean().
-is_outdated({flag, Identifier}, Feature, CachePID) ->
-  case get_from_cache({flag, Identifier}, CachePID) of
-    undefined -> false;
+-spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment()) -> boolean().
+is_outdated(Key, NewValue) ->
+  case get_value(Key) of
+    {error, undefined} -> false;
 
-    OldFeature ->
-      #{version := OldFeatureVersion} = OldFeature,
-      #{version := NewFeatureVersion} = Feature,
-      OldFeatureVersion > NewFeatureVersion
-  end;
-
-is_outdated({segment, Identifier}, Segment, CachePID) ->
-  case get_from_cache({segment, Identifier}, CachePID) of
-    undefined -> false;
-
-    OldSegment ->
-      #{version := OldSegmentVersion} = OldSegment,
-      #{version := NewSegmentVersion} = Segment,
-      OldSegmentVersion > NewSegmentVersion
+    {ok, OldValue} ->
+      #{version := OldVersion} = OldValue,
+      #{version := NewVersion} = NewValue,
+      OldVersion > NewVersion
   end.
 
-% Create binary key from flag or segment
--spec format_key(flag() | segment()) -> binary().
+
+% @doc Create binary key from flag or segment
+-spec format_key({flag, binary()} | {segment, binary()}) -> binary().
 format_key({flag, Identifier}) -> <<"flags/", Identifier/binary>>;
 format_key({segment, Identifier}) -> <<"segments/", Identifier/binary>>.
 
--spec set_pid(CachePID :: pid()) -> ok.
-set_pid(CachePID) ->
-  application:set_env(cfclient, cachepid, CachePID).
+-spec cache_segment(segment()) -> ok | {error, outdated}.
+cache_segment(#{identifier := Id} = Value) -> set_value({segment, Id}, Value).
 
--spec get_pid() -> pid().
-get_pid() ->
-  {ok, Pid} = application:get_env(cfclient, cachepid),
-  Pid.
+-spec cache_flag(flag()) -> ok | {error, outdated}.
+cache_flag(#{feature := Id} = Value) -> set_value({flag, Id}, Value).
+
+-spec set_pid(pid()) -> ok.
+set_pid(_) -> ok.
