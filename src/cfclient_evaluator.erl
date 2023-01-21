@@ -435,7 +435,7 @@ search_prerequisites([Head | Tail], Target) ->
 search_prerequisites([], _) -> true.
 
 
--spec check_prerequisite(feature(), binary(), feature(), cfclient:target()) -> boolean().
+-spec check_prerequisite(feature(), binary(), feature(), target()) -> boolean().
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   case evaluate_flag(PrerequisiteFlag, Target, off) of
     {ok, VariationIdentifier, _} ->
@@ -459,7 +459,7 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
   end.
 
 
--spec bool_variation(binary(), cfclient:target()) ->
+-spec bool_variation(binary(), target()) ->
   {ok, Identifier :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
 bool_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
@@ -468,7 +468,7 @@ bool_variation(FlagIdentifier, Target) ->
   end.
 
 
--spec string_variation(binary(), cfclient:target()) ->
+-spec string_variation(binary(), target()) ->
   {ok, Identifier :: binary(), Value :: string()} | {error, Reason :: atom()}.
 string_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
@@ -477,7 +477,7 @@ string_variation(FlagIdentifier, Target) ->
   end.
 
 
--spec number_variation(binary(), cfclient:target()) ->
+-spec number_variation(binary(), target()) ->
   {ok, Identifier :: binary(), Value :: number()} | {error, Reason :: atom()}.
 number_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
@@ -492,7 +492,7 @@ number_variation(FlagIdentifier, Target) ->
   end.
 
 
--spec json_variation(binary(), cfclient:target()) ->
+-spec json_variation(binary(), target()) ->
   {ok, Identifier :: binary(), Value :: map()} | {error, Reason :: atom()}.
 json_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
