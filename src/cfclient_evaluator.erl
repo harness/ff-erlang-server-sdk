@@ -344,46 +344,48 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(Ta
 
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName)
-  when map_size(TargetCustomAttributes) > 0 ->
-    % Check if rule attribute matches custom attributes.
-    % Custom attribute keys are atoms
-    case maps:find(binary_to_atom(RuleAttribute), TargetCustomAttributes) of
-        {ok, Value} ->
-            %% Rule values are binaries
-            custom_attribute_to_binary(Value);
+when map_size(TargetCustomAttributes) > 0 ->
+  % Check if rule attribute matches custom attributes.
+  % Custom attribute keys are atoms
+  case maps:find(binary_to_atom(RuleAttribute), TargetCustomAttributes) of
+    {ok, Value} ->
+      %% Rule values are binaries
+      custom_attribute_to_binary(Value);
 
-        error ->
-            get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
-    end;
+    error -> get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
+  end;
+
 get_attribute_value(_, <<"identifier">>, Identifier, _) -> Identifier;
 get_attribute_value(_, <<"name">>, _, Name) -> Name;
 get_attribute_value(_, _, _, _) -> <<>>.
 
-% Convert custom attributes to binary
-custom_attribute_to_binary(Value) when is_binary(Value) ->
-    Value;
-custom_attribute_to_binary(Value) when is_atom(Value) ->
-    atom_to_binary(Value);
-custom_attribute_to_binary(Value) when is_number(Value) ->
-    list_to_binary(mochinum:digits(Value));
-custom_attribute_to_binary(Value) when is_list(Value) ->
-    case io_lib:char_list(Value) of
-        % If user supplies a string/list then log an error as not supported input
-        true ->
-            ?LOG_ERROR(
-                "Using strings/lists for element values in the target custom attributes list is not supported"
-            ),
-            not_ok;
 
-        false ->
-            [custom_attribute_list_elem_to_binary(X) || X <- Value]
+% Convert custom attributes to binary
+custom_attribute_to_binary(Value) when is_binary(Value) -> Value;
+custom_attribute_to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
+custom_attribute_to_binary(Value) when is_number(Value) -> list_to_binary(mochinum:digits(Value));
+
+custom_attribute_to_binary(Value) when is_list(Value) ->
+  case io_lib:char_list(Value) of
+    % If user supplies a string/list then log an error as not supported input
+    true ->
+      ?LOG_ERROR(
+        "Using strings/lists for element values in the target custom attributes list is not supported"
+      ),
+      not_ok;
+
+    false -> [custom_attribute_list_elem_to_binary(X) || X <- Value]
   end.
+
 
 % Convert custom rule array elements to binary
 custom_attribute_list_elem_to_binary(Element) when is_atom(Element) -> atom_to_binary(Element);
+
 custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
   list_to_binary(mochinum:digits(Element));
+
 custom_attribute_list_elem_to_binary(Element) when is_binary(Element) -> Element;
+
 custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   ?LOG_ERROR(
     "Using strings/lists for element values in the target custom attributes list is not supported"
