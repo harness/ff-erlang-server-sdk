@@ -613,32 +613,6 @@ search_variation_map_test() ->
   ).
 
 
-search_targets_test() ->
-  %%-------------------- Single Target --------------------
-  TargetsSingle = [#{identifier => <<"target_identifier_1">>, name => <<"target_test_1">>}],
-  %% Found %%
-  ?assertEqual(found, cfclient_evaluator:search_targets(<<"target_identifier_1">>, TargetsSingle)),
-  %% NotFound %%
-  ?assertEqual(
-    not_found,
-    cfclient_evaluator:search_targets(<<"target_identifier_34w3434">>, TargetsSingle)
-  ),
-  %%-------------------- Multiple Targets --------------------
-  TargetsMultiple =
-    [
-      #{identifier => <<"target_identifier_1">>, name => <<"target_test_1">>},
-      #{identifier => <<"target_identifier_2">>, name => <<"target_test_2">>}
-    ],
-  %% Found %%
-  ?assertEqual(found, cfclient_evaluator:search_targets(<<"target_identifier_1">>, TargetsMultiple)),
-  ?assertEqual(found, cfclient_evaluator:search_targets(<<"target_identifier_2">>, TargetsMultiple)),
-  %% NotFound %%
-  ?assertEqual(
-    not_found,
-    cfclient_evaluator:search_targets(<<"target_identifier_34214awe">>, TargetsMultiple)
-  ).
-
-
 is_rule_included_or_excluded_test() ->
   Clauses =
     [
