@@ -83,9 +83,7 @@ evaluate_flag(#{prerequisites := Prerequisites} = Flag, Target, prerequisites) -
       get_default_off_variation(Flag, maps:get(offVariation, Flag))
   end;
 
-evaluate_flag(Flag, Target, prerequisites) ->
-  evaluate_flag(Flag, Target, target_rules);
-
+evaluate_flag(Flag, Target, prerequisites) -> evaluate_flag(Flag, Target, target_rules);
 % Evaluate target rules
 evaluate_flag(#{variationToTargetMap := []} = Flag, Target, target_rules) ->
   #{feature := Feature} = Flag,
@@ -134,7 +132,6 @@ evaluate_flag(#{rules := Rules} = Flag, Target, group_rules) ->
   end;
 
 evaluate_flag(Flag, Target, group_rules) -> evaluate_flag(Flag, Target, default_on);
-
 % Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
   #{feature := Feature, variations := Variations, defaultServe := DefaultServe} = Flag,
@@ -178,15 +175,13 @@ get_target_or_group_variation(Flag, Identifier) ->
   end.
 
 
--spec evaluate_target_rule([cfapi_variation_map:cfapi_variation_map()], cfclient:target()) ->
-  binary() | not_found.
+-spec evaluate_target_rule([variation_map()], target()) -> binary() | not_found.
 evaluate_target_rule(VariationMap, #{identifier := Identifier}) ->
   search_variation_map(VariationMap, Identifier);
 
 evaluate_target_rule(_, _) -> not_found.
 
--spec search_variation_map([cfapi_variation_map:cfapi_variation_map()], binary()) ->
-  binary() | not_found.
+-spec search_variation_map([variation_map()], binary()) -> binary() | not_found.
 search_variation_map([Head | Tail], Identifier) ->
   #{variation := Variation, targets := Targets} = Head,
   case lists:any(fun (#{identifier := I}) -> Identifier == I end, Targets) of
@@ -250,6 +245,7 @@ is_rule_included_or_excluded([#{op := ?SEGMENT_MATCH_OPERATOR} = Head | _Tail], 
 
 is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excluded(Tail, Target).
 
+
 % Parses Group Rules for the different rule types.
 -spec search_group(RuleType :: excluded | included | custom_rules, cfclient:target(), map()) ->
   included | excluded | false.
@@ -293,8 +289,7 @@ search_group_custom_rules([Head | Tail], Target) ->
 search_group_custom_rules([], _) -> false.
 
 
--spec is_custom_rule_match(Operator :: binary(), TargetAttribute :: binary() | list(), binary()) ->
-  boolean().
+-spec is_custom_rule_match(Operator :: binary(), binary(), [binary()]) -> boolean().
 % No target attribute, don't attempt match
 is_custom_rule_match(_, <<>>, _) -> false;
 % Equal case sensitive
