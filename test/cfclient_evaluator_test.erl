@@ -62,20 +62,20 @@ variations_test() ->
       anonymous => <<"">>,
       attributes => #{ab_testing => <<"GREAT_GROUP">>}
     },
-  CustomRulesNotIncludedA =
-    #{
-      identifier => <<"target_324235">>,
-      name => <<"target_name_2345">>,
-      anonymous => <<"">>,
-      attributes => #{ab_testing => <<"first_detached_group">>}
-    },
-  CustomRulesNotIncludedB =
-    #{
-      identifier => <<"target_3333">>,
-      name => <<"target_name_1444">>,
-      anonymous => <<"">>,
-      attributes => #{beta => <<"target_5000">>}
-    },
+  % CustomRulesNotIncludedA =
+  %   #{
+  %     identifier => <<"target_324235">>,
+  %     name => <<"target_name_2345">>,
+  %     anonymous => <<"">>,
+  %     attributes => #{ab_testing => <<"first_detached_group">>}
+  %   },
+  % CustomRulesNotIncludedB =
+  %   #{
+  %     identifier => <<"target_3333">>,
+  %     name => <<"target_name_1444">>,
+  %     anonymous => <<"">>,
+  %     attributes => #{beta => <<"target_5000">>}
+  %   },
   NonExistentTarget =
     #{
       identifier => <<"target_identifier_q2341q41324ad">>,
