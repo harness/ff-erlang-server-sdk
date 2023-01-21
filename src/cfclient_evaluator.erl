@@ -27,8 +27,10 @@
                 excluded => list(),
                 included => list()
               }.
--type feature() :: cfapi_feature_config:cfapi_feature_config().
--type segment() :: cfapi_segment:cfapi_segment().
+-type target() :: cfclient:target().
+-type feature() :: cfclient:feature().
+-type segment() :: cfclient:segment().
+-type variation_map() :: cfapi_variation_map:cfapi_variation_map().
 
 -include("cfclient_evaluator_operators.hrl").
 
@@ -46,7 +48,7 @@ evaluate(FlagIdentifier, Target) ->
 
 -spec evaluate_flag(
   feature() | segment(),
-  cfclient:target(),
+  target(),
   default_on | group_rules | off | prerequisites | target_rules
 ) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, atom()}.
