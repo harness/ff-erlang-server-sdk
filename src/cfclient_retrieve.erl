@@ -6,7 +6,7 @@
 
 -module(cfclient_retrieve).
 
--export([retrieve_flags/3, retrieve_segments/3]).
+-export([retrieve_flags/1, retrieve_segments/1]).
 
 -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type segment() :: cfapi_segment:cfapi_segment().
