@@ -464,6 +464,7 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
 bool_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, <<"true">>} -> {ok, VariationIdentifier, true};
+    {ok, VariationIdentifier, <<"false">>} -> {ok, VariationIdentifier, false};
     {error, Reason} -> {error, Reason}
   end.
 
