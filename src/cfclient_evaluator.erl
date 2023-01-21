@@ -498,13 +498,10 @@ number_variation(FlagIdentifier, Target) ->
 json_variation(FlagIdentifier, Target) ->
   case evaluate(FlagIdentifier, Target) of
     {ok, VariationIdentifier, Variation} ->
-      try
-        {ok, VariationIdentifier, jsx:decode(Variation, [])}
-      catch
+      try {ok, VariationIdentifier, jsx:decode(Variation, [])} catch
         error : badarg ->
           ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
-          {error, json_decode}
-      end;
+          {error, json_decode} end;
 
     {error, Reason} -> {error, Reason}
   end.
