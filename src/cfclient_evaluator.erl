@@ -90,6 +90,11 @@ evaluate_flag(#{variationToTargetMap := []} = Flag, Target, target_rules) ->
   ?LOG_DEBUG("No target rules for flag ~p, target ~p", [Feature, Target]),
   evaluate_flag(Flag, Target, group_rules);
 
+evaluate_flag(#{variationToTargetMap := null} = Flag, Target, target_rules) ->
+  #{feature := Feature} = Flag,
+  ?LOG_DEBUG("No target rules for flag ~p, target ~p", [Feature, Target]),
+  evaluate_flag(Flag, Target, group_rules);
+
 evaluate_flag(#{variationToTargetMap := VariationToTargetMap} = Flag, Target, target_rules) ->
   #{feature := Feature} = Flag,
   ?LOG_DEBUG("Evaluating target rule for flag ~p, target ~p", [Feature, Target]),
