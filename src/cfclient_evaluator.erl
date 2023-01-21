@@ -23,7 +23,7 @@
                 clauses := list(),
                 serve => map(),
                 op => binary(),
-                values => list(),
+                values => [binary()],
                 excluded => list(),
                 included => list()
               }.
