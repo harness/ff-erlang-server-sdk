@@ -223,7 +223,8 @@ search_rules_for_inclusion([Head | Tail], Target) ->
         %% Apply the percentage rollout calculation for the rule
         Distribution when Distribution /= null ->
           BucketBy = maps:get(bucketBy, Distribution),
-          #{attributes := Attributes, identifier := Identifier, name := Name} = Target,
+          #{identifier := Identifier, name := Name} = Target,
+          Attributes = maps:get(attributes, Target, #{}),
           TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Identifier, Name),
           apply_percentage_rollout(
             maps:get(variations, Distribution),
@@ -283,7 +284,8 @@ search_group(custom_rules, Target, #{rules := Values}) ->
 -spec search_group_custom_rules(CustomRules :: [map()], cfclient:target()) -> boolean().
 search_group_custom_rules([Head | Tail], Target) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Head,
-  #{attributes := TargetAttributes, identifier := TargetIdentifier, name := TargetName} = Target,
+  #{identifier := TargetIdentifier, name := TargetName} = Target,
+  TargetAttributes = maps:get(attributes, Target, #{}),
   TargetAttribute =
     get_attribute_value(TargetAttributes, RuleAttribute, TargetIdentifier, TargetName),
   case is_custom_rule_match(Op, TargetAttribute, RuleValue) of
