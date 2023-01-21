@@ -3,223 +3,203 @@
 -include_lib("kernel/include/logger.hrl").
 
 -include("cfclient_config.hrl").
-
--behaviour(gen_server).
-
--export([enqueue_metrics/4, set_metrics_cache_pid/1, set_metrics_target_cache_pid/1]).
-
--export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
-
 -include("cfclient_metrics_attributes.hrl").
 
--define(SERVER, ?MODULE).
+-export([process_metrics/1, enqueue_metrics/4]).
 
--record(cfclient_metrics_server_state, {analytics_push_interval, metrics_cache_pid, metric_target_cache_pid}).
-
-start_link() ->
-  gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
-
-init([]) ->
-  AnalyticsPushInterval = cfclient_config:get_value(analytics_push_interval),
-  MetricsCachePID = get_metrics_cache_pid(),
-  MetricTargetCachePID = get_metric_target_cache_pid(),
-  State = #cfclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID},
-  metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
-  {ok, State}.
-
-handle_call(_Request, _From, State) ->
-  {reply, ok, State}.
-
-handle_cast(_Request, State) ->
-  {noreply, State}.
-
-handle_info(_Info, State = #cfclient_metrics_server_state{analytics_push_interval = AnalyticsPushInterval, metrics_cache_pid = MetricsCachePID, metric_target_cache_pid = MetricTargetCachePID}) ->
-  metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID),
-  {noreply, State}.
-
-terminate(_Reason, _State = #cfclient_metrics_server_state{}) ->
-  ok.
-
-metrics_interval(AnalyticsPushInterval, MetricsCachePID, MetricTargetCachePID) ->
+% @doc Gather metrics and send them to server.
+% Called periodically.
+-spec process_metrics(map()) -> ok | noop | {error, api}.
+process_metrics(Config) ->
   ?LOG_INFO("Gathering and sending metrics"),
-  MetricsData = create_metrics_data(lru:keys(MetricsCachePID), MetricsCachePID, os:system_time(millisecond), []),
-  MetricTargetData = create_metric_target_data(lru:keys(MetricTargetCachePID), MetricTargetCachePID, []),
-  case post_metrics(MetricsData, MetricTargetData) of
-    {ok, Response} ->
-      ?LOG_INFO("Posted metrics: ~p", [Response]),
-      reset_metrics_cache(MetricsCachePID),
-      reset_metric_target_cache(MetricTargetCachePID),
-      ok;
+  #{
+    metrics_cache_table := MetricsCacheTable,
+    metrics_target_table := MetricsTargetTable,
+    metrics_counter_table := MetricsCounterTable
+   } = Config,
 
+
+  {ok, MetricsData} = collect_metrics_data(MetricsCacheTable),
+  {ok, MetricsTargetData} = collect_metrics_target_data(MetricsTargetTable),
+  case post_metrics(Config, MetricsData, MetricsTargetData) of
     noop ->
-      ?LOG_INFO("No metrics to post"),
+      ?LOG_DEBUG("No metrics to post"),
       noop;
 
-    {not_ok, Response} ->
+    {ok, Response} ->
+      ?LOG_INFO("Posted metrics: ~p", [Response]),
+      % TODO: race condition, will lose any metrics made during call to post_metrics
+      ets:delete_all_objects(MetricsCacheTable),
+      ets:delete_all_objects(MetricsCounterTable),
+      ets:delete_all_objects(MetricsTargetTable),
+      ok;
+
+    {error, Response} ->
       ?LOG_ERROR("Error posting metrics: ~p", [Response]),
-      not_ok
-  end,
-  erlang:send_after(AnalyticsPushInterval, self(), trigger).
+      {error, api}
+  end.
 
--spec post_metrics(list(), list()) -> {ok, term()} | noop.
-post_metrics([], []) ->
-    noop;
-post_metrics(MetricsData, MetricTargetData) ->
-    AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
-    Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
-    ClusterID = cfclient_instance:get_project_value("clusterIdentifier"),
-    EventsUrl = cfclient_config:get_value("events_url")},
 
-    Opts =
+% @doc Send metrics to the server via API
+-spec post_metrics(map(), [map()], [map()]) -> {ok, term()} | {error, term()} | noop.
+post_metrics(_Config, [], []) -> noop;
+
+post_metrics(Config, MetricsData, MetricsTargetData) ->
+  #{auth_token := AuthToken, project := Project, events_url := EventsUrl} = Config,
+  #{environment := Environment, 'clusterIdentifier' := ClusterID} = Project,
+  Opts =
     #{
       cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => EventsUrl},
-      params => #{metricsData => MetricsData, targetData => MetricTargetData}
-     },
+      params => #{metricsData => MetricsData, targetData => MetricsTargetData}
+    },
 
-    ClusterMap = #{cluster => ClusterID},
-    case cfapi_metrics_api:post_metrics(ctx:new(), ClusterMap, Environment, Opts) of
-        {ok, Response, _} -> {ok, Response};
-        {error, Response, _} -> {not_ok, Response}
-    end.
+  case cfapi_metrics_api:post_metrics(ctx:new(), ClusterID, Environment, Opts) of
+    {ok, Response, _} -> {ok, Response};
+    {error, Response, _} -> {error, Response}
+  end.
 
+
+-spec enqueue_metrics(binary(), cfclient:target(), binary(), term()) -> ok.
 enqueue_metrics(FlagId, Target, VariationId, VariationValue) ->
-  set_to_metrics_cache(FlagId, Target, VariationId, VariationValue, get_metrics_cache_pid()),
-  set_to_metric_target_cache(Target, get_metric_target_cache_pid()).
-
--spec create_metrics_data(MetricsCacheKeys :: list(), pid(), integer(), list()) -> list().
-create_metrics_data([UniqueEvaluation | Tail], MetricsCachePID, Timestamp, Acc) ->
-  % Each key is the unique evaluation mapped to its evaluation occurrence count and target
-  {Count, UniqueEvaluationTarget} = lru:get(MetricsCachePID, UniqueEvaluation),
-  Metric = create_metric(UniqueEvaluation, UniqueEvaluationTarget, Count, Timestamp),
-  create_metrics_data(Tail, MetricsCachePID, Timestamp, [Metric | Acc]);
-
-create_metrics_data([], _, _, Acc) -> Acc.
-
-% TODO: We pass in the target here, but so far only using the Global
-% target per ff-server requirements. We will, however, want to add an option to
-% the config to disable that global config and use the actual target.
-% So for the moment the UniqueEvaluationTarget is unreferenced.
-create_metric(UniqueEvaluation, _UniqueEvaluationTarget, Count, TimeStamp) ->
-    #{feature_name := FeatureName, variation_value := VariationValue,
-      variation_identifier := VariationId} = UniqueEvaluation,
-
-    MetricAttributes =
-    [
-     #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => FeatureName},
-     #{key => ?FEATURE_NAME_ATTRIBUTE, value => FeatureName},
-     #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
-     #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => VariationId},
-     #{key => ?VARIATION_VALUE_ATTRIBUTE, value => VariationValue},
-     #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
-     #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
-     #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
-    ],
-
-    #{
-      timestamp => TimeStamp,
-      count => Count,
-      %% Camel case to honour the API.
-      metricsType => ?METRICS_TYPE,
-      attributes => MetricAttributes
-     }.
+  cache_metrics(FlagId, Target, VariationId, VariationValue),
+  cache_target(Target),
+  ok.
 
 
-create_metric_target_data([UniqueMetricsTargetKey | Tail], MetricsTargetCachePID, Acc) ->
-  Target = lru:get(MetricsTargetCachePID, UniqueMetricsTargetKey),
-      MetricTarget = create_metric_target(Target),
-      create_metric_target_data(Tail, MetricsTargetCachePID, [MetricTarget | Acc]);
-create_metric_target_data([], _, Acc) -> Acc.
-
-
--spec create_metric_target(cfclient:target()) -> map().
-create_metric_target(Target) ->
-    Attributes = target_attributes_to_metrics(Target),
-    #{identifier := Id} = Target,
-    Name = maps:get(name, Target, Id),
-    #{identifier => Id, name => Name, attributes => Attributes}.
-
--spec target_attributes_to_metrics(cfclient:target()) -> [map()].
-target_attributes_to_metrics(#{attributes := Values}) ->
-    maps:map(fun target_attribute_to_metric/2, Values).
-
--spec target_attribute_to_metric(binary(), term()) -> map().
-target_attribute_to_metric(K, V) ->
-    #{key => K, value => cfclient_evaluator:custom_attribute_to_binary(V)}.
-
-value_to_binary(Value) when is_binary(Value) ->
-  Value;
-value_to_binary(Value) when is_atom(Value) ->
-  atom_to_binary(Value);
-value_to_binary(Value) when is_list(Value) ->
-  list_to_binary(Value).
-
--spec set_to_metrics_cache(FlagIdentifier :: binary(), Target :: cfclient:target(), VariationIdentifier :: binary(), VariationValue :: binary(), MetricsCachePID :: pid()) -> atom().
-set_to_metrics_cache(FlagIdentifier, Target, VariationIdentifier, VariationValue, MetricsCachePID) ->
-  % We want to capture the unique evaluations which are a combination of Flag
-  % and Variation (which includes the variation value and identifier).
+-spec cache_metrics(binary(), cfclient:target(), binary(), binary()) -> ok.
+cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
+  % Record unique evaluations, a combination of Flag, Variation identifier,
+  % and variation value.
   Evaluation =
     #{
       feature_name => FlagIdentifier,
       variation_identifier => VariationIdentifier,
       variation_value => VariationValue
     },
-  % In the cache, we map unique evaluations to two data points:
+  % In the cache, we store unique evaluations to two data points:
   % 1. A counter so we can count how many times it has occurred.
-  % 2. The target for the unique evaluation. At present, we use the so called
-  %    Global Target when posting metrics to FF-server, but lets cache the
-  %    actual target as in the future we want to enable real target posting for
-  %    when we need to debug.
-  case lru:contains_or_add(MetricsCachePID, Evaluation, {1, Target}) of
-    {true, _} ->
-      {Counter, CachedTarget} = lru:get(MetricsCachePID, Evaluation),
-      lru:add(MetricsCachePID, Evaluation, {Counter + 1, CachedTarget});
+  % 2. The target for the unique evaluation.
+  %    At present, we use the so called Global Target when posting metrics to
+  %    FF-server, but we cache the actual target as in the future we want to
+  %    enable real target posting for when we need to debug.
+  true = ets:insert(?METRICS_CACHE_TABLE, {Evaluation, Target}),
+  Counter = ets:update_counter(?METRICS_COUNTER_TABLE, Evaluation, 1),
+  ?LOG_DEBUG("Counter ~p = ~w", [Evaluation, Counter]),
+  ok.
 
-    {false, _} -> noop
+
+-spec cache_target(cfclient:target()) -> ok | noop.
+cache_target(#{anonymous := <<"true">>} = Target) ->
+  ?LOG_DEBUG("Not caching anonymous target ~p for metrics", [Target]),
+  noop;
+
+cache_target(Target) ->
+  #{identifier := Identifier} = Target,
+  true = ets:insert(?METRICS_TARGET_TABLE, {Identifier, Target}),
+  ok.
+
+
+-spec collect_metrics_data(atom()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+collect_metrics_data(Table) ->
+  Timestamp = os:system_time(millisecond),
+  case list_table(Table) of
+    {ok, Pairs} ->
+      Metrics =
+        lists:map(
+          fun
+            ({Evaluation, Target}) ->
+              Count =
+                case get_metric(Evaluation) of
+                  {ok, Value} -> Value;
+                  {error, undefined} -> 1
+                end,
+              create_metric(Evaluation, Target, Count, Timestamp)
+          end,
+          Pairs
+        ),
+      {ok, Metrics};
+
+    {error, Reason} -> {error, Reason}
   end.
 
--spec set_to_metric_target_cache(Target :: cfclient:target(), MetricsTargetCachePID :: pid()) -> atom().
-set_to_metric_target_cache(Target, MetricsTargetCachePID) ->
-  %% Only store target if it's not anonymous.
-  case value_to_binary(maps:get(anonymous, Target, <<"false">>)) of
-    <<"false">> ->
-      Identifier = maps:get(identifier, Target),
-      %% We only want to store unique Targets. Targets are considered unique if they have different identifiers.
-      %% We achieve this by mapping the identifier to the target it belongs to and checking if it exists before putting it in the cache.
-      case lru:contains(MetricsTargetCachePID, Identifier) of
-        true ->
-          noop;
-        false ->
-          %% Key is identifier and value is the target itself
-          lru:add(MetricsTargetCachePID, Identifier, Target)
-      end;
-    <<"true">> ->
-      ?LOG_DEBUG("Not registering Target ~p~n for metrics because it is anonymous", [Target]),
-      noop
+
+% TODO: We pass in the target here, but so far only using the Global
+% target per ff-server requirements. We will, however, want to add an option to
+% the config to disable that global config and use the actual target.
+% So for the moment the UniqueEvaluationTarget is unreferenced.
+create_metric(UniqueEvaluation, _UniqueEvaluationTarget, Count, TimeStamp) ->
+  #{
+    feature_name := FeatureName,
+    variation_value := VariationValue,
+    variation_identifier := VariationId
+  } = UniqueEvaluation,
+  MetricAttributes =
+    [
+      #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => FeatureName},
+      #{key => ?FEATURE_NAME_ATTRIBUTE, value => FeatureName},
+      #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
+      #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => VariationId},
+      #{key => ?VARIATION_VALUE_ATTRIBUTE, value => VariationValue},
+      #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
+      #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
+      #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
+    ],
+  #{
+    timestamp => TimeStamp,
+    count => Count,
+    %% Camel case to honour the API.
+    metricsType => ?METRICS_TYPE,
+    attributes => MetricAttributes
+  }.
+
+
+-spec collect_metrics_target_data(atom()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+collect_metrics_target_data(Table) ->
+  case list_table(Table) of
+    {ok, Pairs} ->
+      Metrics = lists:map(fun ({_Id, Target}) -> create_metric_target(Target) end, Pairs),
+      {ok, Metrics};
+
+    {error, Reason} -> {error, Reason}
   end.
 
 
--spec set_metrics_cache_pid(MetricsCachePID :: pid()) -> ok.
-set_metrics_cache_pid(MetricsCachePID) ->
-  application:set_env(cfclient, metrics_cache_pid, MetricsCachePID).
+-spec create_metric_target(cfclient:target()) -> map().
+create_metric_target(Target) ->
+  Attributes = target_attributes_to_metrics(Target),
+  #{identifier := Id} = Target,
+  Name = maps:get(name, Target, Id),
+  #{identifier => Id, name => Name, attributes => Attributes}.
 
--spec set_metrics_target_cache_pid(MetricsTargetCachePID :: pid()) -> ok.
-set_metrics_target_cache_pid(MetricsTargetCachePID) ->
-  application:set_env(cfclient, metrics_target_cache_pid, MetricsTargetCachePID).
 
+-spec target_attributes_to_metrics(cfclient:target()) -> map().
+target_attributes_to_metrics(#{attributes := Values}) ->
+  maps:map(fun target_attribute_to_metric/2, Values).
 
--spec get_metrics_cache_pid() -> pid().
-get_metrics_cache_pid() ->
-  {ok, MetricsCachePID} = application:get_env(cfclient, metrics_cache_pid),
-  MetricsCachePID.
+-spec target_attribute_to_metric(binary(), term()) -> map().
+target_attribute_to_metric(K, V) ->
+  #{key => K, value => cfclient_evaluator:custom_attribute_to_binary(V)}.
 
--spec get_metric_target_cache_pid() -> pid().
-get_metric_target_cache_pid() ->
-  {ok, MetricsTargetCachePID} = application:get_env(cfclient, metrics_target_cache_pid),
-  MetricsTargetCachePID.
+-spec get_metric(term()) -> {ok, cfclient:target()} | {error, undefined}.
+get_metric(Key) ->
+  case ets:lookup(?METRICS_CACHE_TABLE, Key) of
+    [] -> {error, undefined};
+    [Value] -> {ok, Value}
+  end.
 
--spec reset_metrics_cache(MetricsCachePID :: pid()) -> pid().
-reset_metrics_cache(MetricsCachePID) ->
-  lru:purge(MetricsCachePID).
+% -spec get_target(binary()) -> {ok, cfclient:target()} | {error, undefined}.
+% get_target(Key) ->
+%   case ets:lookup(?METRICS_TARGET_TABLE, Key) of
+%     [] -> {error, undefined};
+%     [Value] -> {ok, Value}
+%   end.
+% -spec get_counter(term()) -> {ok, integer()} | {error, undefined}.
+% get_counter(Key) ->
+%   case ets:lookup(?METRICS_COUNTER_TABLE, Key) of
+%     [] -> {error, undefined};
+%     [Value] -> {ok, Value}
+%   end.
 
-reset_metric_target_cache(MetricsTargetCachePID) ->
-  lru:purge(MetricsTargetCachePID).
+% @doc Get contents of ETS table
+-spec list_table(ets:table()) -> {ok, list()} | {error, Reason :: term()}.
+list_table(TableName) -> try {ok, ets:tab2list(TableName)} catch error : R -> {error, R} end.
