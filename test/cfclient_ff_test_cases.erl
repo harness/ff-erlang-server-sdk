@@ -88,16 +88,15 @@ evaluate_tests([], _, _, Accu) -> Accu.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
   [
-    cfclient_cache:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID)
-    || Flag <- Flags
+   cfclient_cache:set_value({flag, maps:get(feature, Flag)}, Flag)
+   || Flag <- Flags
   ],
   [
-    cfclient_cache:set_to_cache(
-      {segment, maps:get(identifier, Segment)},
-      Segment,
-      CachePID
+   cfclient_cache:set_value(
+     {segment, maps:get(identifier, Segment)},
+     Segment
     )
-    || Segment <- Groups
+   || Segment <- Groups
   ].
 
 
