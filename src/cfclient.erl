@@ -148,7 +148,7 @@ enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
         "Analytics enabled: flag ~p, target ~p, variation ~p",
         [FlagIdentifier, Target, VariationValue]
       ),
-      cfclient_metrics_server:enqueue_metrics(
+      cfclient_metrics:enqueue_metrics(
         FlagIdentifier,
         Target,
         VariationIdentifier,

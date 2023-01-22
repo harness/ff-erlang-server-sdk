@@ -66,7 +66,7 @@ init(Args) ->
 handle_info(metrics, Config) ->
   ?LOG_INFO("Metrics triggered"),
   #{analytics_push_interval := AnalyticsPushInterval} = Config,
-  cfclient_metrics_server:process_metrics(Config),
+  cfclient_metrics:process_metrics(Config),
   erlang:send_after(AnalyticsPushInterval, self(), metrics),
   {noreply, Config};
 

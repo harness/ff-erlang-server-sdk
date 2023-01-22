@@ -98,7 +98,7 @@ create_metric_data_test() ->
     ],
   ?assertEqual(
     ExpectedMetrics,
-    cfclient_metrics_server:create_metrics_data(
+    cfclient_metrics:create_metrics_data(
       [UniqueEvaluation1, UniqueEvaluation2],
       CachePID,
       Timestamp,
@@ -106,7 +106,7 @@ create_metric_data_test() ->
     )
   ),
   %%-------------------- No Unique Evaluations --------------------
-  ?assertEqual([], cfclient_metrics_server:create_metrics_data([], CachePID, Timestamp, [])),
+  ?assertEqual([], cfclient_metrics:create_metrics_data([], CachePID, Timestamp, [])),
   lru:stop(CachePID).
 
 
@@ -163,11 +163,11 @@ create_metric_target_data_test() ->
   ?assertEqual(
     ExpectedMetricTargetData,
     sort_metric_target_list(
-      cfclient_metrics_server:create_metric_target_data(UnusedKeys, UnusedCachePID, [])
+      cfclient_metrics:create_metric_target_data(UnusedKeys, UnusedCachePID, [])
     )
   ),
   %%-------------------- No Targets --------------------
-  ?assertEqual([], cfclient_metrics_server:create_metric_target_data([], UnusedCachePID, [])).
+  ?assertEqual([], cfclient_metrics:create_metric_target_data([], UnusedCachePID, [])).
 
 %% helper function that allows us to compare list equality for metric target data
 
@@ -193,7 +193,7 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     SingleBinaryExpectedTarget,
-    cfclient_metrics_server:create_metric_target(SingleBinaryTarget)
+    cfclient_metrics:create_metric_target(SingleBinaryTarget)
   ),
   %% Multiple binary attributes
   MultipleBinaryTarget =
@@ -212,7 +212,7 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     MultipleBinaryExpectedTarget,
-    cfclient_metrics_server:create_metric_target(MultipleBinaryTarget)
+    cfclient_metrics:create_metric_target(MultipleBinaryTarget)
   ),
   %%-------------------- Target with atom attributes --------------------
   %% Single atom attribute
@@ -231,7 +231,7 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     SingleAtomAttributeExpectedTarget,
-    cfclient_metrics_server:create_metric_target(SingleAtomAttributeTarget)
+    cfclient_metrics:create_metric_target(SingleAtomAttributeTarget)
   ),
   %% Multiple atom attributes
   MultipleAtomAttributeTarget =
@@ -250,7 +250,7 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     MultipleAtomAttributeExpectedTarget,
-    cfclient_metrics_server:create_metric_target(MultipleAtomAttributeTarget)
+    cfclient_metrics:create_metric_target(MultipleAtomAttributeTarget)
   ).
 
 %% Used for metric data - we just get more value spinning up a real cache vs mocking calls.

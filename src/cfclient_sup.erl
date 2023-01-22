@@ -38,16 +38,16 @@ init(Args) ->
 analytics_children(#{analytics_enabled := true}) ->
   [
     #{
-      id => cfclient_metrics_server_lru,
+      id => cfclient_metrics_lru,
       start => {lru, start_link, [[{max_size, 32000000}]]},
       modules => [lru]
     },
     #{
-      id => cfclient_metrics_server_target_lru,
+      id => cfclient_metrics_target_lru,
       start => {lru, start_link, [[{max_size, 32000000}]]},
       modules => [lru]
     }
-    #{id => cfclient_metrics_server, start => {cfclient_metrics_server, start_link, []}}
+    #{id => cfclient_metrics, start => {cfclient_metrics, start_link, []}}
   ];
 
 analytics_children(_) -> [].
