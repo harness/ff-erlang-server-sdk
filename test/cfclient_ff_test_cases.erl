@@ -12,7 +12,8 @@
 
 -define(TESTS_PATH, "test/ff-test-cases/tests").
 
-%% The original ff-test-cases are flaky (causing errors and forcing the SDK to return the default value), so only use new TestGrid test cases.
+%% The original ff-test-cases are flaky (causing errors and forcing the SDK to
+%% return the default value), so only use new TestGrid test cases.
 
 -define(
   NON_TEST_GRID_TESTS,
