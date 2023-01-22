@@ -84,7 +84,7 @@ variations_test() ->
       attributes => <<"">>
     },
   meck:new(cfclient_ets),
-  % meck:expect(cfclient_cache_repository, get_pid, fun () -> self() end),
+  % meck:expect(cfclient_cache, get_pid, fun () -> self() end),
   %%-------------------- Bool Variation --------------------
   %%%%%%%% Flag is off %%%%%%%%
   meck:expect(
@@ -679,7 +679,7 @@ is_rule_included_or_excluded_test() ->
       attributes => #{beta => <<"target_5000">>}
     },
   %% Cache data for mocked cache call
-  cfclient_cache_repository:set_pid(self()),
+  cfclient_cache:set_pid(self()),
   CachedGroup =
     #{
       environment => <<"dev">>,
@@ -1251,7 +1251,7 @@ custom_attribute_to_binary_test() ->
 
 percentage_rollout_test() ->
   %%-------------------- 50/50 ------------------------------------------------------------
-  cfclient_cache_repository:set_pid(self()),
+  cfclient_cache:set_pid(self()),
   meck:expect(
     cfclient_ets,
     get,
@@ -1266,7 +1266,7 @@ percentage_rollout_test() ->
   %% For low target counts, in this case 20, a split like this is expected.
   ?assertEqual({12, 8}, do_variation_20_times({0, 0}, 0)),
   %%-------------------- 100/0 ------------------------------------------------------------
-  cfclient_cache_repository:set_pid(self()),
+  cfclient_cache:set_pid(self()),
   meck:expect(
     cfclient_ets,
     get,
@@ -1280,7 +1280,7 @@ percentage_rollout_test() ->
   ),
   ?assertEqual({20, 0}, do_variation_20_times({0, 0}, 0)),
   %%-------------------- 0/100 ------------------------------------------------------------
-  cfclient_cache_repository:set_pid(self()),
+  cfclient_cache:set_pid(self()),
   meck:expect(
     cfclient_ets,
     get,
@@ -1338,7 +1338,7 @@ search_prerequisites_test() ->
   PrerequisiteMatchesFlag2 = cfclient_evaluator_test_data:prerequisite_matches_flag_2(),
   PrerequisiteMatchesFlag3 = cfclient_evaluator_test_data:prerequisite_matches_flag_3(),
   %% Mock calls to the cache to return the above three Prerequisite flags
-  cfclient_cache_repository:set_pid(self()),
+  cfclient_cache:set_pid(self()),
   meck:sequence(
     cfclient_ets,
     get,

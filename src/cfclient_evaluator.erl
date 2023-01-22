@@ -37,7 +37,7 @@
 -spec evaluate(binary(), cfclient:target()) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, unknown_flag}.
 evaluate(FlagIdentifier, Target) ->
-  case cfclient_cache_repository:get_value({flag, FlagIdentifier}) of
+  case cfclient_cache:get_value({flag, FlagIdentifier}) of
     {error, undefined} ->
       ?LOG_ERROR("Flag not found in cache: ~p", [FlagIdentifier]),
       {error, unknown_flag};
@@ -246,7 +246,7 @@ is_rule_included_or_excluded([], _) -> false;
 is_rule_included_or_excluded([#{op := ?SEGMENT_MATCH_OPERATOR} = Head | _Tail], Target) ->
   % At present there is only ever one element in values, so get the first one.
   #{values := [GroupName | _Rest]} = Head,
-  {ok, Group} = cfclient_cache_repository:get_value({segment, GroupName}),
+  {ok, Group} = cfclient_cache:get_value({segment, GroupName}),
   search_group(excluded, Target, Group);
 
 is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excluded(Tail, Target).
@@ -416,19 +416,19 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
 search_prerequisites([Head | Tail], Target) ->
   Identifier = maps:get(feature, Head),
   % Get prerequisite from cache
-  case cfclient_cache_repository:get_value({flag, Identifier}) of
-    {error, undefined} ->
-      ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
-      false;
+case cfclient_cache:get_value({flag, Identifier}) of
+{error, undefined} ->
+  ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
+  false;
 
-    {ok, PrerequisiteFlag} ->
-      case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
-        %% A prerequisite has been met, so continue to check any others
-        true -> search_prerequisites(Tail, Target);
-        % Prerequisites are not met
-        false -> false
-      end
-  end;
+{ok, PrerequisiteFlag} ->
+  case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
+    %% A prerequisite has been met, so continue to check any others
+    true -> search_prerequisites(Tail, Target);
+    % Prerequisites are not met
+    false -> false
+  end
+end;
 
 % This function is only called with a non-empty list, so we can safely return
 % true as it means all previous prerequisites have been true.
@@ -437,12 +437,12 @@ search_prerequisites([], _) -> true.
 
 -spec check_prerequisite(feature(), binary(), feature(), target()) -> boolean().
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
-  case evaluate_flag(PrerequisiteFlag, Target, off) of
-    {ok, VariationIdentifier, _} ->
-      ?LOG_DEBUG(
-        "Prerequisite flag ~p has variation ~p, target ~p",
-        [PrerequisiteFlagIdentifier, VariationIdentifier, Target]
-      ),
+case evaluate_flag(PrerequisiteFlag, Target, off) of
+{ok, VariationIdentifier, _} ->
+  ?LOG_DEBUG(
+    "Prerequisite flag ~p has variation ~p, target ~p",
+    [PrerequisiteFlagIdentifier, VariationIdentifier, Target]
+  ),
       PrerequisiteVariations = maps:get(variations, Prerequisite),
       ?LOG_DEBUG(
         "Prerequisite flag ~p should have variations ~p",

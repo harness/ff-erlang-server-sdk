@@ -40,7 +40,7 @@ evaluate_test_files([Head | Tail], Accu) ->
   TestAsMap = test_file_json_to_map(Head),
   %% Create new LRU cache and load Flags and Groups into it
   {ok, CachePID} = start_lru_cache(),
-  cfclient_cache_repository:set_pid(CachePID),
+  cfclient_cache:set_pid(CachePID),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
   Result = evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID, Accu),
   lru:stop(CachePID),
@@ -69,7 +69,7 @@ evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
       %% If no Target for test case then just return an empty map
       false -> #{}
     end,
-  Flag = cfclient_cache_repository:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
+  Flag = cfclient_cache:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
   Kind = maps:get(kind, Flag),
   FlagIdentifier = maps:get(flag, Head),
   Result =
@@ -87,11 +87,11 @@ evaluate_tests([], _, _, Accu) -> Accu.
 
 cache_flags_and_groups(CachePID, Flags, Groups) ->
   [
-    cfclient_cache_repository:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID)
+    cfclient_cache:set_to_cache({flag, maps:get(feature, Flag)}, Flag, CachePID)
     || Flag <- Flags
   ],
   [
-    cfclient_cache_repository:set_to_cache(
+    cfclient_cache:set_to_cache(
       {segment, maps:get(identifier, Segment)},
       Segment,
       CachePID

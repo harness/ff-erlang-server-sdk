@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
 %%% @doc
-%%% LRU Repository for Flag and Segment configuration
+%%% Functions to manage Flag and Segment cache.
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(cfclient_cache_repository).
+-module(cfclient_cache).
 
 -include_lib("kernel/include/logger.hrl").
 
