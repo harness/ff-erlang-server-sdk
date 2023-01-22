@@ -10,14 +10,7 @@
 
 -include("cfclient_config.hrl").
 
--export(
-  [
-    bool_variation/3,
-    string_variation/3,
-    number_variation/3,
-    json_variation/3
-  ]
-).
+-export([bool_variation/3, string_variation/3, number_variation/3, json_variation/3]).
 
 -type target() :: #{
                   identifier := binary(),

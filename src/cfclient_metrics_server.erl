@@ -16,9 +16,7 @@ process_metrics(Config) ->
     metrics_cache_table := MetricsCacheTable,
     metrics_target_table := MetricsTargetTable,
     metrics_counter_table := MetricsCounterTable
-   } = Config,
-
-
+  } = Config,
   {ok, MetricsData} = collect_metrics_data(MetricsCacheTable),
   {ok, MetricsTargetData} = collect_metrics_target_data(MetricsTargetTable),
   case post_metrics(Config, MetricsData, MetricsTargetData) of
@@ -46,13 +44,12 @@ post_metrics(_Config, [], []) -> noop;
 
 post_metrics(Config, MetricsData, MetricsTargetData) ->
   #{auth_token := AuthToken, project := Project, events_url := EventsUrl} = Config,
-  #{environment := Environment, 'clusterIdentifier' := ClusterID} = Project,
+  #{environment := Environment, clusterIdentifier := ClusterID} = Project,
   Opts =
     #{
       cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => EventsUrl},
       params => #{metricsData => MetricsData, targetData => MetricsTargetData}
     },
-
   case cfapi_metrics_api:post_metrics(ctx:new(), ClusterID, Environment, Opts) of
     {ok, Response, _} -> {ok, Response};
     {error, Response, _} -> {error, Response}
@@ -187,6 +184,7 @@ get_metric(Key) ->
     [Value] -> {ok, Value}
   end.
 
+
 % -spec get_target(binary()) -> {ok, cfclient:target()} | {error, undefined}.
 % get_target(Key) ->
 %   case ets:lookup(?METRICS_TARGET_TABLE, Key) of
@@ -199,7 +197,6 @@ get_metric(Key) ->
 %     [] -> {error, undefined};
 %     [Value] -> {ok, Value}
 %   end.
-
 % @doc Get contents of ETS table
 -spec list_table(ets:table()) -> {ok, list()} | {error, Reason :: term()}.
 list_table(TableName) -> try {ok, ets:tab2list(TableName)} catch error : R -> {error, R} end.
