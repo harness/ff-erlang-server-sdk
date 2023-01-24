@@ -258,26 +258,22 @@ evaluate_target_group_rules(Rules, Target) ->
 
 -spec search_rules_for_inclusion([rule()], target()) -> binary() | excluded | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
-  case is_rule_included_or_excluded(maps:get(clauses, Head), Target) of
+  #{clauses := Clauses, serve := Serve} = Head,
+  case is_rule_included_or_excluded(Clauses, Target) of
     excluded -> excluded;
 
     included ->
       %% Check if percentage rollout applies to this rule
-      case maps:get(distribution, maps:get(serve, Head), false) of
+      case maps:get(distribution, Serve, false) of
         %% If not then return the rule's variation
-        false -> maps:get(variation, maps:get(serve, Head));
+        false -> maps:get(variation, Serve);
         %% Apply the percentage rollout calculation for the rule
         Distribution when Distribution /= null ->
-          BucketBy = maps:get(bucketBy, Distribution),
+          #{bucketBy := BucketBy, variations := Variations} = Distribution,
           #{identifier := Identifier, name := Name} = Target,
           Attributes = maps:get(attributes, Target, #{}),
           TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Identifier, Name),
-          apply_percentage_rollout(
-            maps:get(variations, Distribution),
-            BucketBy,
-            TargetAttributeValue,
-            0
-          )
+          apply_percentage_rollout(Variations, BucketBy, TargetAttributeValue, 0)
       end;
 
     _ -> search_rules_for_inclusion(Tail, Target)
