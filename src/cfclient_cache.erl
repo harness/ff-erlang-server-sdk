@@ -10,7 +10,7 @@
 
 -include("cfclient_config.hrl").
 
--export([get_value/1, set_value/2, cache_flag/1, cache_segment/1]).
+-export([get_value/1, set_value/2, cache_flag/1, cache_segment/1, set_pid/1]).
 
 -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type segment() :: cfapi_segment:cfapi_segment().
