@@ -282,7 +282,7 @@ search_rules_for_inclusion([Head | Tail], Target) ->
 search_rules_for_inclusion([], _) -> not_found.
 
 
--spec is_rule_included_or_excluded([map()], cfclient:target()) -> included | excluded | false.
+-spec is_rule_included_or_excluded([map()], target()) -> included | excluded | false.
 is_rule_included_or_excluded([], _) -> false;
 
 is_rule_included_or_excluded([#{op := ?SEGMENT_MATCH_OPERATOR} = Head | _Tail], Target) ->
@@ -295,7 +295,7 @@ is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excl
 
 
 % Parses Group Rules for the different rule types.
--spec search_group(RuleType :: excluded | included | custom_rules, cfclient:target(), map()) ->
+-spec search_group(RuleType :: excluded | included | custom_rules, target(), map()) ->
   included | excluded | false.
 search_group(excluded, Target, #{excluded := []} = Group) -> search_group(included, Target, Group);
 
@@ -323,7 +323,7 @@ search_group(custom_rules, Target, #{rules := Values}) ->
   end.
 
 
--spec search_group_custom_rules(CustomRules :: [map()], cfclient:target()) -> boolean().
+-spec search_group_custom_rules(CustomRules :: [map()], target()) -> boolean().
 search_group_custom_rules([Head | Tail], Target) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Head,
   #{identifier := TargetIdentifier, name := TargetName} = Target,
