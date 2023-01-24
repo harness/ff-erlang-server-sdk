@@ -10,10 +10,10 @@
 
 -export(
   [
-    bool_variation/2,
-    string_variation/2,
-    number_variation/2,
-    json_variation/2,
+    bool_variation/3,
+    string_variation/3,
+    number_variation/3,
+    json_variation/3,
     custom_attribute_to_binary/1
   ]
 ).
@@ -31,13 +31,14 @@
 -type feature() :: cfclient:feature().
 -type segment() :: cfclient:segment().
 -type variation_map() :: cfapi_variation_map:cfapi_variation_map().
+-type config() :: map().
 
 -include("cfclient_evaluator_operators.hrl").
 
 -spec evaluate(binary(), cfclient:target()) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, unknown_flag}.
-evaluate(FlagIdentifier, Target) ->
-  case cfclient_cache:get_value({flag, FlagIdentifier}) of
+evaluate(FlagIdentifier, Target, Config) ->
+  case cfclient_cache:get_value({flag, FlagIdentifier}, Config) of
     {error, undefined} ->
       ?LOG_ERROR("Flag not found in cache: ~p", [FlagIdentifier]),
       {error, unknown_flag};
