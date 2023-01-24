@@ -1625,83 +1625,112 @@ is_custom_rule_match_test() ->
 
 
 custom_attribute_to_binary_test_() ->
-    [
-     {"Binary", ?_assertEqual(<<"Sample">>, cfclient_evaluator:custom_attribute_to_binary(<<"Sample">>))},
-     {"Atom", ?_assertEqual(<<"sample">>, cfclient_evaluator:custom_attribute_to_binary(sample))},
-     {"Integer", ?_assertEqual(<<"2">>, cfclient_evaluator:custom_attribute_to_binary(2))},
-     {"Float", ?_assertEqual(<<"2.2">>, cfclient_evaluator:custom_attribute_to_binary(2.2))},
-     {"List of binaries", 
-      ?_assertEqual([<<"Sample 1">>, <<"Sample2">>], cfclient_evaluator:custom_attribute_to_binary([<<"Sample 1">>, <<"Sample2">>]))},
-     {"List of atoms", ?_assertEqual([<<"sample2">>, <<"sample3">>], cfclient_evaluator:custom_attribute_to_binary([sample2, sample3]))},
-     {"Mixed list", ?_assertEqual([<<"sample2">>, <<"3">>], cfclient_evaluator:custom_attribute_to_binary([sample2, <<"3">>]))},
-     {"Unsupported Inputs",
+  [
+    {
+      "Binary",
+      ?_assertEqual(<<"Sample">>, cfclient_evaluator:custom_attribute_to_binary(<<"Sample">>))
+    },
+    {"Atom", ?_assertEqual(<<"sample">>, cfclient_evaluator:custom_attribute_to_binary(sample))},
+    {"Integer", ?_assertEqual(<<"2">>, cfclient_evaluator:custom_attribute_to_binary(2))},
+    {"Float", ?_assertEqual(<<"2.2">>, cfclient_evaluator:custom_attribute_to_binary(2.2))},
+    {
+      "List of binaries",
+      ?_assertEqual(
+        [<<"Sample 1">>, <<"Sample2">>],
+        cfclient_evaluator:custom_attribute_to_binary([<<"Sample 1">>, <<"Sample2">>])
+      )
+    },
+    {
+      "List of atoms",
+      ?_assertEqual(
+        [<<"sample2">>, <<"sample3">>],
+        cfclient_evaluator:custom_attribute_to_binary([sample2, sample3])
+      )
+    },
+    {
+      "Mixed list",
+      ?_assertEqual(
+        [<<"sample2">>, <<"3">>],
+        cfclient_evaluator:custom_attribute_to_binary([sample2, <<"3">>])
+      )
+    },
+    {
+      "Unsupported Inputs",
       [
-       {"String", ?_assertEqual(not_ok, cfclient_evaluator:custom_attribute_to_binary("Sample"))},
-       {"List of Strings", ?_assertEqual([not_ok, not_ok], cfclient_evaluator:custom_attribute_to_binary(["Sample 1", "Sample2"]))}
+        {"String", ?_assertEqual(not_ok, cfclient_evaluator:custom_attribute_to_binary("Sample"))},
+        {
+          "List of Strings",
+          ?_assertEqual(
+            [not_ok, not_ok],
+            cfclient_evaluator:custom_attribute_to_binary(["Sample 1", "Sample2"])
+          )
+        }
       ]
-     }
-    ].
-
+    }
+  ].
 
 percentage_rollout() ->
   {
     "Percentage Rollout",
     [
-        { "50/50",
-          setup,
-          fun
-            () ->
-              meck:expect(
-                cfclient_ets,
-                get,
-                fun
-                  (_, <<"segments/target_group_1">>) ->
-                    cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+      {
+        "50/50",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
-                  (_, <<"flags/My_boolean_flag">>) ->
-                    cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
-                end
-              )
-          end,
-          %% For low target counts, in this case 20, a split like this is expected.
-          ?_assertEqual({12, 8}, do_variation_20_times({0, 0}, 0))
+                (_, <<"flags/My_boolean_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
+              end
+            )
+        end,
+        %% For low target counts, in this case 20, a split like this is expected.
+        ?_assertEqual({12, 8}, do_variation_20_times({0, 0}, 0))
       },
-        { "100/0",
-          setup,
-          fun
-            () ->
-              meck:expect(
-                cfclient_ets,
-                get,
-                fun
-                  (_, <<"segments/target_group_1">>) ->
-                    cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+      {
+        "100/0",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
-                  (_, <<"flags/My_boolean_flag">>) ->
-                    cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
-                end
-              )
-          end,
-          ?_assertEqual({20, 0}, do_variation_20_times({0, 0}, 0))
+                (_, <<"flags/My_boolean_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
+              end
+            )
+        end,
+        ?_assertEqual({20, 0}, do_variation_20_times({0, 0}, 0))
       },
-        { "0/100",
-          setup,
-          fun
-            () ->
-              meck:expect(
-                cfclient_ets,
-                get,
-                fun
-                  (_, <<"segments/target_group_1">>) ->
-                    cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+      {
+        "0/100",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
-                  (_, <<"flags/My_boolean_flag">>) ->
-                    cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
-                end
-              )
-          end,
-          ?_assertEqual({0, 20}, do_variation_20_times({0, 0}, 0))
-        }
+                (_, <<"flags/My_boolean_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
+              end
+            )
+        end,
+        ?_assertEqual({0, 20}, do_variation_20_times({0, 0}, 0))
+      }
     ]
   }.
 

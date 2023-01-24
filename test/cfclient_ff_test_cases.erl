@@ -1,7 +1,6 @@
 % @doc
 % Runs the JSON tests in the git submodule ff-test-cases
 % @end
-
 -module(cfclient_ff_test_cases).
 
 -author("erowlands").
@@ -12,7 +11,6 @@
 
 % The original ff-test-cases are flaky (causing errors and forcing the SDK to
 % return the default value), so only use new TestGrid test cases.
-
 -define(
   NON_TEST_GRID_TESTS,
   [
