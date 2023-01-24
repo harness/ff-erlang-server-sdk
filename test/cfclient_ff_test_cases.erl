@@ -1,8 +1,6 @@
-%%%-------------------------------------------------------------------
-%%% @doc
-%%% %% Runs the JSON tests in the git submodule ff-test-cases
-%%% @end
-%%%-------------------------------------------------------------------
+% @doc
+% Runs the JSON tests in the git submodule ff-test-cases
+% @end
 
 -module(cfclient_ff_test_cases).
 
@@ -12,8 +10,8 @@
 
 -define(TESTS_PATH, "test/ff-test-cases/tests").
 
-%% The original ff-test-cases are flaky (causing errors and forcing the SDK to
-%% return the default value), so only use new TestGrid test cases.
+% The original ff-test-cases are flaky (causing errors and forcing the SDK to
+% return the default value), so only use new TestGrid test cases.
 
 -define(
   NON_TEST_GRID_TESTS,
@@ -31,17 +29,17 @@
 
 evaluations_test_() ->
   {ok, TestFiles} = load_test_files(?TESTS_PATH),
-  %% Disable analytics as we call the public variation functions.
+  % Disable analytics as we call the public variation functions.
   cfclient_config:init("fake_key", #{analytics_enabled => false}),
   evaluate_test_files(TestFiles, []).
 
 
 evaluate_test_files([Head | Tail], Accu) ->
-  %% Parse each file into a map - e.g. we can get The Flags, Targets, Tests
+  % Parse each file into a map - e.g. we can get The Flags, Targets, Tests
   TestAsMap = test_file_json_to_map(Head),
-  %% Create new LRU cache and load Flags and Groups into it
+  % Create new LRU cache and load Flags and Groups into it
   {ok, CachePID} = start_lru_cache(),
-  cfclient_cache:set_pid(CachePID),
+  % cfclient_cache:set_pid(CachePID),
   cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
   Result = evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID, Accu),
   lru:stop(CachePID),
@@ -51,7 +49,7 @@ evaluate_test_files([], Accu) -> Accu.
 
 
 evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
-  %% Get correct Target for test case
+  % Get correct Target for test case
   Target =
     case maps:is_key(target, Head) of
       true ->
@@ -67,7 +65,7 @@ evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
           end,
         GetTarget(Targets);
 
-      %% If no Target for test case then just return an empty map
+      % If no Target for test case then just return an empty map
       false -> #{}
     end,
   Flag = cfclient_cache:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
@@ -99,7 +97,7 @@ start_lru_cache() ->
 
 test_file_json_to_map(Json) ->
   {ok, Data} = file:read_file(Json),
-  %% Same shape as Client API
+  % Same shape as Client API
   jsx:decode(Data, [return_maps, {labels, atom}]).
 
 
