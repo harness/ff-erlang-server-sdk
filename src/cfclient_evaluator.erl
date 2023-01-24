@@ -458,19 +458,19 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
 search_prerequisites([Head | Tail], Target) ->
   Identifier = maps:get(feature, Head),
   % Get prerequisite from cache
-case cfclient_cache:get_value({flag, Identifier}) of
-{error, undefined} ->
-  ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
-  false;
+  case cfclient_cache:get_value({flag, Identifier}) of
+    {error, undefined} ->
+      ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
+      false;
 
-{ok, PrerequisiteFlag} ->
-  case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
-    %% A prerequisite has been met, so continue to check any others
-    true -> search_prerequisites(Tail, Target);
-    % Prerequisites are not met
-    false -> false
-  end
-end;
+    {ok, PrerequisiteFlag} ->
+      case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
+        %% A prerequisite has been met, so continue to check any others
+        true -> search_prerequisites(Tail, Target);
+        % Prerequisites are not met
+        false -> false
+      end
+  end;
 
 % This function is only called with a non-empty list, so we can safely return
 % true as it means all previous prerequisites have been true.
