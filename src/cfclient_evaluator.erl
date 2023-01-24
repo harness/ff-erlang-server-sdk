@@ -479,12 +479,12 @@ search_prerequisites([], _) -> true.
 
 -spec check_prerequisite(feature(), binary(), feature(), target()) -> boolean().
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
-case evaluate_flag(PrerequisiteFlag, Target, off) of
-{ok, VariationIdentifier, _} ->
-  ?LOG_DEBUG(
-    "Prerequisite flag ~p has variation ~p, target ~p",
-    [PrerequisiteFlagIdentifier, VariationIdentifier, Target]
-  ),
+  case evaluate_flag(PrerequisiteFlag, Target, off) of
+    {ok, VariationIdentifier, _} ->
+      ?LOG_DEBUG(
+        "Prerequisite flag ~p has variation ~p, target ~p",
+        [PrerequisiteFlagIdentifier, VariationIdentifier, Target]
+      ),
       PrerequisiteVariations = maps:get(variations, Prerequisite),
       ?LOG_DEBUG(
         "Prerequisite flag ~p should have variations ~p",
