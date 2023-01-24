@@ -27,38 +27,21 @@ init(Args) ->
   ApiKey0 = proplists:get_value(api_key, Args),
   ApiKey = to_binary(ApiKey0),
   Config0 = proplists:get_value(config, Args, []),
-  Config = cfclient_config:normalize(Config0),
-  Name = maps:get(name, Config, default),
-  ConfigUrl = maps:get(config_url, Config),
-  PollInterval = maps:get(poll_interval, Config),
-  AnalyticsPushInterval = maps:get(analytics_push_interval, Config),
-  AnalyticsEnabled = maps:get(analytics_enabled, Config),
-  erlang:send_after(PollInterval, self(), poll),
-  case AnalyticsEnabled of
-    true -> erlang:send_after(AnalyticsPushInterval, self(), metrics);
-    false -> ok
-  end,
-  ConfigTable = maps:get(config_table, Config),
-  ConfigTable = ets:new(ConfigTable, [named_table, set, public, {read_concurrency, true}]),
-  CacheTable = maps:get(cache_table, Config),
-  CacheTable = ets:new(CacheTable, [named_table, set, public, {read_concurrency, true}]),
-  MetricsTargetTable = maps:get(metrics_target_table, Config),
-  MetricsTargetTable = ets:new(MetricsTargetTable, [named_table, set, public]),
-  MetricsCacheTable = maps:get(metrics_cache_table, Config),
-  MetricsCacheTable = ets:new(MetricsCacheTable, [named_table, set, public]),
-  MetricsCounterTable = maps:get(metrics_counter_table, Config),
-  MetricsCounterTable = ets:new(MetricsCounterTable, [named_table, set, public]),
-  Opts = #{cfg => #{host => ConfigUrl, params => #{apiKey => ApiKey}}},
-  case cfapi_client_api:authenticate(ctx:new(), Opts) of
-    {ok, #{authToken := AuthToken}, _} ->
-      {ok, Project} = cfclient_config:parse_jwt(AuthToken),
-      MergedConfig =
-        maps:merge(Config, #{api_key => ApiKey, auth_token => AuthToken, project => Project}),
-      true = ets:insert(ConfigTable, {Name, MergedConfig}),
-      {ok, MergedConfig};
+  Config1 = cfclient_config:normalize(Config0),
+  ok = cfclient_config:create_tables(Config1),
+  case cfclient_config:authenticate(ApiKey, Config1) of
+    {ok, Config} ->
+      PollInterval = maps:get(poll_interval, Config),
+      AnalyticsPushInterval = maps:get(analytics_push_interval, Config),
+      AnalyticsEnabled = maps:get(analytics_enabled, Config),
+      erlang:send_after(PollInterval, self(), poll),
+      case AnalyticsEnabled of
+        true -> erlang:send_after(AnalyticsPushInterval, self(), metrics);
+        false -> ok
+      end;
 
-    {error, Response, _} ->
-      ?LOG_ERROR("Authentication failed: ~p", [Response]),
+    {error, Reason} ->
+      ?LOG_ERROR("Authentication failed: ~p", [Reason]),
       {stop, authenticate}
   end.
 
