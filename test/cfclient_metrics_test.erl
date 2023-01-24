@@ -38,27 +38,27 @@ create_metric_data_test() ->
       anonymous => <<"false">>,
       attributes => #{location => <<"emea">>}
     },
-  UniqueEvaluationTarget2 =
-    #{
-      identifier => <<"target_2">>,
-      name => <<"target_name_1">>,
-      anonymous => <<"false">>,
-      attributes => #{location => <<"us">>}
-    },
+  % UniqueEvaluationTarget2 =
+  %   #{
+  %     identifier => <<"target_2">>,
+  %     name => <<"target_name_1">>,
+  %     anonymous => <<"false">>,
+  %     attributes => #{location => <<"us">>}
+  %   },
   lru:add(CachePID, UniqueEvaluation1, {1, UniqueEvaluationTarget1}),
   lru:add(CachePID, UniqueEvaluation2, {1, UniqueEvaluationTarget1}),
-  Evaluation1 =
-    #{
-      feature_name => <<"Flag1">>,
-      variation_identifier => <<"true">>,
-      variation_value => <<"true">>
-    },
-  Evaluation2 =
-    #{
-      feature_name => <<"Flag1">>,
-      variation_identifier => <<"false">>,
-      variation_value => <<"false">>
-    },
+  % Evaluation1 =
+  %   #{
+  %     feature_name => <<"Flag1">>,
+  %     variation_identifier => <<"true">>,
+  %     variation_value => <<"true">>
+  %   },
+  % Evaluation2 =
+  %   #{
+  %     feature_name => <<"Flag1">>,
+  %     variation_identifier => <<"false">>,
+  %     variation_value => <<"false">>
+  %   },
   MetricAttributes1 =
     [
       #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => <<"flag1">>},
