@@ -5,7 +5,7 @@
 -include("cfclient_config.hrl").
 -include("cfclient_metrics_attributes.hrl").
 
--export([process_metrics/1, enqueue_metrics/4]).
+-export([process_metrics/1, enqueue/5]).
 
 % @doc Gather metrics and send them to server.
 % Called periodically.
@@ -17,9 +17,9 @@ process_metrics(Config) ->
     metrics_target_table := MetricsTargetTable,
     metrics_counter_table := MetricsCounterTable
   } = Config,
-  {ok, MetricsData} = collect_metrics_data(MetricsCacheTable),
+  {ok, MetricsData} = collect_metrics_data(MetricsCacheTable, Config),
   {ok, MetricsTargetData} = collect_metrics_target_data(MetricsTargetTable),
-  case post_metrics(Config, MetricsData, MetricsTargetData) of
+  case post_metrics(MetricsData, MetricsTargetData, Config) of
     noop ->
       ?LOG_DEBUG("No metrics to post"),
       noop;
@@ -39,10 +39,10 @@ process_metrics(Config) ->
 
 
 % @doc Send metrics to the server via API
--spec post_metrics(map(), [map()], [map()]) -> {ok, term()} | {error, term()} | noop.
-post_metrics(_Config, [], []) -> noop;
+-spec post_metrics([map()], [map()], map()) -> {ok, term()} | {error, term()} | noop.
+post_metrics([], [], _Config) -> noop;
 
-post_metrics(Config, MetricsData, MetricsTargetData) ->
+post_metrics(MetricsData, MetricsTargetData, Config) ->
   #{auth_token := AuthToken, project := Project, events_url := EventsUrl} = Config,
   #{environment := Environment, clusterIdentifier := ClusterID} = Project,
   Opts =
@@ -63,8 +63,10 @@ enqueue_metrics(FlagId, Target, VariationId, VariationValue) ->
   ok.
 
 
--spec cache_metrics(binary(), cfclient:target(), binary(), binary()) -> ok.
-cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
+-spec cache_metrics(binary(), cfclient:target(), binary(), binary(), map()) -> ok.
+cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config) ->
+  #{metrics_cache_table := MetricsCacheTable, metrics_counter_table := MetricsCounterTable} =
+    Config,
   % Record unique evaluations, a combination of Flag, Variation identifier,
   % and variation value.
   Evaluation =
@@ -79,25 +81,26 @@ cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
   %    At present, we use the so called Global Target when posting metrics to
   %    FF-server, but we cache the actual target as in the future we want to
   %    enable real target posting for when we need to debug.
-  true = ets:insert(?METRICS_CACHE_TABLE, {Evaluation, Target}),
-  Counter = ets:update_counter(?METRICS_COUNTER_TABLE, Evaluation, 1),
+  true = ets:insert(MetricsCacheTable, {Evaluation, Target}),
+  Counter = ets:update_counter(MetricsCounterTable, Evaluation, 1),
   ?LOG_DEBUG("Counter ~p = ~w", [Evaluation, Counter]),
   ok.
 
 
--spec cache_target(cfclient:target()) -> ok | noop.
-cache_target(#{anonymous := <<"true">>} = Target) ->
+-spec cache_target(cfclient:target(), map()) -> ok | noop.
+cache_target(#{anonymous := <<"true">>} = Target, _Config) ->
   ?LOG_DEBUG("Not caching anonymous target ~p for metrics", [Target]),
   noop;
 
-cache_target(Target) ->
+cache_target(Target, Config) ->
   #{identifier := Identifier} = Target,
-  true = ets:insert(?METRICS_TARGET_TABLE, {Identifier, Target}),
+  #{metrics_target_table := MetricsTargetTable} = Config,
+  true = ets:insert(MetricsTargetTable, {Identifier, Target}),
   ok.
 
 
--spec collect_metrics_data(atom()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
-collect_metrics_data(Table) ->
+-spec collect_metrics_data(atom(), map()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+collect_metrics_data(Table, Config) ->
   Timestamp = os:system_time(millisecond),
   case list_table(Table) of
     {ok, Pairs} ->
@@ -106,7 +109,7 @@ collect_metrics_data(Table) ->
           fun
             ({Evaluation, Target}) ->
               Count =
-                case get_metric(Evaluation) of
+                case get_metric(Evaluation, Config) of
                   {ok, Value} -> Value;
                   {error, undefined} -> 1
                 end,
@@ -179,7 +182,13 @@ target_attribute_to_metric(K, V) ->
 
 -spec get_metric(term()) -> {ok, cfclient:target()} | {error, undefined}.
 get_metric(Key) ->
-  case ets:lookup(?METRICS_CACHE_TABLE, Key) of
+  Config = cfclient_config:get_config(),
+  get_metric(Key, Config).
+
+
+get_metric(Key, Config) ->
+  MetricsCacheTable = cfclient_config:get_value(metrics_cache_table, Config),
+  case ets:lookup(MetricsCacheTable, Key) of
     [] -> {error, undefined};
     [Value] -> {ok, Value}
   end.
