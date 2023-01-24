@@ -509,3 +509,7 @@ get_variation([_Head | Tail], Identifier) -> get_variation(Tail, Identifier).
 -spec identifier_matches(map(), [map()]) -> boolean().
 identifier_matches(#{identifier := Identifier}, Values) ->
   lists:any(fun (#{identifier := I}) -> Identifier == I end, Values).
+
+-spec to_number(binary()) -> float() | integer().
+to_number(Value) when is_binary(Value) ->
+  try binary_to_float(Value) catch error : badarg -> binary_to_integer(Value) end.
