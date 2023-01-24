@@ -1,4 +1,4 @@
--module(cfclient_evaluator_test).
+-module(cfclient_evaluator_tests).
 
 -include_lib("eunit/include/eunit.hrl").
 
