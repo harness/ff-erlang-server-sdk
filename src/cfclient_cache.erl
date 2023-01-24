@@ -19,8 +19,14 @@
 -spec get_value({flag, binary()} | {segment, binary()}) ->
   {ok, flag() | segment()} | {error, undefined}.
 get_value({Type, Identifier}) ->
+  Config = cfclient_config:get_config(),
+  get_value({Type, Identifier}, Config).
+
+
+get_value({Type, Identifier}, Config) ->
+  #{cache_table := CacheTable} = Config,
   Key = format_key({Type, Identifier}),
-  case cfclient_ets:get(?CACHE_TABLE, Key) of
+  case cfclient_ets:get(CacheTable, Key) of
     undefined -> {error, undefined};
     Value -> {ok, Value}
   end.
@@ -30,8 +36,16 @@ get_value({Type, Identifier}) ->
 -spec set_value({flag, binary()} | {segment, binary()}, flag() | segment()) ->
   ok | {error, outdated}.
 set_value({Type, Identifier}, Value) ->
+  Config = cfclient_config:get_config(),
+  set_value({Type, Identifier}, Value, Config).
+
+
+-spec set_value({flag, binary()} | {segment, binary()}, flag() | segment(), map()) ->
+  ok | {error, outdated}.
+set_value({Type, Identifier}, Value, Config) ->
+  #{cache_table := CacheTable} = Config,
   % TODO: set expiration
-  case is_outdated({Type, Identifier}, Value) of
+  case is_outdated({Type, Identifier}, Value, Config) of
     true ->
       % This should not happen
       ?LOG_ERROR("Outdated type ~p, identifier ~p", [Type, Identifier]),
@@ -39,15 +53,15 @@ set_value({Type, Identifier}, Value) ->
 
     false ->
       Key = format_key({Type, Identifier}),
-      true = ets:insert(?CACHE_TABLE, {Key, Value}),
+      true = ets:insert(CacheTable, {Key, Value}),
       ?LOG_DEBUG("Cached type ~p, identifier ~p", [Type, Identifier]),
       ok
   end.
 
 
--spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment()) -> boolean().
-is_outdated(Key, NewValue) ->
-  case get_value(Key) of
+-spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment(), map()) -> boolean().
+is_outdated(Key, NewValue, Config) ->
+  case get_value(Key, Config) of
     {error, undefined} -> false;
 
     {ok, OldValue} ->
