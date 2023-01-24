@@ -56,11 +56,25 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
   end.
 
 
--spec enqueue_metrics(binary(), cfclient:target(), binary(), term()) -> ok.
-enqueue_metrics(FlagId, Target, VariationId, VariationValue) ->
-  cache_metrics(FlagId, Target, VariationId, VariationValue),
-  cache_target(Target),
-  ok.
+-spec enqueue(binary(), cfclient:target(), binary(), binary(), map()) -> atom().
+enqueue(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config) ->
+  case maps:get(analytics_enabled, Config) of
+    true ->
+      ?LOG_DEBUG(
+        "Analytics enabled: flag ~p, target ~p, variation ~p",
+        [FlagIdentifier, Target, VariationValue]
+      ),
+      cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config),
+      cache_target(Target, Config),
+      ok;
+
+    _ ->
+      ?LOG_DEBUG(
+        "Analytics disabled: flag ~p, target ~p, variation ~p",
+        [FlagIdentifier, Target, VariationValue]
+      ),
+      ok
+  end.
 
 
 -spec cache_metrics(binary(), cfclient:target(), binary(), binary(), map()) -> ok.
