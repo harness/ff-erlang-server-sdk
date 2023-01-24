@@ -127,7 +127,7 @@ based on these attributes.
 Note: `attribute` keys must be `atoms` and the values must either be
 `binaries` or `atoms` or a list of `binaries` or `atoms`.
 
-```Erlang
+```erlang
   TargetBetaGroup = #{'identifier' => <<"my_target">>,
     name => <<"my_target_name">>,
     anonymous => <<"">>,
@@ -153,3 +153,11 @@ Reading](https://github.com/harness/ff-erlang-server-sdk/raw/main/docs/further_r
 
 For more information about Feature Flags, see our [Feature Flags
 documentation](https://ngdocs.harness.io/article/0a2u2ppp8s-getting-started-with-feature-flags).
+
+### Contributing
+
+In order to run the tests, pull the submodules:
+
+```command
+git submodule update --init
+```
