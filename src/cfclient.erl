@@ -23,11 +23,18 @@ bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   bool_variation(list_to_binary(FlagKey), Target, Default);
 
 bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Config = cfclient_config:get_config(),
   Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:bool_variation(FlagKey, Target) of
+    case cfclient_evaluator:bool_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(FlagKey, Target, VariationIdentifier, atom_to_binary(Variation)),
+        cfclient_metrics:enqueue(
+          FlagKey,
+          Target,
+          VariationIdentifier,
+          atom_to_binary(Variation),
+          Config
+        ),
         Variation;
 
       {error, Reason} ->
@@ -52,11 +59,18 @@ string_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   string_variation(list_to_binary(FlagKey), Target, Default);
 
 string_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Config = cfclient_config:get_config(),
   Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:string_variation(FlagKey, Target) of
+    case cfclient_evaluator:string_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(FlagKey, Target, VariationIdentifier, list_to_binary(Variation)),
+        cfclient_metrics:enqueue(
+          FlagKey,
+          Target,
+          VariationIdentifier,
+          list_to_binary(Variation),
+          Config
+        ),
         Variation;
 
       {error, Reason} ->
@@ -81,15 +95,17 @@ number_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   number_variation(list_to_binary(FlagKey), Target, Default);
 
 number_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Config = cfclient_config:get_config(),
   Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:number_variation(FlagKey, Target) of
+    case cfclient_evaluator:number_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(
+        cfclient_metrics:enqueue(
           FlagKey,
           Target,
           VariationIdentifier,
-          list_to_binary(mochinum:digits(Variation))
+          list_to_binary(mochinum:digits(Variation)),
+          Config
         ),
         Variation;
 
@@ -115,11 +131,18 @@ json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
   json_variation(list_to_binary(FlagKey), Target, Default);
 
 json_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Config = cfclient_config:get_config(),
   Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:json_variation(FlagKey, Target) of
+    case cfclient_evaluator:json_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(FlagKey, Target, VariationIdentifier, jsx:encode(Variation)),
+        cfclient_metrics:enqueue(
+          FlagKey,
+          Target,
+          VariationIdentifier,
+          jsx:encode(Variation),
+          Config
+        ),
         Variation;
 
       {error, Reason} ->
@@ -136,30 +159,6 @@ json_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
         [FlagKey, Target, Default, Stacktrace]
       ),
       Default
-  end.
-
-
--spec enqueue_metrics(binary(), target(), binary(), binary()) -> atom().
-enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
-  case cfclient_config:get_value(analytics_enabled) of
-    true ->
-      ?LOG_DEBUG(
-        "Analytics enabled: flag ~p, target ~p, variation ~p",
-        [FlagIdentifier, Target, VariationValue]
-      ),
-      cfclient_metrics:enqueue_metrics(
-        FlagIdentifier,
-        Target,
-        VariationIdentifier,
-        VariationValue
-      );
-
-    _ ->
-      ?LOG_DEBUG(
-        "Analytics disabled: flag ~p, target ~p, variation ~p",
-        [FlagIdentifier, Target, VariationValue]
-      ),
-      ok
   end.
 
 
