@@ -11,8 +11,8 @@
 
 -include("cfclient_config.hrl").
 
--export([init/2, get_value/1, clear_config/0]).
--export([defaults/0, normalize/1, get_config/0, parse_jwt/1]).
+-export([get_config/0, get_config/1]).
+-export([create_tables/1, authenticate/2, defaults/0, parse_jwt/1]).
 
 % Config defaults
 % Config endpoint for Prod
@@ -40,25 +40,11 @@
 -define(DEFAULT_ANALYTICS_ENABLED, true).
 -define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000).
 
--spec init(string(), map() | list()) -> ok.
-init(ApiKey, Opts) when is_list(ApiKey), is_list(Opts) -> init(ApiKey, maps:from_list(Opts));
-
-init(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
-  Config = normalize_config(maps:merge(defaults(), Opts)),
-  application:set_env(cfclient, config, Config).
-
-
--spec get_config() -> {ok, map()} | {error, Reason :: atom()}.
-get_config() -> get_config(default).
-
--spec get_config(atom()) -> {ok, map()} | {error, Reason :: atom()}.
-get_config(Project) ->
-  case ets:lookup(?CONFIG_TABLE, Project) of
-    [] -> {error, undefined};
-    [{Project, Value}] -> {ok, Value}
-  end.
-
-
+% -spec init(string(), map() | list()) -> ok.
+% init(ApiKey, Opts) when is_list(ApiKey), is_list(Opts) -> init(ApiKey, maps:from_list(Opts));
+% init(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
+%   Config = normalize_config(maps:merge(defaults(), Opts)),
+%   application:set_env(cfclient, config, Config).
 -spec defaults() -> map().
 defaults() ->
   #{
@@ -129,6 +115,24 @@ normalize_config(K, V, Acc) -> maps:put(K, V, Acc).
 % Strip trailing / from URL
 normalize_url(V) -> string:trim(V, trailing, "/").
 
+% @doc Authenticate with server and merge project attributes into config
+-spec authenticate(binary(), map()) -> {ok, Config :: map()} | {error, Response :: term()}.
+authenticate(ApiKey, Config) ->
+  Name = maps:get(name, Config, default),
+  ConfigUrl = maps:get(config_url, Config),
+  Opts = #{cfg => #{host => ConfigUrl, params => #{apiKey => ApiKey}}},
+  case cfapi_client_api:authenticate(ctx:new(), Opts) of
+    {ok, #{authToken := AuthToken}, _} ->
+      {ok, Project} = cfclient_config:parse_jwt(AuthToken),
+      MergedConfig =
+        maps:merge(Config, #{api_key => ApiKey, auth_token => AuthToken, project => Project}),
+      true = ets:insert(?CONFIG_TABLE, {Name, MergedConfig}),
+      {ok, MergedConfig};
+
+    {error, Response, _} -> {error, Response}
+  end.
+
+
 % TODO: validate the JWT
 -spec parse_jwt(binary()) -> {ok, map()} | {error, Reason :: term()}.
 parse_jwt(JwtToken) ->
@@ -143,13 +147,47 @@ parse_jwt(JwtToken) ->
   end.
 
 
+-spec create_tables(map()) -> ok.
+create_tables(Config) ->
+  #{
+    config_table := ConfigTable,
+    cache_table := CacheTable,
+    metrics_cache_table := MetricsCacheTable,
+    metrics_counter_table := MetricsCounterTable,
+    metrics_target_table := MetricsTargetTable
+  } = Config,
+  ConfigTable = ets:new(ConfigTable, [named_table, set, public, {read_concurrency, true}]),
+  CacheTable = ets:new(CacheTable, [named_table, set, public, {read_concurrency, true}]),
+  MetricsCacheTable = ets:new(MetricsCacheTable, [named_table, set, public]),
+  MetricsCounterTable = ets:new(MetricsCounterTable, [named_table, set, public]),
+  MetricsTargetTable = ets:new(MetricsTargetTable, [named_table, set, public]),
+  ok.
+
+
+-spec get_config() -> map().
+get_config() -> get_config(default).
+
+-spec get_config(atom()) -> map().
+get_config(Name) ->
+  ?LOG_DEBUG("Loading config for ~p", [Name]),
+  [{Name, Config}] = ets:lookup(?CONFIG_TABLE, Name),
+  Config.
+
+
 -spec get_value(atom() | string()) -> string() | term().
 get_value(Key) when is_list(Key) -> get_value(list_to_atom(Key));
+get_value(Key) when is_atom(Key) -> get_value(Key, #{}).
 
-get_value(Key) when is_atom(Key) ->
-  {ok, Config} = application:get_env(cfclient, config),
-  maps:get(Key, Config).
+-spec get_value(atom(), map()) -> term().
+get_value(Key, Opts) ->
+  case maps:find(Key, Opts) of
+    {ok, Value} -> Value;
+
+    error ->
+      Config = get_config(),
+      maps:get(Key, Config)
+  end.
 
 
--spec clear_config() -> ok.
-clear_config() -> application:unset_env(cfclient, config).
+% -spec clear_config() -> ok.
+% clear_config() -> application:unset_env(cfclient, config).
