@@ -16,6 +16,3 @@ start(_StartType, _StartArgs) ->
 
 
 stop(_State) -> ok.
-
-% TODO: does not exist
-% cfclient:close().
