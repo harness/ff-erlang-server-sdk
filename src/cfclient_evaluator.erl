@@ -35,7 +35,52 @@
 
 -include("cfclient_evaluator_operators.hrl").
 
--spec evaluate(binary(), cfclient:target()) ->
+% Public API
+-spec bool_variation(binary(), target(), config()) ->
+  {ok, Identifier :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
+bool_variation(FlagIdentifier, Target, Config) ->
+  case evaluate(FlagIdentifier, Target, Config) of
+    {ok, VariationIdentifier, <<"true">>} -> {ok, VariationIdentifier, true};
+    {ok, VariationIdentifier, <<"false">>} -> {ok, VariationIdentifier, false};
+    {error, Reason} -> {error, Reason}
+  end.
+
+
+-spec string_variation(binary(), target(), config()) ->
+  {ok, Identifier :: binary(), Value :: string()} | {error, Reason :: atom()}.
+string_variation(FlagIdentifier, Target, Config) ->
+  case evaluate(FlagIdentifier, Target, Config) of
+    % TODO: return binary?
+    {ok, VariationIdentifier, Variation} -> {ok, VariationIdentifier, binary_to_list(Variation)};
+    {error, Reason} -> {error, Reason}
+  end.
+
+
+-spec number_variation(binary(), target(), config()) ->
+  {ok, Identifier :: binary(), Value :: number()} | {error, Reason :: atom()}.
+number_variation(FlagIdentifier, Target, Config) ->
+  case evaluate(FlagIdentifier, Target, Config) of
+    {ok, VariationIdentifier, Variation} -> {ok, VariationIdentifier, to_number(Variation)};
+    {error, Reason} -> {error, Reason}
+  end.
+
+
+-spec json_variation(binary(), target(), config()) ->
+  {ok, Identifier :: binary(), Value :: map()} | {error, Reason :: atom()}.
+json_variation(FlagIdentifier, Target, Config) ->
+  case evaluate(FlagIdentifier, Target, Config) of
+    {ok, VariationIdentifier, Variation} ->
+      try {ok, VariationIdentifier, jsx:decode(Variation, [])} catch
+        error : badarg ->
+          ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
+          {error, json_decode} end;
+
+    {error, Reason} -> {error, Reason}
+  end.
+
+
+% internal
+-spec evaluate(binary(), target(), map()) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, unknown_flag}.
 evaluate(FlagIdentifier, Target, Config) ->
   case cfclient_cache:get_value({flag, FlagIdentifier}, Config) of
@@ -457,54 +502,6 @@ case evaluate_flag(PrerequisiteFlag, Target, off) of
         [PrerequisiteFlagIdentifier, Reason]
       ),
       false
-  end.
-
-
--spec bool_variation(binary(), target()) ->
-  {ok, Identifier :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
-bool_variation(FlagIdentifier, Target) ->
-  case evaluate(FlagIdentifier, Target) of
-    {ok, VariationIdentifier, <<"true">>} -> {ok, VariationIdentifier, true};
-    {ok, VariationIdentifier, <<"false">>} -> {ok, VariationIdentifier, false};
-    {error, Reason} -> {error, Reason}
-  end.
-
-
--spec string_variation(binary(), target()) ->
-  {ok, Identifier :: binary(), Value :: string()} | {error, Reason :: atom()}.
-string_variation(FlagIdentifier, Target) ->
-  case evaluate(FlagIdentifier, Target) of
-    {ok, VariationIdentifier, Variation} -> {ok, VariationIdentifier, binary_to_list(Variation)};
-    {error, Reason} -> {error, Reason}
-  end.
-
-
--spec number_variation(binary(), target()) ->
-  {ok, Identifier :: binary(), Value :: number()} | {error, Reason :: atom()}.
-number_variation(FlagIdentifier, Target) ->
-  case evaluate(FlagIdentifier, Target) of
-    {ok, VariationIdentifier, Variation} ->
-      try
-        {ok, VariationIdentifier, binary_to_float(Variation)}
-      catch
-        error : badarg -> {ok, VariationIdentifier, binary_to_integer(Variation)}
-      end;
-
-    {error, Reason} -> {error, Reason}
-  end.
-
-
--spec json_variation(binary(), target()) ->
-  {ok, Identifier :: binary(), Value :: map()} | {error, Reason :: atom()}.
-json_variation(FlagIdentifier, Target) ->
-  case evaluate(FlagIdentifier, Target) of
-    {ok, VariationIdentifier, Variation} ->
-      try {ok, VariationIdentifier, jsx:decode(Variation, [])} catch
-        error : badarg ->
-          ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
-          {error, json_decode} end;
-
-    {error, Reason} -> {error, Reason}
   end.
 
 
