@@ -11,10 +11,13 @@ Erlang SDK For Harness Feature Flags
 
 ## Intro
 
-Use this README to get started with our Feature Flags (FF) SDK for Erlang. This
-guide outlines the basics of getting started with the SDK and provides a full
+[Harness](https://www.harness.io/) is a feature management platform that helps
+teams to build better software and to test features quicker.
+
+Use this README to get started with our Feature Flags (FF) SDK for Erlang.
+This guide outlines the basics of getting started with the SDK and provides a full
 code sample for you to try out. This sample doesn’t include configuration
-options, for in depth steps and configuring the SDK, for example, disabling
+options. For in depth steps and configuring the SDK, e.g. disabling
 streaming or using our Relay Proxy, see the 
 [Erlang SDK Reference](https://ngdocs.harness.io/article/hwoxb6x2oe-Erlang-sdk-reference).
 
@@ -28,30 +31,28 @@ For a sample FF Erlang SDK Project for Elixir, see our
 
 ## Requirements
 
-[Erlang OTP 22]() or newer (Erlang --version)<br>
-[rebar3]()<br>
-<br>
+Erlang OTP 22 or newer
 
 ## Quickstart
 
-To follow along with our test code sample, make sure you’ve:
+To follow along with our test code sample, make sure you have:
 
 - [Created a Feature Flag on the Harness Platform](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag)
   called `harnessappdemodarkmode`
-- [Created a server SDK key and made a copy of
-  it](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_3_create_an_sdk_key)
+- [Created a server SDK key and made a copy of it](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_3_create_an_sdk_key)
 
 ### Install the SDK
-Install the Erlang SDK using [rebar3](https://www.rebar3.org/)
 
-First add the dependency to your `rebar.config`.
+Install the Erlang SDK to [rebar3](https://www.rebar3.org/).
+
+Add the dependency to your `rebar.config`.
 ```Erlang
 {deps, [
   {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {branch, "0.1.0"}}}
 ]}.
 ```
 
-Then add the dependency to your project's `app.src`.
+Add the dependency to your project's `app.src`.
 ```Erlang
 {applications,
   [kernel, stdlib, cfclient]
@@ -68,7 +69,6 @@ the code it will:
 - Report the value of the Flag every 10 seconds until the connection is closed.
   Every time the harnessappdemodarkmode Flag is toggled on or off on the
   Harness Platform, the updated value is reported.
-- Close the SDK.
 
 ```Erlang
 -module(getting_started).
@@ -108,23 +108,24 @@ get_flag_loop() ->
 ### Running the example
 
 In the SDK project directory run the following using rebar3.
-```
-$ rebar3 shell
+
+```console
+rebar3 shell
 1> getting_started:start("YOUR SDK KEY").
 Erlang SDK Successfuly Started
 Varaion for Flag "harnessappdemodarkmode" witih Target "Harness_Target_1" is: true
 ```
 
 ### Targets with custom attributes
+
 You can use the `attributes` map to provide custom attributes. If the Target
 isn't anonymous, the attributes will shortly appear in the Harness UI after an
-evaluation using the Target. You can create
-[Group Rules](https://docs.harness.io/article/5qz1qrugyk-add-target-groups)
+evaluation using the Target.
+You can create [Group Rules](https://docs.harness.io/article/5qz1qrugyk-add-target-groups)
 based on these attributes.
 
 Note: `attribute` keys must be `atoms` and the values must either be
-`binaries` or `atoms`, or if using a `list` then each element must be either
-`binaries` or `atoms`
+`binaries` or `atoms` or a list of `binaries` or `atoms`.
 
 ```Erlang
   TargetBetaGroup = #{'identifier' => <<"my_target">>,
@@ -145,14 +146,6 @@ Note: `attribute` keys must be `atoms` and the values must either be
 ```
 
 
-## Cleanup
-To avoid potential a memory leak, when the SDK is no longer needed
-(when the app is closed, for example), a caller should call this method:
-
-```
-cfclient:stop().
-```
-
 ### Additional Reading
 
 For further examples and config options, see the [Erlang SDK Further
@@ -160,9 +153,3 @@ Reading](https://github.com/harness/ff-erlang-server-sdk/raw/main/docs/further_r
 
 For more information about Feature Flags, see our [Feature Flags
 documentation](https://ngdocs.harness.io/article/0a2u2ppp8s-getting-started-with-feature-flags).
-
--------------------------
-[Harness](https://www.harness.io/) is a feature management platform that helps
-teams to build better software and to test features quicker.
-
--------------------------
