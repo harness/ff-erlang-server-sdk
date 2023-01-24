@@ -256,7 +256,7 @@ evaluate_target_group_rules(Rules, Target) ->
   search_rules_for_inclusion(PrioritizedRules, Target).
 
 
--spec search_rules_for_inclusion([rule()], cfclient:target()) -> binary() | excluded | not_found.
+-spec search_rules_for_inclusion([rule()], target()) -> binary() | excluded | not_found.
 search_rules_for_inclusion([Head | Tail], Target) ->
   case is_rule_included_or_excluded(maps:get(clauses, Head), Target) of
     excluded -> excluded;
