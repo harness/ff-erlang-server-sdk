@@ -1,8 +1,6 @@
-%%%-------------------------------------------------------------------
-%%% @doc
-%%% Functions to manage Flag and Segment cache.
-%%% @end
-%%%-------------------------------------------------------------------
+% @doc
+% Functions to manage Flag and Segment cache.
+% @end
 
 -module(cfclient_cache).
 
