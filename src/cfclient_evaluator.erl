@@ -559,12 +559,12 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, T
 
 -spec get_variation([map()], binary()) -> {ok, map()} | {error, not_found}.
 get_variation([], _Identifier) -> {error, not_found};
-get_variation([#{identifier := Identifier} = Head | _Tail], Identifier) -> {ok, Head};
-get_variation([_Head | Tail], Identifier) -> get_variation(Tail, Identifier).
+get_variation([#{identifier := Id} = Head | _Tail], Id) -> {ok, Head};
+get_variation([_Head | Tail], Id) -> get_variation(Tail, Id).
 
 -spec identifier_matches(map(), [map()]) -> boolean().
-identifier_matches(#{identifier := Identifier}, Values) ->
-  lists:any(fun (#{identifier := I}) -> Identifier == I end, Values).
+identifier_matches(#{identifier := Id}, Values) ->
+  lists:any(fun (#{identifier := I}) -> Id == I end, Values).
 
 -spec to_number(binary()) -> float() | integer().
 to_number(Value) when is_binary(Value) ->
