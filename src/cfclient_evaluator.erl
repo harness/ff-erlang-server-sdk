@@ -349,7 +349,7 @@ is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excl
 -spec search_group(RuleType :: excluded | included | custom_rules, target(), map()) ->
   included | excluded | false.
 search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Values) ->
-  case identifier_matches(Target, Values) of
+  case identifier_matches(Values, Target) of
     true -> excluded;
     false -> search_group(included, Target, Group)
   end;
@@ -357,7 +357,7 @@ search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Value
 search_group(excluded, Target, Group) -> search_group(included, Target, Group);
 
 search_group(included, Target, #{included := Values} = Group) when is_list(Values) ->
-  case identifier_matches(Target, Values) of
+  case identifier_matches(Values, Targets) of
     true -> included;
     false -> search_group(custom_rules, Target, Group)
   end;
@@ -551,10 +551,10 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) -
 search_by_id(Values, Id) ->
   lists:search(fun (#{identifier := I}) -> I == Id end, Values).
 
--spec identifier_matches(map(), [map()]) -> boolean().
-identifier_matches(_, []) -> false;
+-spec identifier_matches([map()], map()) -> boolean().
+identifier_matches([], _) -> false;
 
-identifier_matches(#{identifier := Id}, Values) ->
+identifier_matches(Values, #{identifier := Id}) ->
   lists:any(fun (#{identifier := I}) -> Id == I end, Values).
 
 -spec to_number(binary()) -> float() | integer().
