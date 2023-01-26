@@ -287,7 +287,7 @@ evaluate_target_rule(_, _) -> false.
   TargetVariationId :: binary() | false.
 search_variation_map([Head | Tail], Id) ->
   #{variation := Variation, targets := Targets} = Head,
-  case lists:any(fun (#{identifier := I}) -> Id == I end, Targets) of
+  case identifier_matches_any(Targets, Id) of
     true -> Variation;
     _ -> search_variation_map(Tail, Id)
   end;
@@ -349,7 +349,7 @@ is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excl
 -spec search_group(RuleType :: excluded | included | custom_rules, target(), map()) ->
   included | excluded | false.
 search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Values) ->
-  case id_matches_any(Values, Target) of
+  case identifier_matches_any(Values, Target) of
     true -> excluded;
     false -> search_group(included, Target, Group)
   end;
@@ -357,7 +357,7 @@ search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Value
 search_group(excluded, Target, Group) -> search_group(included, Target, Group);
 
 search_group(included, Target, #{included := Values} = Group) when is_list(Values) ->
-  case id_matches_any(Values, Targets) of
+  case identifier_matches_any(Values, Targets) of
     true -> included;
     false -> search_group(custom_rules, Target, Group)
   end;
@@ -551,10 +551,13 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) -
 search_by_id(Values, Id) ->
   lists:search(fun (#{identifier := I}) -> I == Id end, Values).
 
--spec id_matches_any([map()], map()) -> boolean().
-id_matches_any([], _) -> false;
+-spec identifier_matches_any([map()], map() | binary()) -> boolean().
+identifier_matches_any([], _) -> false;
 
-id_matches_any(Values, #{identifier := Id}) ->
+identifier_matches_any(Values, #{identifier := Id}) ->
+  lists:any(fun (#{identifier := I}) -> Id == I end, Values).
+
+identifier_matches_any(Values, Id) ->
   lists:any(fun (#{identifier := I}) -> Id == I end, Values).
 
 -spec to_number(binary()) -> float() | integer().
