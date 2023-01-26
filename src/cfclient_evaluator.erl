@@ -351,30 +351,31 @@ is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excl
 % Process Group Rules for different rule types.
 -spec search_group(RuleType :: excluded | included | custom_rules, target(), map()) ->
   included | excluded | false.
-search_group(excluded, Target, #{excluded := []} = Group) -> search_group(included, Target, Group);
-
-search_group(excluded, Target, #{excluded := Values} = Group) ->
+search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Values) ->
   case identifier_matches(Target, Values) of
     true -> excluded;
     false -> search_group(included, Target, Group)
   end;
 
-search_group(included, Target, #{included := []} = Group) ->
-  search_group(custom_rules, Target, Group);
+search_group(excluded, Target, Group) ->
+    search_group(included, Target, Group);
 
-search_group(included, Target, #{included := Values} = Group) ->
+search_group(included, Target, #{included := Values} = Group) when is_list(Values) ->
   case identifier_matches(Target, Values) of
     true -> included;
     false -> search_group(custom_rules, Target, Group)
   end;
 
-search_group(custom_rules, _Target, #{rules := []}) -> false;
+search_group(included, Target, Group) ->
+  search_group(custom_rules, Target, Group);
 
-search_group(custom_rules, Target, #{rules := Values}) ->
+search_group(custom_rules, Target, #{rules := Values}) when is_list(Values) ->
   case search_group_custom_rules(Values, Target) of
     true -> included;
     false -> false
-  end.
+  end;
+
+search_group(custom_rules, _, _) -> false.
 
 
 -spec search_group_custom_rules(CustomRules :: [map()], target()) -> boolean().
@@ -440,7 +441,7 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(Targ
 
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName)
-when map_size(TargetCustomAttributes) > 0 ->
+when is_map(TargetCustomAttributes), map_size(TargetCustomAttributes) > 0 ->
   % Check if rule attribute matches custom attributes.
   % Custom attribute keys are atoms
   case maps:find(binary_to_atom(RuleAttribute), TargetCustomAttributes) of
