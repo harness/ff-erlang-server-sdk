@@ -333,7 +333,7 @@ search_rules_for_inclusion([Rule | Tail], Target) ->
     _ -> search_rules_for_inclusion(Tail, Target)
   end;
 
-search_rules_for_inclusion([], _) -> not_found.
+search_rules_for_inclusion([], _) -> false.
 
 
 -spec is_rule_included_or_excluded([rule_clause()], target()) -> included | excluded | false.
