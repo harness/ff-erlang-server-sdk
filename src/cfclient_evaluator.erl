@@ -265,7 +265,7 @@ return_default_off_variation(Flag) ->
   end.
 
 
--spec get_target_or_group_variation(flag(), binary()) ->
+-spec return_target_or_group_variation(flag(), binary()) ->
   {ok, Id :: binary(), term()} | {error, not_found}.
 return_target_or_group_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
