@@ -251,7 +251,7 @@ evaluate_flag(Flag, Target, default_on) ->
   end.
 
 
--spec get_default_off_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
+-spec get_default_off_variation(flag(), binary()) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, not_found}.
 get_default_off_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
@@ -266,7 +266,7 @@ get_default_off_variation(Flag, Id) ->
   end.
 
 
--spec get_target_or_group_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
+-spec get_target_or_group_variation(flag(), binary()) ->
   {ok, Identifier :: binary(), term()} | {error, not_found}.
 get_target_or_group_variation(Flag, Id) ->
   #{feature := Feature, variations := Variations} = Flag,
@@ -280,13 +280,13 @@ get_target_or_group_variation(Flag, Id) ->
   end.
 
 
--spec evaluate_target_rule([variation_map()], target()) -> binary() | not_found.
+-spec evaluate_target_rule([variation_map()], target()) -> TargetVariationId :: binary() | not_found.
 evaluate_target_rule(VariationMap, #{identifier := Id}) ->
   search_variation_map(VariationMap, Id);
 
 evaluate_target_rule(_, _) -> not_found.
 
--spec search_variation_map([variation_map()], binary()) -> binary() | not_found.
+-spec search_variation_map([variation_map()], binary()) -> TargetVariationId :: binary() | not_found.
 search_variation_map([Head | Tail], Id) ->
   #{variation := Variation, targets := Targets} = Head,
   case lists:any(fun (#{identifier := I}) -> Id == I end, Targets) of
