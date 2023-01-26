@@ -132,7 +132,7 @@ normalize_url(V) -> string:trim(V, trailing, "/").
 -spec authenticate(binary() | undefined, map()) ->
   {ok, Config :: map()} | {error, Response :: term()}.
 authenticate(undefined, Config) ->
-  ?LOG_DEBUG("ApiKey undefined"),
+  ?LOG_INFO("api_key undefined"),
   {ok, Config};
 
 authenticate(ApiKey, Config) ->
