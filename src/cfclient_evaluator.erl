@@ -345,15 +345,16 @@ search_rules_for_inclusion([], _) -> not_found.
 
 
 -spec is_rule_included_or_excluded([rule_clause()], target()) -> included | excluded | false.
-is_rule_included_or_excluded([], _) -> false;
+is_rule_included_or_excluded(Clauses, Target) ->
+    {_, Result} = lists:foldl(fun match_rule_clause/2, {Target, false}, Clauses),
+    Result.
 
-is_rule_included_or_excluded([#{op := ?SEGMENT_MATCH_OPERATOR} = Head | _Tail], Target) ->
-  % At present there is only ever one element in values, so get the first one.
-  #{values := [GroupName | _Rest]} = Head,
+match_rule_clause(#{op := ?SEGMENT_MATCH_OPERATOR} = Clause, {Target, false}) ->
+  #{values := [GroupName | _Rest]} = Clause,
   {ok, Group} = cfclient_cache:get_value({segment, GroupName}),
-  search_group(excluded, Target, Group);
+  {Target, search_group(excluded, Target, Group)};
 
-is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excluded(Tail, Target).
+match_rule_clause(_, Result) -> Result.
 
 
 % Process Group Rules for different rule types.
