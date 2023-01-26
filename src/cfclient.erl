@@ -15,7 +15,7 @@
                   identifier := binary(),
                   name := binary(),
                   anonymous => boolean(),
-                  attributes := #{atom() := binary() | atom() | list()}
+                  attributes := #{atom() := binary() | atom() | list()} | null
                 }.
 
 -spec bool_variation(binary() | string(), target(), binary()) -> boolean().
