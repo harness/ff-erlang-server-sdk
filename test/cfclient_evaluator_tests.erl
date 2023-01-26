@@ -12,6 +12,7 @@ setup() ->
   Config = cfclient_config:defaults(),
   meck:new(Modules),
   meck:expect(cfclient_config, get_config, fun () -> Config end),
+  meck:expect(cfclient_config, get_config, fun (_) -> Config end),
   meck:expect(cfclient_config, defaults, fun () -> Config end),
   Modules.
 
