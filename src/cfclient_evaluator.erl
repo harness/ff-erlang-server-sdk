@@ -15,15 +15,26 @@
   ]
 ).
 
+-type rule_serve() :: #{
+                        variation := binary(),
+                        distribution => boolean()
+                       }.
+
+-type rule_clause() :: #{
+                         op := binary(),
+                         values := [binary()]
+                        }.
+
 -type rule() :: #{
                 priority := non_neg_integer(),
-                clauses := list(),
-                serve => map(),
+                clauses := [rule_clause()],
+                serve => rule_serve(),
                 op => binary(),
                 values => [binary()],
                 excluded => [map()] | null,
                 included => [map()] | null
               }.
+
 
 % -type cfapi_serving_rule() ::
 %     #{ 'ruleId' => binary(),
@@ -333,7 +344,7 @@ search_rules_for_inclusion([Rule | Tail], Target) ->
 search_rules_for_inclusion([], _) -> not_found.
 
 
--spec is_rule_included_or_excluded([map()], target()) -> included | excluded | false.
+-spec is_rule_included_or_excluded([rule_clause()], target()) -> included | excluded | false.
 is_rule_included_or_excluded([], _) -> false;
 
 is_rule_included_or_excluded([#{op := ?SEGMENT_MATCH_OPERATOR} = Head | _Tail], Target) ->
@@ -346,7 +357,7 @@ is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excl
 
 
 % Process Group Rules for different rule types.
--spec search_group(RuleType :: excluded | included | custom_rules, target(), map()) ->
+-spec search_group(RuleType :: excluded | included | custom_rules, target(), segment()) ->
   included | excluded | false.
 search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Values) ->
   case identifier_matches_any(Values, Target) of
