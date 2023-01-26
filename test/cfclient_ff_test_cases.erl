@@ -1,5 +1,5 @@
 % @doc
-% Runs the JSON tests in the git submodule ff-test-cases
+% Run the JSON tests in the git submodule ff-test-cases.
 % @end
 -module(cfclient_ff_test_cases).
 
@@ -25,117 +25,120 @@
   ]
 ).
 
+-define(_assertEqualVars(Expect, Expr, Vars),
+        ?_test(?assertEqual(Expect, Expr, (list_to_binary(io_lib:format("~p", Vars))) ))).
+
+-define(_assertEqual(Expect, Expr, Comment), ?_test(?assertEqual(Expect, Expr, Comment))).
+
+setup() ->
+  % ?debugMsg("Running setup"),
+  Modules = [cfclient_config],
+
+  Config0 = [{name, ?MODULE}, {analytics_enabled, false}, {poll_enabled, false}],
+  Config = cfclient_config:normalize(Config0),
+
+  meck:new(Modules, [passthrough]),
+  meck:expect(cfclient_config, get_config, fun () -> Config end),
+  meck:expect(cfclient_config, get_config, fun (_) -> Config end),
+  meck:expect(cfclient_config, defaults, fun () -> Config end),
+  Modules.
+
+cleanup(Modules) ->
+  % ?debugFmt("Running cleanup ~p", [Modules]),
+  meck:unload(Modules).
+
 evaluations_test_() ->
-  {ok, TestFiles} = load_test_files(?TESTS_PATH),
-  % Disable analytics as we call the public variation functions.
-  cfclient_config:init("fake_key", #{analytics_enabled => false}),
-  evaluate_test_files(TestFiles, []).
+  % Paths = lists:filter(fun (P) -> P == "test/ff-test-cases/tests/GroupRules/GroupRules_Type_Bool_State_Enabled_InOneTwoThree_Should_Return_true_for_Target_three.json" end,
+  %           list_test_files(?TESTS_PATH)),
+  Paths = list_test_files(?TESTS_PATH),
+
+  {setup, fun setup/0, fun cleanup/1, lists:map(fun evaluate_file/1, Paths)}.
+
+evaluate_file(Path) ->
+  TestFile = parse_file(Path),
+  #{flags := Flags, tests := Tests} = TestFile,
+  Segments = maps:get(segments, TestFile, []),
+
+  {Path, setup,
+   fun () ->
+      Config = [{name, ?MODULE}, {analytics_enabled, false}, {poll_enabled, false}],
+      {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
+      [cfclient_cache:cache_flag(F) || F <- Flags],
+      [cfclient_cache:cache_segment(S) || S <- Segments],
+      Pid
+   end,
+   fun (Pid) -> gen_server:stop(Pid) end,
+   [
+     [evaluate_test(T, TestFile) || T <- Tests]
+   ]
+  }.
+
+  % Config0 = [{name, ?MODULE}, {analytics_enabled, false}, {poll_enabled, false}],
+  % Config = cfclient_config:normalize(Config0),
+
+  % {ok, Pid} = cfclient_instance:start_link([{config, Config0}]),
+  % cfclient_config:set_config(Config),
+
+  % [cfclient_cache:cache_flag(F, Config) || F <- Flags],
+  % [cfclient_cache:cache_segment(S, Config) || S <- Segments],
+
+  % Results = {Path, [evaluate_test(T, TestFile) || T <- Tests]},
+
+  % gen_server:stop(Pid),
+
+  % Results.
+
+evaluate_test(Test, TestFile) ->
+  #{flag := Id, expected := Expected} = Test,
+  #{flags := Flags} = TestFile,
+
+  Target = find_target(Test, TestFile),
+  #{kind := Kind} = find_flag(Id, Flags),
+
+  case Kind of
+      <<"boolean">> ->
+          {Id, ?_assertEqual(Expected, cfclient:bool_variation(Id, Target, false), Target)};
+      <<"string">> ->
+          {Id, ?_assertEqual(Expected, list_to_binary(cfclient:string_variation(Id, Target, "blue")))};
+      <<"int">> ->
+          {Id, ?_assertEqual(Expected, cfclient:number_variation(Id, Target, 100))};
+      <<"json">> ->
+          {Id, ?_assertEqual(Expected, jsx:encode(cfclient:json_variation(Id, Target, #{}), [{space, 1}]))}
+  end.
 
 
-evaluate_test_files([Head | Tail], Accu) ->
-  % Parse each file into a map - e.g. we can get The Flags, Targets, Tests
-  TestAsMap = test_file_json_to_map(Head),
-  % Create new LRU cache and load Flags and Groups into it
-  {ok, CachePID} = start_lru_cache(),
-  % cfclient_cache:set_pid(CachePID),
-  cache_flags_and_groups(CachePID, maps:get(flags, TestAsMap), maps:get(segments, TestAsMap, [])),
-  Result = evaluate_tests(maps:get(tests, TestAsMap), maps:get(targets, TestAsMap), CachePID, Accu),
-  lru:stop(CachePID),
-  evaluate_test_files(Tail, Result);
+-spec find_target(map(), map()) -> Target :: map().
+find_target(#{target := Id}, #{targets := Targets}) when is_list(Targets) ->
+  case lists:search(fun (#{identifier := I}) -> I == Id end, Targets) of
+    {value, Value} ->
+      Value;
 
-evaluate_test_files([], Accu) -> Accu.
+    false ->
+      ?debugFmt("Test target not found for test ~p ~p", [Id, Targets]),
+      #{}
+  end;
 
+find_target(_Target, _TestFile) ->
+  % ?debugFmt(" No target for test ~p ~p", [Target, TestFile]),
+  #{}.
 
-evaluate_tests([Head | Tail], Targets, CachePID, Accu) ->
-  % Get correct Target for test case
-  Target =
-    case maps:is_key(target, Head) of
-      true ->
-        GetTarget =
-          fun
-            F([H | T]) ->
-              case string:equal(maps:get(identifier, H), maps:get(target, Head), false) of
-                true -> H;
-                false -> F(T)
-              end;
+find_flag(Id, Flags) ->
+    {value, Value} = lists:search(fun (#{feature := I}) -> I == Id end, Flags),
+    Value.
 
-            F([]) -> logger:error("Target for test case not found")
-          end,
-        GetTarget(Targets);
-
-      % If no Target for test case then just return an empty map
-      false -> #{}
-    end,
-  Flag = cfclient_cache:get_from_cache({flag, maps:get(flag, Head)}, CachePID),
-  Kind = maps:get(kind, Flag),
-  FlagIdentifier = maps:get(flag, Head),
-  Result =
-    case Kind of
-      <<"boolean">> -> cfclient:bool_variation(maps:get(flag, Head), Target, false);
-      <<"string">> -> list_to_binary(cfclient:string_variation(FlagIdentifier, Target, "blue"));
-      <<"int">> -> cfclient:number_variation(FlagIdentifier, Target, 100);
-      <<"json">> -> jsx:encode(cfclient:json_variation(FlagIdentifier, Target, #{}), [{space, 1}])
-    end,
-  Test = {FlagIdentifier, ?_assertEqual(maps:get(expected, Head), Result)},
-  evaluate_tests(Tail, Targets, CachePID, [Test | Accu]);
-
-evaluate_tests([], _, _, Accu) -> Accu.
-
-
-cache_flags_and_groups(CachePID, Flags, Groups) ->
-  [cfclient_cache:set_value({flag, maps:get(feature, Flag)}, Flag) || Flag <- Flags],
-  [cfclient_cache:set_value({segment, maps:get(identifier, Segment)}, Segment) || Segment <- Groups].
-
-
-start_lru_cache() ->
-  Size = 32000000,
-  CacheName = cfclient_cache_default,
-  lru:start_link({local, CacheName}, [{max_size, Size}]).
-
-
-test_file_json_to_map(Json) ->
-  {ok, Data} = file:read_file(Json),
+-spec parse_file(file:filename()) -> map().
+parse_file(Path) ->
+  {ok, Data} = file:read_file(Path),
   % Same shape as Client API
   jsx:decode(Data, [return_maps, {labels, atom}]).
 
 
-load_test_files(Dir) -> load_test_files(Dir, true).
+list_test_files(Dir) ->
+    filelib:fold_files(Dir, ".json$", true,
+                       fun (F, Acc) ->
+                               case lists:member(filename:basename(F), ?NON_TEST_GRID_TESTS) of
+                                   true -> Acc;
+                                   false -> [F | Acc]
+                               end
 
-load_test_files(Dir, FilesOnly) ->
-  case filelib:is_file(Dir) of
-    true ->
-      case filelib:is_dir(Dir) of
-        true -> {ok, walk_directory([Dir], FilesOnly, [])};
-        false -> {error, enotdir}
-      end;
-
-    false -> {error, enoent}
-  end.
-
-
-walk_directory([], _FilesOnly, Acc) -> Acc;
-
-walk_directory([Path | Paths], FilesOnly, Acc) ->
-  walk_directory(
-    Paths,
-    FilesOnly,
-    case filelib:is_dir(Path) of
-      false -> [Path | Acc];
-
-      true ->
-        {ok, Listing} = file:list_dir(Path),
-        SubPaths =
-          [
-            filename:join(Path, Name) || Name <- Listing,
-            lists:member(Name, ?NON_TEST_GRID_TESTS) == false
-          ],
-        walk_directory(
-          SubPaths,
-          FilesOnly,
-          case FilesOnly of
-            true -> Acc;
-            false -> [Path | Acc]
-          end
-        )
-    end
-  ).
+                       end, []).
