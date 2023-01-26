@@ -140,25 +140,22 @@ evaluate(FlagId, Target, Config) ->
       ?LOG_ERROR("Flag ~s not found in cache", [FlagId]),
       {error, unknown_flag};
 
-    {ok, Flag} -> evaluate_flag(Flag, Target, off)
+    {ok, Flag} -> evaluate_flag(off, Flag, Target)
   end.
 
 
--spec evaluate_flag(
-  flag() | segment(),
-  target(),
-  default_on | group_rules | off | prerequisites | target_rules
-) ->
-  {ok, Id :: binary(), Value :: term()} | {error, atom()}.
-% Evaluate for off state
-evaluate_flag(#{state := <<"off">>} = Flag, _Target, off) ->
+-spec evaluate_flag(default_on | group_rules | off | prerequisites | target_rules,
+                    flag() | segment(), target()) ->
+    {ok, Id :: binary(), Value :: term()} | {error, atom()}.
+%% Evaluate for off state
+evaluate_flag(off, #{state := <<"off">>} = Flag, _Target) ->
   #{offVariation := OffVariation} = Flag,
   ?LOG_DEBUG("Flag state off for flag ~p, returning default 'off' variation", [Flag]),
   get_default_off_variation(Flag, OffVariation);
 
-evaluate_flag(#{state := <<"on">>} = Flag, Target, off) ->
+evaluate_flag(off, #{state := <<"on">>} = Flag, Target) ->
   ?LOG_DEBUG("Flag state on for flag ~p", [Flag]),
-  evaluate_flag(Flag, Target, prerequisites);
+  evaluate_flag(prerequisites, Flag, Target);
 
 % % TODO: type mismatch with state, which is declared as a map, match any state here
 % evaluate_flag(Flag, Target, off) ->
@@ -168,33 +165,39 @@ evaluate_flag(#{state := <<"on">>} = Flag, Target, off) ->
 
 %% Evaluate prerequisites
 
-evaluate_flag(#{prerequisites := []} = Flag, Target, prerequisites) ->
+evaluate_flag(prerequisites, #{prerequisites := []} = Flag, Target) ->
   ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
-  evaluate_flag(Flag, Target, target_rules);
+  evaluate_flag(target_rules, Flag, Target);
 
-evaluate_flag(#{prerequisites := Prereq} = Flag, Target, prerequisites) when Prereq /= null ->
-  case search_prerequisites(Prereq, Target) of
+evaluate_flag(prerequisites, #{prerequisites := Prereqs} = Flag, Target) when is_list(Prereqs) ->
+  case search_prerequisites(Prereqs, Target) of
     true ->
       ?LOG_DEBUG("Prerequisites met for flag ~p, target ~p", [Flag, Target]),
-      evaluate_flag(Flag, Target, target_rules);
+      evaluate_flag(target_rules, Flag, Target);
 
     _ ->
       ?LOG_DEBUG("Prerequisites not met for flag ~p, target ~p", [Flag, Target]),
       get_default_off_variation(Flag, maps:get(offVariation, Flag))
   end;
 
-evaluate_flag(Flag, Target, prerequisites) -> evaluate_flag(Flag, Target, target_rules);
+evaluate_flag(prerequisites, Flag, Target) ->
+    ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
+    evaluate_flag(target_rules, Flag, Target);
 
 % Evaluate target rules
-evaluate_flag(#{variationToTargetMap := []} = Flag, Target, target_rules) ->
+evaluate_flag(target_rules, #{variationToTargetMap := []} = Flag, Target) ->
   ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
-  evaluate_flag(Flag, Target, group_rules);
+  evaluate_flag(group_rules, Flag, Target);
 
-evaluate_flag(#{variationToTargetMap := Map} = Flag, Target, target_rules) when Map /= null ->
-  case evaluate_target_rule(Map, Target) of
+evaluate_flag(target_rules, #{variationToTargetMap := null} = Flag, Target) ->
+  ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
+  evaluate_flag(group_rules, Flag, Target);
+
+evaluate_flag(target_rules, #{variationToTargetMap := TM} = Flag, Target) when TM /= null ->
+  case evaluate_target_rule(TM, Target) of
     not_found ->
       ?LOG_DEBUG("Target rules map did not match flag ~p, target ~p", [Flag, Target]),
-      evaluate_flag(Flag, Target, group_rules);
+      evaluate_flag(group_rules, Flag, Target);
 
     TargetVariationId ->
       ?LOG_DEBUG("Target rules map matched flag ~p, target ~p", [Flag, Target]),
@@ -203,33 +206,34 @@ evaluate_flag(#{variationToTargetMap := Map} = Flag, Target, target_rules) when 
       get_target_or_group_variation(Flag, TargetVariationId)
   end;
 
-evaluate_flag(Flag, Target, target_rules) ->
+evaluate_flag(target_rules, Flag, Target) ->
   ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
-  evaluate_flag(Flag, Target, group_rules);
+  evaluate_flag(group_rules, Flag, Target);
 
 % Evaluate group rules
-evaluate_flag(#{rules := []} = Flag, Target, group_rules) ->
+evaluate_flag(group_rules, #{rules := []} = Flag, Target) ->
   ?LOG_DEBUG("Group rules not set for flag ~p, target ~p", [Flag, Target]),
-  evaluate_flag(Flag, Target, default_on);
+  evaluate_flag(default_on, Flag, Target);
 
-evaluate_flag(#{rules := Rules} = Flag, Target, group_rules) when Rules /= null ->
+evaluate_flag(group_rules, #{rules := Rules} = Flag, Target) when Rules /= null ->
   case evaluate_target_group_rules(Rules, Target) of
     not_found ->
       ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Flag, Target]),
-      evaluate_flag(Flag, Target, default_on);
+      evaluate_flag(default_on, Flag, Target);
 
     excluded ->
       ?LOG_DEBUG("Group rules excluded flag ~p, target ~p", [Flag, Target]),
-      evaluate_flag(Flag, Target, default_on);
+      evaluate_flag(default_on, Flag, Target);
 
     GroupVariationId ->
       ?LOG_DEBUG("Group rules matched flag ~p, target ~p", [Flag, Target]),
       get_target_or_group_variation(Flag, GroupVariationId)
   end;
 
-evaluate_flag(Flag, Target, group_rules) -> evaluate_flag(Flag, Target, default_on);
-% Default "on" variation
-evaluate_flag(Flag, Target, default_on) ->
+evaluate_flag(group_rules, Flag, Target) -> evaluate_flag(default_on, Flag, Target);
+
+%% Default "on" variation
+evaluate_flag(default_on, Flag, Target) ->
   #{variations := Variations, defaultServe := DefaultServe} = Flag,
   #{variation := Id} = DefaultServe,
   case get_variation(Variations, Id) of
@@ -525,7 +529,7 @@ search_prerequisites([], _) -> true.
 
 -spec check_prerequisite(flag(), binary(), flag(), target()) -> boolean().
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) ->
-  case evaluate_flag(PrerequisiteFlag, Target, off) of
+  case evaluate_flag(off, PrerequisiteFlag, Target) of
     {ok, VariationId, _} ->
       ?LOG_DEBUG(
         "Prerequisite flag ~p has variation ~p, target ~p",
