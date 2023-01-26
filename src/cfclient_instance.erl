@@ -52,11 +52,11 @@ handle_info(metrics, Config) ->
 handle_info(poll, Config) ->
   ?LOG_INFO("Poll triggered"),
   #{poll_interval := PollInterval} = Config,
-  case cfclient_retreive:retrieve_flags(Config) of
+  case cfclient_retrieve:retrieve_flags(Config) of
     {ok, Flags} -> lists:foreach(fun cfclient_cache:cache_flag/1, Flags);
     {error, Reason} -> ?LOG_WARNING("Could not retrive flags from API: ~p", [Reason])
   end,
-  case cfclient_retreive:retrieve_segments(Config) of
+  case cfclient_retrieve:retrieve_segments(Config) of
     {ok, Segments} -> lists:foreach(fun cfclient_cache:cache_segment/1, Segments);
     {error, Reason1} -> ?LOG_WARNING("Could not retrive segments from API: ~p", [Reason1])
   end,
