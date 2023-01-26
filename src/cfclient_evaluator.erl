@@ -566,7 +566,7 @@ search_by_id(Values, Id) ->
 identifier_matches_any([], _) -> false;
 
 identifier_matches_any(Values, #{identifier := Id}) ->
-  lists:any(fun (#{identifier := I}) -> Id == I end, Values).
+  lists:any(fun (#{identifier := I}) -> Id == I end, Values);
 
 identifier_matches_any(Values, Id) ->
   lists:any(fun (#{identifier := I}) -> Id == I end, Values).
