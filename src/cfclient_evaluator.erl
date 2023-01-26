@@ -392,7 +392,7 @@ search_group_custom_rules([Rule | Tail], Target) ->
 search_group_custom_rules([], _) -> false.
 
 
--spec is_custom_rule_match(Operator :: binary(), binary(), [binary()]) -> boolean().
+-spec is_custom_rule_match(Operator :: binary(), binary() | [binary()], [binary()]) -> boolean().
 % No target attribute, don't attempt match
 is_custom_rule_match(_, TargetAttribute, _) when byte_size(TargetAttribute) == 0 -> false;
 % Equal case sensitive
@@ -457,6 +457,7 @@ get_attribute_value(_, _, _, _) -> <<>>.
 
 
 % Convert custom attributes to binary
+-spec custom_attribute_to_binary(binary() | atom() | number() | string()) -> binary().
 custom_attribute_to_binary(Value) when is_binary(Value) -> Value;
 custom_attribute_to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
 custom_attribute_to_binary(Value) when is_number(Value) -> list_to_binary(mochinum:digits(Value));
@@ -531,7 +532,7 @@ search_prerequisites([Head | Tail], Target) ->
 search_prerequisites([], _) -> true.
 
 
--spec check_prerequisite(feature(), binary(), feature(), target()) -> boolean().
+-spec check_prerequisite(flag(), binary(), flag(), target()) -> boolean().
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
   case evaluate_flag(PrerequisiteFlag, Target, off) of
     {ok, VariationIdentifier, _} ->
