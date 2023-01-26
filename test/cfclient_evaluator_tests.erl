@@ -18,7 +18,7 @@ setup() ->
 
 
 cleanup(Modules) ->
-  ?debugFmt("Running cleanup ~p)", [Modules]),
+  % ?debugFmt("Running cleanup ~p)", [Modules]),
   meck:unload(Modules).
 
 
