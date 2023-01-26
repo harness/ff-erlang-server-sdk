@@ -13,7 +13,7 @@
 -define(SERVER, ?MODULE).
 
 -spec start_link(proplists:proplist()) -> supervisor:startlink_ret().
-start_link(Args) -> supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
+start_link(Args) -> supervisor:start_link(?MODULE, Args).
 
 init(Args) ->
   ApiKey = proplists:get_value(api_key, Args),
