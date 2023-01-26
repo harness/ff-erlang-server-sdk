@@ -90,7 +90,8 @@
 
 -include("cfclient_evaluator_operators.hrl").
 
-% Public API
+%% Public API
+
 -spec bool_variation(binary(), target(), config()) ->
   {ok, Id :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
 bool_variation(FlagId, Target, Config) ->
@@ -132,7 +133,8 @@ json_variation(FlagId, Target, Config) ->
   end.
 
 
-% internal
+%% Internal functions
+
 -spec evaluate(binary(), target(), map()) ->
   {ok, Id :: binary(), Value :: term()} | {error, unknown_flag}.
 evaluate(FlagId, Target, Config) ->
