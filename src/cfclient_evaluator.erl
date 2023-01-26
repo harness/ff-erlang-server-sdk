@@ -199,7 +199,7 @@ evaluate_flag(target_rules, #{variationToTargetMap := null} = Flag, Target) ->
 
 evaluate_flag(target_rules, #{variationToTargetMap := TM} = Flag, Target) when TM /= null ->
   case evaluate_target_rule(TM, Target) of
-    not_found ->
+    false ->
       ?LOG_DEBUG("Target rules map did not match flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(group_rules, Flag, Target);
 
@@ -279,12 +279,12 @@ return_target_or_group_variation(Flag, Id) ->
 
 
 -spec evaluate_target_rule([variation_map()], target()) ->
-  TargetVariationId :: binary() | not_found.
+  TargetVariationId :: binary() | false.
 evaluate_target_rule(VariationMap, #{identifier := Id}) -> search_variation_map(VariationMap, Id);
-evaluate_target_rule(_, _) -> not_found.
+evaluate_target_rule(_, _) -> false.
 
 -spec search_variation_map([variation_map()], binary()) ->
-  TargetVariationId :: binary() | not_found.
+  TargetVariationId :: binary() | false.
 search_variation_map([Head | Tail], Id) ->
   #{variation := Variation, targets := Targets} = Head,
   case lists:any(fun (#{identifier := I}) -> Id == I end, Targets) of
@@ -292,7 +292,7 @@ search_variation_map([Head | Tail], Id) ->
     _ -> search_variation_map(Tail, Id)
   end;
 
-search_variation_map([], _) -> not_found.
+search_variation_map([], _) -> false.
 
 
 -spec evaluate_target_group_rules(Rules :: [map()], cfclient:target()) ->
