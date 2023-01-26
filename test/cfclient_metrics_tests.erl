@@ -7,7 +7,7 @@
 %%% Created : 01. Dec 2022 15:17
 %%%-------------------------------------------------------------------
 
--module(cfclient_metrics_test).
+-module(cfclient_metrics_tests).
 
 -author("erowlands").
 
