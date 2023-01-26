@@ -316,8 +316,10 @@ search_rules_for_inclusion([Rule | Tail], Target) ->
     included ->
       % Check if percentage rollout applies to this rule
       case maps:get(distribution, Serve, false) of
-        % If not then return the rule's variation
-        false -> maps:get(variation, Serve);
+        false ->
+          % Return rule variation
+          maps:get(variation, Serve);
+
         % Apply the percentage rollout calculation for the rule
         Distribution when Distribution /= null ->
           #{bucketBy := BucketBy, variations := Variations} = Distribution,
