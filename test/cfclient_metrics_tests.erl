@@ -1,11 +1,9 @@
-%%%-------------------------------------------------------------------
-%%% @author erowlands
-%%% @copyright (C) 2022, <COMPANY>
-%%% @doc
-%%%
-%%% @end
-%%% Created : 01. Dec 2022 15:17
-%%%-------------------------------------------------------------------
+% @author erowlands
+% @copyright (C) 2022, <COMPANY>
+% @doc
+%
+% @end
+% Created : 01. Dec 2022 15:17
 
 -module(cfclient_metrics_tests).
 
