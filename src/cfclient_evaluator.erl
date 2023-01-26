@@ -233,9 +233,7 @@ evaluate_flag(group_rules, Flag, Target) -> evaluate_flag(default_on, Flag, Targ
 
 %% Default "on" variation
 evaluate_flag(default_on, Flag, Target) ->
-  #{variations := Variations, defaultServe := DefaultServe} = Flag,
-  #{variation := Id} = DefaultServe,
-
+  #{variations := Variations, defaultServe := #{variation := Id}} = Flag,
   case search_by_id(Variations, Id) of
     false ->
       ?LOG_ERROR("Default on variation not found for flag ~p, target ~p, id ~s", [Flag, Target, Id]),
