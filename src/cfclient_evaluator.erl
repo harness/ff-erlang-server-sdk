@@ -551,6 +551,11 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) -
       false
   end.
 
+-spec sort_by_priority([map()]) -> [map()].
+sort_by_priority(Values) ->
+  % 0 is highest priority
+  lists:sort(fun (#{priority := A}, #{priority := B}) -> A =< B end, Values).
+
 -spec search_by_id([map()], binary()) -> {value, map()} | false.
 search_by_id(Values, Id) ->
   lists:search(fun (#{identifier := I}) -> I == Id end, Values).
