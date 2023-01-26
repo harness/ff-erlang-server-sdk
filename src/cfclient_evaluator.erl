@@ -568,7 +568,7 @@ identifier_matches_any([], _) -> false;
 identifier_matches_any(Values, #{identifier := Id}) ->
   lists:any(fun (#{identifier := I}) -> Id == I end, Values);
 
-identifier_matches_any(Values, Id) ->
+identifier_matches_any(Values, Id) when is_binary(Id) ->
   lists:any(fun (#{identifier := I}) -> Id == I end, Values).
 
 -spec to_number(binary()) -> float() | integer().
