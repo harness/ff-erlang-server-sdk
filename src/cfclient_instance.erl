@@ -33,20 +33,14 @@ init(Args) ->
   case cfclient_config:authenticate(ApiKey, Config1) of
     {ok, Config} ->
       cfclient_config:set_config(Config),
-      PollInterval = maps:get(poll_interval, Config),
-      AnalyticsPushInterval = maps:get(analytics_push_interval, Config),
-      AnalyticsEnabled = maps:get(analytics_enabled, Config),
-      erlang:send_after(PollInterval, self(), poll),
-      case AnalyticsEnabled of
-        true -> erlang:send_after(AnalyticsPushInterval, self(), metrics);
-        false -> ok
-      end;
+      start_poll(Config),
+      start_analytics(Config),
+      {ok, Config};
 
     {error, Reason} ->
       ?LOG_ERROR("Authentication failed: ~p", [Reason]),
       {stop, authenticate}
   end.
-
 
 handle_info(metrics, Config) ->
   ?LOG_INFO("Metrics triggered"),
@@ -73,6 +67,18 @@ handle_info(poll, Config) ->
 handle_call(_, _From, State) -> {reply, ok, State}.
 
 handle_cast(_, State) -> {noreply, State}.
+
+start_poll(#{poll_enabled := true} = Config) ->
+    #{analytics_push_interval := Interval} = Config,
+    erlang:send_after(Interval, self(), poll);
+start_poll(_) ->
+    ok.
+
+start_analytics(#{analytics_enabled := true} = Config) ->
+    #{analytics_push_interval := Interval} = Config,
+    erlang:send_after(Interval, self(), metrics);
+start_analytics(_) ->
+    ok.
 
 % Ensure value is binary
 to_binary(Value) when is_binary(Value) -> Value;
