@@ -39,7 +39,7 @@ bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
 
       {error, Reason} ->
         ?LOG_ERROR(
-          "Evaluation failed for flag ~p, target ~p, returning default ~p: ~p",
+          "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
           [FlagKey, Target, Default, Reason]
         ),
         Default
@@ -47,7 +47,7 @@ bool_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
   catch
     _:_ : Stacktrace ->
       ?LOG_ERROR(
-        "Evaluation error for flag: ~p, target ~p, returning default ~p: ~p",
+        "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
         [FlagKey, Target, Default, Stacktrace]
       ),
       Default
@@ -75,7 +75,7 @@ string_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
 
       {error, Reason} ->
         ?LOG_ERROR(
-          "Evaluation failed for flag ~p, target ~p, returning default ~p: ~p",
+          "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
           [FlagKey, Target, Default, Reason]
         ),
         Default
@@ -83,7 +83,7 @@ string_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
   catch
     _:_ : Stacktrace ->
       ?LOG_ERROR(
-        "Evaluation failed for flag ~p, target ~p, returning default ~p: ~p",
+        "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
         [FlagKey, Target, Default, Stacktrace]
       ),
       Default
@@ -111,7 +111,7 @@ number_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
 
       {error, Reason} ->
         ?LOG_ERROR(
-          "Evaluation failed for flag ~p, target ~p, returning default ~p: ~p",
+          "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
           [FlagKey, Target, Default, Reason]
         ),
         Default
@@ -119,7 +119,7 @@ number_variation(FlagKey, Target0, Default) when is_binary(FlagKey) ->
   catch
     _:_ : Stacktrace ->
       ?LOG_ERROR(
-        "Evaluation failed for flag ~p, target ~p, returning default ~p: ~p",
+        "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
         [FlagKey, Target, Default, Stacktrace]
       ),
       Default
