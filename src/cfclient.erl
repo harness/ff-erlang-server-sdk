@@ -25,14 +25,17 @@
 
 -spec bool_variation(binary() | string(), target(), boolean()) -> boolean().
 bool_variation(FlagKey, Target, Default) ->
-  Config = cfclient_config:get_config(),
-  bool_variation(FlagKey, Target, Default, Config).
+  bool_variation(default, FlagKey, Target, Default).
 
--spec bool_variation(binary() | string(), target(), boolean(), map()) -> boolean().
-bool_variation(FlagKey, Target, Default, Config) when is_list(FlagKey) ->
-  bool_variation(list_to_binary(FlagKey), Target, Default, Config);
+-spec bool_variation(atom() | map(), binary() | string(), target(), boolean()) -> boolean().
+bool_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  bool_variation(Config, list_to_binary(FlagKey), Target, Default);
 
-bool_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
+bool_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  bool_variation(Config, FlagKey, Target, Default);
+
+bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:bool_variation(FlagKey, Target, Config) of
@@ -63,16 +66,19 @@ bool_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
   end.
 
 
--spec string_variation(binary() | list(), target(), binary()) -> binary().
+-spec string_variation(binary() | string(), target(), binary()) -> binary().
 string_variation(FlagKey, Target, Default) ->
-  Config = cfclient_config:get_config(),
-  string_variation(FlagKey, Target, Default, Config).
+  string_variation(default, FlagKey, Target, Default).
 
--spec string_variation(binary() | list(), target(), binary(), map()) -> binary().
-string_variation(FlagKey, Target, Default, Config) when is_list(FlagKey) ->
-  string_variation(list_to_binary(FlagKey), Target, Default, Config);
+-spec string_variation(atom() | map(), binary() | list(), target(), binary()) -> binary().
+string_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  string_variation(Config, list_to_binary(FlagKey), Target, Default);
 
-string_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
+string_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  string_variation(Config, FlagKey, Target, Default);
+
+string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:string_variation(FlagKey, Target, Config) of
@@ -105,14 +111,17 @@ string_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
 
 -spec number_variation(binary() | list(), target(), number()) -> number().
 number_variation(FlagKey, Target, Default) ->
-  Config = cfclient_config:get_config(),
-  number_variation(FlagKey, Target, Default, Config).
+  number_variation(default, FlagKey, Target, Default).
 
--spec number_variation(binary() | list(), target(), number(), map()) -> number().
-number_variation(FlagKey, Target, Default, Config) when is_list(FlagKey) ->
-  number_variation(list_to_binary(FlagKey), Target, Default, Config);
+-spec number_variation(atom() | map(), binary() | list(), target(), number()) -> number().
+number_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  number_variation(Config, list_to_binary(FlagKey), Target, Default);
 
-number_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
+number_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  number_variation(Config, FlagKey, Target, Default);
+
+number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:number_variation(FlagKey, Target, Config) of
@@ -145,14 +154,17 @@ number_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
 
 -spec json_variation(binary() | list(), target(), map()) -> map().
 json_variation(FlagKey, Target, Default) ->
-  Config = cfclient_config:get_config(),
-  json_variation(FlagKey, Target, Default, Config).
+  json_variation(default, FlagKey, Target, Default).
 
--spec json_variation(binary() | list(), target(), map(), map()) -> map().
-json_variation(FlagKey, Target, Default, Config) when is_list(FlagKey) ->
-  json_variation(list_to_binary(FlagKey), Target, Default, Config);
+-spec json_variation(atom() | map(), binary() | list(), target(), map()) -> map().
+json_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  json_variation(Config, list_to_binary(FlagKey), Target, Default);
 
-json_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
+json_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  json_variation(Config, FlagKey, Target, Default);
+
+json_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:json_variation(FlagKey, Target, Config) of
@@ -185,10 +197,10 @@ json_variation(FlagKey, Target0, Default, Config) when is_binary(FlagKey) ->
 
 % Convert target identifier to binary, as users can provide it as a string,
 % binary, or atom, but client API works in binary.
-normalize_target(#{identifier := Identifier} = Target) when is_binary(Identifier) -> Target;
+normalize_target(#{identifier := Id} = Target) when is_binary(Id) -> Target;
 
-normalize_target(#{identifier := Identifier} = Target) ->
-  Target#{identifier := to_binary(Identifier)};
+normalize_target(#{identifier := Id} = Target) ->
+  Target#{identifier := to_binary(Id)};
 
 normalize_target(Target) -> maps:put(identifier, <<>>, Target).
 
