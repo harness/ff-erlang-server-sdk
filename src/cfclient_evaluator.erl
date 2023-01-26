@@ -24,12 +24,64 @@
                 serve => map(),
                 op => binary(),
                 values => [binary()],
-                excluded => list(),
-                included => list()
+                excluded => [map()] | null,
+                included => [map()] | null
               }.
+
+% -type cfapi_serving_rule() ::
+%     #{ 'ruleId' => binary(),
+%        'priority' := integer(),
+%        'clauses' := list(),
+%        'serve' := cfapi_serve:cfapi_serve()
+%      }.
+
+% "attribute": "identifier",
+%    "negate": false,
+%    "op": "equal",
+%    "values": [
+%        "one"
+%    ]
+
 -type target() :: cfclient:target().
--type feature() :: cfclient:feature().
--type segment() :: cfclient:segment().
+% -type flag() :: cfapi_feature_config:cfapi_feature_config().
+
+-type flag() ::
+    #{
+       'createdAt' => integer(), % added
+       'defaultServe' := cfapi_serve:cfapi_serve(),
+       'environment' := binary(),
+       'excluded' => list(), % added
+       'feature' := binary(),
+       'identifier' => binary(), % added
+       'included' => list(), % added
+       'kind' := binary(),
+       'modifiedAt' => integer(), % added
+       'name' => binary(),
+       'offVariation' := binary(),
+       'prerequisites' => list(),
+       'project' := binary(),
+       'rules' => [map()],
+       'state' := binary() | map(),
+       % 'state' := cfapi_feature_state:cfapi_feature_state(),
+       'tags' => list(), % added
+       'variationToTargetMap' => list() | null,
+       'variations' := list(),
+       'version' => integer()
+     }.
+
+-type segment() :: cfapi_segment:cfapi_segment().
+% -type cfapi_segment() ::
+%     #{ 'identifier' := binary(),
+%        'name' := binary(),
+%        'environment' => binary(),
+%        'tags' => list(),
+%        'included' => [map()] | null,
+%        'excluded' => [map()] | null,
+%        'rules' => [map()],
+%        'createdAt' => integer(),
+%        'modifiedAt' => integer(),
+%        'version' => integer()
+%      }.
 -type variation_map() :: cfapi_variation_map:cfapi_variation_map().
 -type config() :: map().
 
