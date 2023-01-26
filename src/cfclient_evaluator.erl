@@ -137,7 +137,7 @@ json_variation(FlagIdentifier, Target, Config) ->
 evaluate(FlagIdentifier, Target, Config) ->
   case cfclient_cache:get_value({flag, FlagIdentifier}, Config) of
     {error, undefined} ->
-      ?LOG_ERROR("Flag not found in cache: ~p", [FlagIdentifier]),
+      ?LOG_ERROR("Flag ~s not found in cache", [FlagIdentifier]),
       {error, unknown_flag};
 
     {ok, Flag} -> evaluate_flag(Flag, Target, off)
@@ -152,12 +152,12 @@ evaluate(FlagIdentifier, Target, Config) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, atom()}.
 % Evaluate for off state
 evaluate_flag(#{state := <<"off">>} = Flag, _Target, off) ->
-  #{feature := Feature, offVariation := OffVariation} = Flag,
-  ?LOG_DEBUG("Flag ~p is off, returning default 'off' variation", [Feature]),
+  #{offVariation := OffVariation} = Flag,
+  ?LOG_DEBUG("Flag state off for flag ~p, returning default 'off' variation", [Flag]),
   get_default_off_variation(Flag, OffVariation);
 
 evaluate_flag(#{state := <<"on">>} = Flag, Target, off) ->
-  ?LOG_DEBUG("Flag ~p is on", [maps:get(feature, Flag)]),
+  ?LOG_DEBUG("Flag state on for flag ~p", [Flag]),
   evaluate_flag(Flag, Target, prerequisites);
 
 % TODO: type mismatch with state, which is declared as a map, match any state here
@@ -167,21 +167,22 @@ evaluate_flag(Flag, Target, off) ->
   evaluate_flag(Flag, Target, prerequisites);
 
 evaluate_flag(#{prerequisites := []} = Flag, Target, prerequisites) ->
+  ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(Flag, Target, target_rules);
 
 evaluate_flag(#{prerequisites := Prerequisites} = Flag, Target, prerequisites) ->
   case search_prerequisites(Prerequisites, Target) of
     true ->
-      % Prerequisites met, continue evaluating
-      ?LOG_DEBUG("All prerequisites met for flag ~p, target ~p", [Flag, Target]),
+      ?LOG_DEBUG("Prerequisites met for flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(Flag, Target, target_rules);
 
     _ ->
-      % Prerequisites not met
+      ?LOG_DEBUG("Prerequisites not met for flag ~p, target ~p", [Flag, Target]),
       get_default_off_variation(Flag, maps:get(offVariation, Flag))
   end;
 
 evaluate_flag(Flag, Target, prerequisites) -> evaluate_flag(Flag, Target, target_rules);
+
 % Evaluate target rules
 evaluate_flag(#{variationToTargetMap := []} = Flag, Target, target_rules) ->
   #{feature := Feature} = Flag,
@@ -198,54 +199,54 @@ evaluate_flag(#{variationToTargetMap := VariationToTargetMap} = Flag, Target, ta
   ?LOG_DEBUG("Evaluating target rule for flag ~p, target ~p", [Feature, Target]),
   case evaluate_target_rule(VariationToTargetMap, Target) of
     not_found ->
-      ?LOG_DEBUG("Target rule did not match flag ~p, target ~p", [Feature, Target]),
+      ?LOG_DEBUG("Target rules map did not match flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(Flag, Target, group_rules);
 
     TargetVariationIdentifier ->
-      ?LOG_DEBUG("Target rule matched flag ~p with target ~p", [Feature, Target]),
+      ?LOG_DEBUG("Target rules map matched flag ~p, target ~p", [Flag, Target]),
       %% Return both variation identifier and not just the value, because
       %% prerequisites compares on variation identifier
       get_target_or_group_variation(Flag, TargetVariationIdentifier)
   end;
 
 evaluate_flag(Flag, Target, target_rules) ->
-  #{feature := Feature} = Flag,
-  ?LOG_DEBUG("No target rules for flag ~p, target ~p", [Feature, Target]),
+  ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(Flag, Target, group_rules);
 
 % Evaluate group rules
 evaluate_flag(#{rules := []} = Flag, Target, group_rules) ->
+  ?LOG_DEBUG("Group rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(Flag, Target, default_on);
 
 evaluate_flag(#{rules := Rules} = Flag, Target, group_rules) ->
-  #{feature := Feature} = Flag,
-  ?LOG_DEBUG("Evaluating Group rules for flag ~p, target ~p", [Feature, Target]),
   case evaluate_target_group_rules(Rules, Target) of
     not_found ->
-      ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Feature, Target]),
+      ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(Flag, Target, default_on);
 
     excluded ->
-      ?LOG_DEBUG("Group rules excluded flag ~p, target ~p", [Feature, Target]),
+      ?LOG_DEBUG("Group rules excluded flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(Flag, Target, default_on);
 
     GroupVariationIdentifier ->
-      ?LOG_DEBUG("Group rule matched flag ~p with target ~p", [Feature, Target]),
+      ?LOG_DEBUG("Group rules matched flag ~p, target ~p", [Flag, Target]),
       get_target_or_group_variation(Flag, GroupVariationIdentifier)
   end;
 
 evaluate_flag(Flag, Target, group_rules) -> evaluate_flag(Flag, Target, default_on);
+
 % Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
   #{feature := Feature, variations := Variations, defaultServe := DefaultServe} = Flag,
   #{variation := Identifier} = DefaultServe,
-  ?LOG_DEBUG("Returning default 'on' variation for flag ~p, target ~p", [Feature, Target]),
   case get_variation(Variations, Identifier) of
     {error, not_found} ->
-      ?LOG_ERROR("Default variation not found for flag ~p, identifier ~p", [Feature, Identifier]),
+      ?LOG_ERROR("Default on variation not found for flag ~p, target ~p, id ~s", [Flag, Target, Id]),
       {error, not_found};
 
-    {ok, #{value := Value}} -> {ok, Identifier, Value}
+    {ok, #{value := Value}} ->
+      ?LOG_DEBUG("Default on variation returned for flag ~p, target ~p, id ~s: ~p", [Flag, Target, Id, Value]),
+      {ok, Id, Value}
   end.
 
 
@@ -255,10 +256,12 @@ get_default_off_variation(Flag, Identifier) ->
   #{variations := Variations} = Flag,
   case get_variation(Variations, Identifier) of
     {error, not_found} ->
-      ?LOG_ERROR("Off variation not found: ~p", [Identifier]),
+      ?LOG_ERROR("Default off variation not found for flag ~p, id ~s", [Flag, Id]),
       {error, not_found};
 
-    {ok, #{value := Value}} -> {ok, Identifier, Value}
+    {ok, #{value := Value}} ->
+      ?LOG_DEBUG("Default off variation returned for flag ~p, id ~s: ~p", [Flag, Id, Value]),
+      {ok, Id, Value}
   end.
 
 
@@ -268,10 +271,7 @@ get_target_or_group_variation(Flag, Identifier) ->
   #{feature := Feature, variations := Variations} = Flag,
   case get_variation(Variations, Identifier) of
     {error, not_found} ->
-      ?LOG_ERROR(
-        "Target matched rule for flag ~p but variation with identifier ~p not found",
-        [Feature, Identifier]
-      ),
+      ?LOG_ERROR("Target matched rule for flag ~p but variation id ~p not found", [Flag, Id]),
       {error, not_found};
 
     {ok, #{value := Value}} -> {ok, Identifier, Value}
