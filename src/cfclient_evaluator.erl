@@ -89,40 +89,40 @@
 
 % Public API
 -spec bool_variation(binary(), target(), config()) ->
-  {ok, Identifier :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
-bool_variation(FlagIdentifier, Target, Config) ->
-  case evaluate(FlagIdentifier, Target, Config) of
-    {ok, VariationIdentifier, <<"true">>} -> {ok, VariationIdentifier, true};
-    {ok, VariationIdentifier, <<"false">>} -> {ok, VariationIdentifier, false};
+  {ok, Id :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
+bool_variation(FlagId, Target, Config) ->
+  case evaluate(FlagId, Target, Config) of
+    {ok, VariationId, <<"true">>} -> {ok, VariationId, true};
+    {ok, VariationId, <<"false">>} -> {ok, VariationId, false};
     {error, Reason} -> {error, Reason}
   end.
 
 
 -spec string_variation(binary(), target(), config()) ->
-  {ok, Identifier :: binary(), Value :: string()} | {error, Reason :: atom()}.
-string_variation(FlagIdentifier, Target, Config) ->
-  case evaluate(FlagIdentifier, Target, Config) of
+  {ok, Id :: binary(), Value :: string()} | {error, Reason :: atom()}.
+string_variation(FlagId, Target, Config) ->
+  case evaluate(FlagId, Target, Config) of
     % TODO: return binary?
-    {ok, VariationIdentifier, Variation} -> {ok, VariationIdentifier, binary_to_list(Variation)};
+    {ok, VariationId, Variation} -> {ok, VariationId, binary_to_list(Variation)};
     {error, Reason} -> {error, Reason}
   end.
 
 
 -spec number_variation(binary(), target(), config()) ->
-  {ok, Identifier :: binary(), Value :: number()} | {error, Reason :: atom()}.
-number_variation(FlagIdentifier, Target, Config) ->
-  case evaluate(FlagIdentifier, Target, Config) of
-    {ok, VariationIdentifier, Variation} -> {ok, VariationIdentifier, to_number(Variation)};
+  {ok, Id :: binary(), Value :: number()} | {error, Reason :: atom()}.
+number_variation(FlagId, Target, Config) ->
+  case evaluate(FlagId, Target, Config) of
+    {ok, VariationId, Variation} -> {ok, VariationId, to_number(Variation)};
     {error, Reason} -> {error, Reason}
   end.
 
 
 -spec json_variation(binary(), target(), config()) ->
-  {ok, Identifier :: binary(), Value :: map()} | {error, Reason :: atom()}.
-json_variation(FlagIdentifier, Target, Config) ->
-  case evaluate(FlagIdentifier, Target, Config) of
-    {ok, VariationIdentifier, Variation} ->
-      try {ok, VariationIdentifier, jsx:decode(Variation, [])} catch
+  {ok, Id :: binary(), Value :: map()} | {error, Reason :: atom()}.
+json_variation(FlagId, Target, Config) ->
+  case evaluate(FlagId, Target, Config) of
+    {ok, VariationId, Variation} ->
+      try {ok, VariationId, jsx:decode(Variation, [])} catch
         error : badarg ->
           ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
           {error, json_decode} end;
@@ -133,11 +133,11 @@ json_variation(FlagIdentifier, Target, Config) ->
 
 % internal
 -spec evaluate(binary(), target(), map()) ->
-  {ok, Identifier :: binary(), Value :: term()} | {error, unknown_flag}.
-evaluate(FlagIdentifier, Target, Config) ->
-  case cfclient_cache:get_value({flag, FlagIdentifier}, Config) of
+  {ok, Id :: binary(), Value :: term()} | {error, unknown_flag}.
+evaluate(FlagId, Target, Config) ->
+  case cfclient_cache:get_value({flag, FlagId}, Config) of
     {error, undefined} ->
-      ?LOG_ERROR("Flag ~s not found in cache", [FlagIdentifier]),
+      ?LOG_ERROR("Flag ~s not found in cache", [FlagId]),
       {error, unknown_flag};
 
     {ok, Flag} -> evaluate_flag(Flag, Target, off)
@@ -149,7 +149,7 @@ evaluate(FlagIdentifier, Target, Config) ->
   target(),
   default_on | group_rules | off | prerequisites | target_rules
 ) ->
-  {ok, Identifier :: binary(), Value :: term()} | {error, atom()}.
+  {ok, Id :: binary(), Value :: term()} | {error, atom()}.
 % Evaluate for off state
 evaluate_flag(#{state := <<"off">>} = Flag, _Target, off) ->
   #{offVariation := OffVariation} = Flag,
@@ -195,11 +195,11 @@ evaluate_flag(#{variationToTargetMap := Map} = Flag, Target, target_rules) when 
       ?LOG_DEBUG("Target rules map did not match flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(Flag, Target, group_rules);
 
-    TargetVariationIdentifier ->
+    TargetVariationId ->
       ?LOG_DEBUG("Target rules map matched flag ~p, target ~p", [Flag, Target]),
       %% Return both variation identifier and not just the value, because
       %% prerequisites compares on variation identifier
-      get_target_or_group_variation(Flag, TargetVariationIdentifier)
+      get_target_or_group_variation(Flag, TargetVariationId)
   end;
 
 evaluate_flag(Flag, Target, target_rules) ->
@@ -221,9 +221,9 @@ evaluate_flag(#{rules := Rules} = Flag, Target, group_rules) when Rules /= null 
       ?LOG_DEBUG("Group rules excluded flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(Flag, Target, default_on);
 
-    GroupVariationIdentifier ->
+    GroupVariationId ->
       ?LOG_DEBUG("Group rules matched flag ~p, target ~p", [Flag, Target]),
-      get_target_or_group_variation(Flag, GroupVariationIdentifier)
+      get_target_or_group_variation(Flag, GroupVariationId)
   end;
 
 evaluate_flag(Flag, Target, group_rules) -> evaluate_flag(Flag, Target, default_on);
@@ -244,7 +244,7 @@ evaluate_flag(Flag, Target, default_on) ->
 
 
 -spec get_default_off_variation(flag(), binary()) ->
-  {ok, Identifier :: binary(), Value :: term()} | {error, not_found}.
+  {ok, Id :: binary(), Value :: term()} | {error, not_found}.
 get_default_off_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
   case get_variation(Variations, Id) of
@@ -259,7 +259,7 @@ get_default_off_variation(Flag, Id) ->
 
 
 -spec get_target_or_group_variation(flag(), binary()) ->
-  {ok, Identifier :: binary(), term()} | {error, not_found}.
+  {ok, Id :: binary(), term()} | {error, not_found}.
 get_target_or_group_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
   case get_variation(Variations, Id) of
@@ -314,9 +314,9 @@ search_rules_for_inclusion([Rule | Tail], Target) ->
         % Apply the percentage rollout calculation for the rule
         Distribution when Distribution /= null ->
           #{bucketBy := BucketBy, variations := Variations} = Distribution,
-          #{identifier := Identifier, name := Name} = Target,
+          #{identifier := Id, name := Name} = Target,
           Attributes = maps:get(attributes, Target, #{}),
-          TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Identifier, Name),
+          TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Id, Name),
           apply_percentage_rollout(Variations, BucketBy, TargetAttributeValue, 0)
       end;
 
@@ -371,10 +371,10 @@ search_group(custom_rules, _, _) -> false.
 -spec search_group_custom_rules(CustomRules :: [map()], target()) -> boolean().
 search_group_custom_rules([Rule | Tail], Target) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Rule,
-  #{identifier := TargetIdentifier, name := TargetName} = Target,
+  #{identifier := TargetId, name := TargetName} = Target,
   TargetAttributes = maps:get(attributes, Target, #{}),
   TargetAttribute =
-    get_attribute_value(TargetAttributes, RuleAttribute, TargetIdentifier, TargetName),
+    get_attribute_value(TargetAttributes, RuleAttribute, TargetId, TargetName),
   case is_custom_rule_match(Op, TargetAttribute, RuleValue) of
     true -> true;
     false -> search_group_custom_rules(Tail, Target)
@@ -430,7 +430,7 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(Targ
 
 
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
-get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetIdentifier, TargetName)
+get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetId, TargetName)
 when is_map(TargetCustomAttributes), map_size(TargetCustomAttributes) > 0 ->
   % Check if rule attribute matches custom attributes.
   % Custom attribute keys are atoms
@@ -439,10 +439,10 @@ when is_map(TargetCustomAttributes), map_size(TargetCustomAttributes) > 0 ->
       % Rule values are binaries
       custom_attribute_to_binary(Value);
 
-    error -> get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
+    error -> get_attribute_value(#{}, RuleAttribute, TargetId, TargetName)
   end;
 
-get_attribute_value(_, <<"identifier">>, Identifier, _) -> Identifier;
+get_attribute_value(_, <<"identifier">>, Id, _) -> Id;
 get_attribute_value(_, <<"name">>, _, Name) -> Name;
 get_attribute_value(_, _, _, _) -> <<>>.
 
@@ -502,15 +502,15 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
 
 -spec search_prerequisites(Prerequisites :: list(), binary()) -> boolean().
 search_prerequisites([Head | Tail], Target) ->
-  Identifier = maps:get(feature, Head),
+  Id = maps:get(feature, Head),
   % Get prerequisite from cache
-  case cfclient_cache:get_value({flag, Identifier}) of
+  case cfclient_cache:get_value({flag, Id}) of
     {error, undefined} ->
-      ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Identifier]),
+      ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Id]),
       false;
 
     {ok, PrerequisiteFlag} ->
-      case check_prerequisite(PrerequisiteFlag, Identifier, Head, Target) of
+      case check_prerequisite(PrerequisiteFlag, Id, Head, Target) of
         %% A prerequisite has been met, so continue to check any others
         true -> search_prerequisites(Tail, Target);
         % Prerequisites are not met
@@ -524,31 +524,31 @@ search_prerequisites([], _) -> true.
 
 
 -spec check_prerequisite(flag(), binary(), flag(), target()) -> boolean().
-check_prerequisite(PrerequisiteFlag, PrerequisiteFlagIdentifier, Prerequisite, Target) ->
+check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) ->
   case evaluate_flag(PrerequisiteFlag, Target, off) of
-    {ok, VariationIdentifier, _} ->
+    {ok, VariationId, _} ->
       ?LOG_DEBUG(
         "Prerequisite flag ~p has variation ~p, target ~p",
-        [PrerequisiteFlagIdentifier, VariationIdentifier, Target]
+        [PrerequisiteFlagId, VariationId, Target]
       ),
       PrerequisiteVariations = maps:get(variations, Prerequisite),
       ?LOG_DEBUG(
         "Prerequisite flag ~p should have variations ~p",
-        [PrerequisiteFlagIdentifier, PrerequisiteVariations]
+        [PrerequisiteFlagId, PrerequisiteVariations]
       ),
-      lists:member(VariationIdentifier, PrerequisiteVariations);
+      lists:member(VariationId, PrerequisiteVariations);
 
     {error, Reason} ->
       ?LOG_ERROR(
         "Could not evaluate prerequisite flag ~p: ~p",
-        [PrerequisiteFlagIdentifier, Reason]
+        [PrerequisiteFlagId, Reason]
       ),
       false
   end.
 
 
 -spec get_variation([map()], binary()) -> {ok, map()} | {error, not_found}.
-get_variation([], _Identifier) -> {error, not_found};
+get_variation([], _Id) -> {error, not_found};
 get_variation([#{identifier := Id} = Head | _Tail], Id) -> {ok, Head};
 get_variation([_Head | Tail], Id) -> get_variation(Tail, Id).
 
