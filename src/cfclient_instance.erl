@@ -23,13 +23,16 @@ start_link(Args) ->
 
 
 init(Args) ->
-  ApiKey0 = proplists:get_value(api_key, Args),
-  ApiKey = to_binary(ApiKey0),
+  ApiKey = proplists:get_value(api_key, Args),
   Config0 = proplists:get_value(config, Args, []),
   Config1 = cfclient_config:normalize(Config0),
+
   ok = cfclient_config:create_tables(Config1),
+  cfclient_config:set_config(Config1),
+
   case cfclient_config:authenticate(ApiKey, Config1) of
     {ok, Config} ->
+      cfclient_config:set_config(Config),
       PollInterval = maps:get(poll_interval, Config),
       AnalyticsPushInterval = maps:get(analytics_push_interval, Config),
       AnalyticsEnabled = maps:get(analytics_enabled, Config),
