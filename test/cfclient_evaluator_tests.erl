@@ -874,7 +874,7 @@ evaluate_target_rule_test() ->
   ),
   %% Not Found %%
   ?assertEqual(
-    not_found,
+    false,
     cfclient_evaluator:evaluate_target_rule(SmallVariationMap, NonExistentTarget)
   ),
   %%-------------------- Multiple Targets--------------------
@@ -923,11 +923,11 @@ evaluate_target_rule_test() ->
   ),
   %% Not Found %%
   ?assertEqual(
-    not_found,
+    false,
     cfclient_evaluator:evaluate_target_rule(LargeVariationMap, NonExistentTarget)
   ),
   %%-------------------- Null Variation Map or Target --------------------
-  ?assertEqual(not_found, cfclient_evaluator:evaluate_target_rule(null, asd)).
+  ?assertEqual(false, cfclient_evaluator:evaluate_target_rule(null, asd)).
 
 
 search_variation_map_test() ->
@@ -950,7 +950,7 @@ search_variation_map_test() ->
   ),
   %% Not Found %%
   ?assertEqual(
-    not_found,
+    false,
     cfclient_evaluator:search_variation_map(VariationMap, <<"target_identifier_33333">>)
   ),
   %%-------------------- Multiple targets --------------------
@@ -981,7 +981,7 @@ search_variation_map_test() ->
   ),
   %% Not Found %%
   ?assertEqual(
-    not_found,
+    false,
     cfclient_evaluator:search_variation_map(VariationMap2, <<"target_identifier_9999">>)
   ).
 
