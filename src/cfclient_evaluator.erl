@@ -231,8 +231,8 @@ evaluate_flag(group_rules, #{rules := []} = Flag, Target) ->
   evaluate_flag(default_on, Flag, Target);
 
 evaluate_flag(group_rules, #{rules := Rules} = Flag, Target) when Rules /= null ->
-  case evaluate_target_group_rules(Rules, Target) of
-    not_found ->
+  case search_rules_for_inclusion(sort_by_priority(Rules), Target) of
+    false ->
       ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(default_on, Flag, Target);
 
@@ -304,17 +304,6 @@ search_variation_map([Head | Tail], Id) ->
   end;
 
 search_variation_map([], _) -> false.
-
-
--spec evaluate_target_group_rules(Rules :: [map()], cfclient:target()) ->
-  binary() | excluded | not_found.
-% If no rules to evaluate, return Target variation
-evaluate_target_group_rules([], _) -> not_found;
-
-evaluate_target_group_rules(Rules0, Target) ->
-  % Sort by priority, 0 is highest.
-  Rules = lists:sort(fun (#{priority := A}, #{priority := B}) -> A =< B end, Rules0),
-  search_rules_for_inclusion(Rules, Target).
 
 
 -spec search_rules_for_inclusion([rule()], target()) ->
