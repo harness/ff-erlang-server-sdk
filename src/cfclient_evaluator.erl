@@ -145,7 +145,7 @@ evaluate(FlagIdentifier, Target, Config) ->
 
 
 -spec evaluate_flag(
-  feature() | segment(),
+  flag() | segment(),
   target(),
   default_on | group_rules | off | prerequisites | target_rules
 ) ->
