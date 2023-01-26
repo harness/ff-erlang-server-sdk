@@ -307,7 +307,7 @@ search_variation_map([], _) -> false.
 
 
 -spec search_rules_for_inclusion([rule()], target()) ->
-  Variation :: binary() | excluded | not_found.
+  Variation :: binary() | excluded | percentage_rollout_excluded | false.
 search_rules_for_inclusion([Rule | Tail], Target) ->
   #{clauses := Clauses, serve := Serve} = Rule,
   case is_rule_included_or_excluded(Clauses, Target) of
