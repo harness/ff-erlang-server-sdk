@@ -253,9 +253,9 @@ evaluate_flag(Flag, Target, default_on) ->
 
 -spec get_default_off_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
   {ok, Identifier :: binary(), Value :: term()} | {error, not_found}.
-get_default_off_variation(Flag, Identifier) ->
+get_default_off_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
-  case get_variation(Variations, Identifier) of
+  case get_variation(Variations, Id) of
     {error, not_found} ->
       ?LOG_ERROR("Default off variation not found for flag ~p, id ~s", [Flag, Id]),
       {error, not_found};
@@ -268,29 +268,30 @@ get_default_off_variation(Flag, Identifier) ->
 
 -spec get_target_or_group_variation(cfapi_feature_config:cfapi_feature_config(), binary()) ->
   {ok, Identifier :: binary(), term()} | {error, not_found}.
-get_target_or_group_variation(Flag, Identifier) ->
+get_target_or_group_variation(Flag, Id) ->
   #{feature := Feature, variations := Variations} = Flag,
-  case get_variation(Variations, Identifier) of
+  case get_variation(Variations, Id) of
     {error, not_found} ->
       ?LOG_ERROR("Target matched rule for flag ~p but variation id ~p not found", [Flag, Id]),
       {error, not_found};
 
-    {ok, #{value := Value}} -> {ok, Identifier, Value}
+    {ok, #{value := Value}} ->
+      {ok, Id, Value}
   end.
 
 
 -spec evaluate_target_rule([variation_map()], target()) -> binary() | not_found.
-evaluate_target_rule(VariationMap, #{identifier := Identifier}) ->
-  search_variation_map(VariationMap, Identifier);
+evaluate_target_rule(VariationMap, #{identifier := Id}) ->
+  search_variation_map(VariationMap, Id);
 
 evaluate_target_rule(_, _) -> not_found.
 
 -spec search_variation_map([variation_map()], binary()) -> binary() | not_found.
-search_variation_map([Head | Tail], Identifier) ->
+search_variation_map([Head | Tail], Id) ->
   #{variation := Variation, targets := Targets} = Head,
-  case lists:any(fun (#{identifier := I}) -> Identifier == I end, Targets) of
+  case lists:any(fun (#{identifier := I}) -> Id == I end, Targets) of
     true -> Variation;
-    _ -> search_variation_map(Tail, Identifier)
+    _ -> search_variation_map(Tail, Id)
   end;
 
 search_variation_map([], _) -> not_found.
@@ -309,9 +310,9 @@ evaluate_target_group_rules(Rules, Target) ->
   search_rules_for_inclusion(PrioritizedRules, Target).
 
 
--spec search_rules_for_inclusion([rule()], target()) -> binary() | excluded | not_found.
-search_rules_for_inclusion([Head | Tail], Target) ->
-  #{clauses := Clauses, serve := Serve} = Head,
+-spec search_rules_for_inclusion([rule()], target()) -> Variation :: binary() | excluded | not_found.
+search_rules_for_inclusion([Rule | Tail], Target) ->
+  #{clauses := Clauses, serve := Serve} = Rule,
   case is_rule_included_or_excluded(Clauses, Target) of
     excluded -> excluded;
 
@@ -377,8 +378,8 @@ search_group(custom_rules, Target, #{rules := Values}) ->
 
 
 -spec search_group_custom_rules(CustomRules :: [map()], target()) -> boolean().
-search_group_custom_rules([Head | Tail], Target) ->
-  #{attribute := RuleAttribute, values := RuleValue, op := Op} = Head,
+search_group_custom_rules([Rule | Tail], Target) ->
+  #{attribute := RuleAttribute, values := RuleValue, op := Op} = Rule,
   #{identifier := TargetIdentifier, name := TargetName} = Target,
   TargetAttributes = maps:get(attributes, Target, #{}),
   TargetAttribute =
