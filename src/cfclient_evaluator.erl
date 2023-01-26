@@ -310,11 +310,11 @@ search_variation_map([], _) -> false.
   Variation :: binary() | excluded | false.
 search_rules_for_inclusion([Rule | Tail], Target) ->
   #{clauses := Clauses, serve := Serve} = Rule,
-  case is_rule_included_or_excluded(Clauses, Target) of
-    excluded ->
+  case lists:foldl(fun match_rule_clause/2, {Target, false}, Clauses) of
+    {_, excluded} ->
       excluded;
 
-    included ->
+    {_, included} ->
       % Check if percentage rollout applies to this rule
       case maps:get(distribution, Serve, false) of
         false ->
