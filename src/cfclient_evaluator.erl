@@ -302,12 +302,10 @@ search_variation_map([], _) -> not_found.
 % If no rules to evaluate, return Target variation
 evaluate_target_group_rules([], _) -> not_found;
 
-evaluate_target_group_rules(Rules, Target) ->
+evaluate_target_group_rules(Rules0, Target) ->
   % Sort by priority, 0 is highest.
-  PrioritizedRules =
-    lists:sort(fun (A, B) -> maps:get(priority, A) =< maps:get(priority, B) end, Rules),
-  %% Check if a target is included or excluded from the rules.
-  search_rules_for_inclusion(PrioritizedRules, Target).
+  Rules = lists:sort(fun (#{priority := A}, #{priority := B}) -> A =< B end, Rules0),
+  search_rules_for_inclusion(Rules, Target).
 
 
 -spec search_rules_for_inclusion([rule()], target()) -> Variation :: binary() | excluded | not_found.
