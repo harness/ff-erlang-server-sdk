@@ -166,6 +166,7 @@ evaluate_flag(Flag, Target, off) ->
   ?LOG_WARNING("Skipping off check for ~p", [Feature]),
   evaluate_flag(Flag, Target, prerequisites);
 
+% Evaluate prerequisites
 evaluate_flag(#{prerequisites := []} = Flag, Target, prerequisites) ->
   ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(Flag, Target, target_rules);
@@ -301,7 +302,7 @@ search_variation_map([], _) -> not_found.
 evaluate_target_group_rules([], _) -> not_found;
 
 evaluate_target_group_rules(Rules, Target) ->
-  % Sort Target Group Rules by priority, 0 is highest.
+  % Sort by priority, 0 is highest.
   PrioritizedRules =
     lists:sort(fun (A, B) -> maps:get(priority, A) =< maps:get(priority, B) end, Rules),
   %% Check if a target is included or excluded from the rules.
@@ -315,11 +316,11 @@ search_rules_for_inclusion([Head | Tail], Target) ->
     excluded -> excluded;
 
     included ->
-      %% Check if percentage rollout applies to this rule
+      % Check if percentage rollout applies to this rule
       case maps:get(distribution, Serve, false) of
-        %% If not then return the rule's variation
+        % If not then return the rule's variation
         false -> maps:get(variation, Serve);
-        %% Apply the percentage rollout calculation for the rule
+        % Apply the percentage rollout calculation for the rule
         Distribution when Distribution /= null ->
           #{bucketBy := BucketBy, variations := Variations} = Distribution,
           #{identifier := Identifier, name := Name} = Target,
@@ -346,7 +347,7 @@ is_rule_included_or_excluded([#{op := ?SEGMENT_MATCH_OPERATOR} = Head | _Tail], 
 is_rule_included_or_excluded([_Head | Tail], Target) -> is_rule_included_or_excluded(Tail, Target).
 
 
-% Parses Group Rules for the different rule types.
+% Process Group Rules for different rule types.
 -spec search_group(RuleType :: excluded | included | custom_rules, target(), map()) ->
   included | excluded | false.
 search_group(excluded, Target, #{excluded := []} = Group) -> search_group(included, Target, Group);
@@ -443,7 +444,7 @@ when map_size(TargetCustomAttributes) > 0 ->
   % Custom attribute keys are atoms
   case maps:find(binary_to_atom(RuleAttribute), TargetCustomAttributes) of
     {ok, Value} ->
-      %% Rule values are binaries
+      % Rule values are binaries
       custom_attribute_to_binary(Value);
 
     error -> get_attribute_value(#{}, RuleAttribute, TargetIdentifier, TargetName)
