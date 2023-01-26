@@ -368,7 +368,7 @@ search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Value
 search_group(excluded, Target, Group) -> search_group(included, Target, Group);
 
 search_group(included, Target, #{included := Values} = Group) when is_list(Values) ->
-  case identifier_matches_any(Values, Targets) of
+  case identifier_matches_any(Values, Target) of
     true -> included;
     false -> search_group(custom_rules, Target, Group)
   end;
