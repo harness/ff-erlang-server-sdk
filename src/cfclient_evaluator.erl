@@ -240,7 +240,7 @@ evaluate_flag(group_rules, #{rules := Rules} = Flag, Target) when Rules /= null 
       ?LOG_DEBUG("Group rules excluded flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(default_on, Flag, Target);
 
-    GroupVariationId ->
+    GroupVariationId when is_binary(GroupVariationId) ->
       ?LOG_DEBUG("Group rules matched flag ~p, target ~p", [Flag, Target]),
       return_target_or_group_variation(Flag, GroupVariationId)
   end;
