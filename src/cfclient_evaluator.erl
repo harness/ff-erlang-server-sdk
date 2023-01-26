@@ -307,7 +307,7 @@ search_variation_map([], _) -> false.
 
 
 -spec search_rules_for_inclusion([rule()], target()) ->
-  Variation :: binary() | excluded | percentage_rollout_excluded | false.
+  Variation :: binary() | excluded | false.
 search_rules_for_inclusion([Rule | Tail], Target) ->
   #{clauses := Clauses, serve := Serve} = Rule,
   case is_rule_included_or_excluded(Clauses, Target) of
@@ -490,7 +490,7 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
 
 
 -spec apply_percentage_rollout(Variations :: list(), binary(), binary(), integer()) ->
-  binary() | percentage_rollout_excluded.
+  VariationId :: binary() | excluded.
 apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, Acc) ->
   Percentage = Acc + maps:get(weight, Head),
   case should_rollout(BucketBy, TargetValue, Percentage) of
@@ -498,7 +498,7 @@ apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, Acc) ->
     false -> apply_percentage_rollout(Tail, BucketBy, TargetValue, Percentage)
   end;
 
-apply_percentage_rollout([], _, _, _) -> percentage_rollout_excluded.
+apply_percentage_rollout([], _, _, _) -> excluded.
 
 
 -spec should_rollout(binary(), binary(), integer()) -> boolean().
