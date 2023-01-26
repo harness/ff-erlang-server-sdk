@@ -194,11 +194,10 @@ target_attributes_to_metrics(#{attributes := Values}) ->
 target_attribute_to_metric(K, V) ->
   #{key => K, value => cfclient_evaluator:custom_attribute_to_binary(V)}.
 
--spec get_metric(term()) -> {ok, cfclient:target()} | {error, undefined}.
-get_metric(Key) ->
-  Config = cfclient_config:get_config(),
-  get_metric(Key, Config).
-
+% -spec get_metric(term()) -> {ok, cfclient:target()} | {error, undefined}.
+% get_metric(Key) ->
+%   Config = cfclient_config:get_config(),
+%   get_metric(Key, Config).
 
 get_metric(Key, Config) ->
   MetricsCacheTable = cfclient_config:get_value(metrics_cache_table, Config),
