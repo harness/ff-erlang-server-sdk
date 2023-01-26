@@ -1,6 +1,5 @@
 % @doc
 % @end
-
 -module(cfclient_evaluator).
 
 -include_lib("kernel/include/logger.hrl").
@@ -15,16 +14,8 @@
   ]
 ).
 
--type rule_serve() :: #{
-                        variation := binary(),
-                        distribution => boolean()
-                       }.
-
--type rule_clause() :: #{
-                         op := binary(),
-                         values := [binary()]
-                        }.
-
+-type rule_serve() :: #{variation := binary(), distribution => boolean()}.
+-type rule_clause() :: #{op := binary(), values := [binary()]}.
 -type rule() :: #{
                 priority := non_neg_integer(),
                 clauses := [rule_clause()],
@@ -34,7 +25,6 @@
                 excluded => [map()] | null,
                 included => [map()] | null
               }.
-
 
 % -type cfapi_serving_rule() ::
 %     #{ 'ruleId' => binary(),
@@ -49,11 +39,10 @@
 %        "one"
 %    ]
 -type target() :: cfclient:target().
-
 -type variation_map() :: #{
-                           variation := binary(),
-                           targets := [cfapi_variation_map:cfapi_variation_map()]
-                          }.
+                         variation := binary(),
+                         targets := [cfapi_variation_map:cfapi_variation_map()]
+                       }.
 
 % -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type flag() :: #{
@@ -98,7 +87,6 @@
 %        'modifiedAt' => integer(),
 %        'version' => integer()
 %      }.
-
 -type config() :: map().
 
 -include("cfclient_evaluator_operators.hrl").
@@ -145,7 +133,6 @@ json_variation(FlagId, Target, Config) ->
     {error, Reason} -> {error, Reason}
   end.
 
-
 %% Internal functions
 
 -spec evaluate(binary(), target(), config()) ->
@@ -164,6 +151,7 @@ evaluate(FlagId, Target, Config) ->
                     flag() | segment(), target()) ->
     {ok, Id :: binary(), Value :: term()} | {error, atom()}.
 %% Evaluate for off state
+
 evaluate_flag(off, #{state := <<"off">>} = Flag, _Target) ->
   ?LOG_DEBUG("Flag state off for flag ~p, returning default 'off' variation", [Flag]),
   return_default_off_variation(Flag);
@@ -177,14 +165,13 @@ evaluate_flag(off, #{state := <<"on">>} = Flag, Target) ->
 %   #{feature := Feature} = Flag,
 %   ?LOG_WARNING("Flag state ignored for ~p", [Feature]),
 %   evaluate_flag(Flag, Target, prerequisites);
-
 %% Evaluate prerequisites
-
 evaluate_flag(prerequisites, #{prerequisites := []} = Flag, Target) ->
   ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(target_rules, Flag, Target);
 
-evaluate_flag(prerequisites, #{prerequisites := Prereqs} = Flag, Target) when is_list(Prereqs) ->
+evaluate_flag(prerequisites, #{prerequisites := Prereqs} = Flag, Target)
+    when is_list(Prereqs) ->
   case search_prerequisites(Prereqs, Target) of
     true ->
       ?LOG_DEBUG("Prerequisites met for flag ~p, target ~p", [Flag, Target]),
@@ -246,7 +233,6 @@ evaluate_flag(group_rules, #{rules := Rules} = Flag, Target) when Rules /= null 
   end;
 
 evaluate_flag(group_rules, Flag, Target) -> evaluate_flag(default_on, Flag, Target);
-
 %% Default "on" variation
 evaluate_flag(default_on, Flag, Target) ->
   #{variations := Variations, defaultServe := #{variation := Id}} = Flag,
@@ -262,6 +248,7 @@ evaluate_flag(default_on, Flag, Target) ->
       ),
       {ok, Id, Value}
   end.
+
 
 return_default_off_variation(Flag) ->
   #{variations := Variations, offVariation := Id} = Flag,
@@ -289,13 +276,11 @@ return_target_or_group_variation(Flag, Id) ->
   end.
 
 
--spec evaluate_target_rule([variation_map()], target()) ->
-  TargetVariationId :: binary() | false.
+-spec evaluate_target_rule([variation_map()], target()) -> TargetVariationId :: binary() | false.
 evaluate_target_rule(VariationMap, #{identifier := Id}) -> search_variation_map(VariationMap, Id);
 evaluate_target_rule(_, _) -> false.
 
--spec search_variation_map([variation_map()], binary()) ->
-  TargetVariationId :: binary() | false.
+-spec search_variation_map([variation_map()], binary()) -> TargetVariationId :: binary() | false.
 search_variation_map([Head | Tail], Id) ->
   #{variation := Variation, targets := Targets} = Head,
   case identifier_matches_any(Targets, Id) of
@@ -336,10 +321,12 @@ search_rules_for_inclusion([Rule | Tail], Target) ->
 search_rules_for_inclusion([], _) -> false.
 
 
+% Used by tests
 -spec is_rule_included_or_excluded([rule_clause()], target()) -> included | excluded | false.
 is_rule_included_or_excluded(Clauses, Target) ->
-    {_, Result} = lists:foldl(fun match_rule_clause/2, {Target, false}, Clauses),
-    Result.
+  {_, Result} = lists:foldl(fun match_rule_clause/2, {Target, false}, Clauses),
+  Result.
+
 
 match_rule_clause(#{op := ?SEGMENT_MATCH_OPERATOR} = Clause, {Target, false}) ->
   #{values := [GroupName | _Rest]} = Clause,
@@ -551,14 +538,15 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) -
       false
   end.
 
+
 -spec sort_by_priority([map()]) -> [map()].
 sort_by_priority(Values) ->
   % 0 is highest priority
   lists:sort(fun (#{priority := A}, #{priority := B}) -> A =< B end, Values).
 
+
 -spec search_by_id([map()], binary()) -> {value, map()} | false.
-search_by_id(Values, Id) ->
-  lists:search(fun (#{identifier := I}) -> I == Id end, Values).
+search_by_id(Values, Id) -> lists:search(fun (#{identifier := I}) -> I == Id end, Values).
 
 -spec identifier_matches_any([map()], map() | binary()) -> boolean().
 identifier_matches_any([], _) -> false;
