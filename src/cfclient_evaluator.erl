@@ -39,6 +39,11 @@
 %    ]
 -type target() :: cfclient:target().
 
+-type variation_map() :: #{
+                           variation := binary(),
+                           targets := [cfapi_variation_map:cfapi_variation_map()]
+                          }.
+
 % -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type flag() :: #{
                 % added
@@ -64,7 +69,7 @@
                 % 'state' := cfapi_feature_state:cfapi_feature_state(),
                 % added
                 tags => list(),
-                variationToTargetMap => list() | null,
+                variationToTargetMap => [variation_map()] | null,
                 variations := list(),
                 version => integer()
               }.
@@ -82,7 +87,7 @@
 %        'modifiedAt' => integer(),
 %        'version' => integer()
 %      }.
--type variation_map() :: cfapi_variation_map:cfapi_variation_map().
+
 -type config() :: map().
 
 -include("cfclient_evaluator_operators.hrl").
