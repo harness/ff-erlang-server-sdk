@@ -53,11 +53,11 @@ handle_info(poll, Config) ->
   ?LOG_INFO("Poll triggered"),
   #{poll_interval := PollInterval} = Config,
   case cfclient_retrieve:retrieve_flags(Config) of
-    {ok, Flags} -> [cfclient_cache:cache_flag(Flag, Config) || Flag <- Flags],
+    {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
     {error, Reason} -> ?LOG_WARNING("Could not retrive flags from API: ~p", [Reason])
   end,
   case cfclient_retrieve:retrieve_segments(Config) of
-    {ok, Segments} -> [cfclient_cache:cache_segment(Segment, Config) || Segment <- Segments],
+    {ok, Segments} -> [cfclient_cache:cache_segment(S, Config) || S <- Segments];
     {error, Reason1} -> ?LOG_WARNING("Could not retrive segments from API: ~p", [Reason1])
   end,
   erlang:send_after(PollInterval, self(), poll),
