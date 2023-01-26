@@ -207,7 +207,7 @@ evaluate_flag(target_rules, #{variationToTargetMap := TM} = Flag, Target) when T
       ?LOG_DEBUG("Target rules map matched flag ~p, target ~p", [Flag, Target]),
       %% Return both variation identifier and not just the value, because
       %% prerequisites compares on variation identifier
-      get_target_or_group_variation(Flag, TargetVariationId)
+      return_target_or_group_variation(Flag, TargetVariationId)
   end;
 
 evaluate_flag(target_rules, Flag, Target) ->
@@ -231,7 +231,7 @@ evaluate_flag(group_rules, #{rules := Rules} = Flag, Target) when Rules /= null 
 
     GroupVariationId ->
       ?LOG_DEBUG("Group rules matched flag ~p, target ~p", [Flag, Target]),
-      get_target_or_group_variation(Flag, GroupVariationId)
+      return_target_or_group_variation(Flag, GroupVariationId)
   end;
 
 evaluate_flag(group_rules, Flag, Target) -> evaluate_flag(default_on, Flag, Target);
@@ -267,7 +267,7 @@ return_default_off_variation(Flag) ->
 
 -spec get_target_or_group_variation(flag(), binary()) ->
   {ok, Id :: binary(), term()} | {error, not_found}.
-get_target_or_group_variation(Flag, Id) ->
+return_target_or_group_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
   case search_by_id(Variations, Id) of
     false ->
