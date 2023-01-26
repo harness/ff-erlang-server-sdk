@@ -33,7 +33,8 @@ top_test_() ->
       {generator, fun variations_number/0},
       {generator, fun variations_json/0},
       {generator, fun percentage_rollout/0},
-      {generator, fun search_prerequisites/0}
+      {generator, fun search_prerequisites/0},
+      {generator, fun check_prerequisite/0}
     ]
   }.
 
@@ -873,10 +874,7 @@ evaluate_target_rule_test() ->
     cfclient_evaluator:evaluate_target_rule(SmallVariationMap, ExistingTargetA)
   ),
   %% Not Found %%
-  ?assertEqual(
-    false,
-    cfclient_evaluator:evaluate_target_rule(SmallVariationMap, NonExistentTarget)
-  ),
+  ?assertEqual(false, cfclient_evaluator:evaluate_target_rule(SmallVariationMap, NonExistentTarget)),
   %%-------------------- Multiple Targets--------------------
   LargeVariationMap =
     [
@@ -922,10 +920,7 @@ evaluate_target_rule_test() ->
     cfclient_evaluator:evaluate_target_rule(LargeVariationMap, ExistingTargetE)
   ),
   %% Not Found %%
-  ?assertEqual(
-    false,
-    cfclient_evaluator:evaluate_target_rule(LargeVariationMap, NonExistentTarget)
-  ),
+  ?assertEqual(false, cfclient_evaluator:evaluate_target_rule(LargeVariationMap, NonExistentTarget)),
   %%-------------------- Null Variation Map or Target --------------------
   ?assertEqual(false, cfclient_evaluator:evaluate_target_rule(null, asd)).
 
@@ -1894,7 +1889,11 @@ search_prerequisites() ->
           end,
           ?_assertEqual(
             true,
-            cfclient_evaluator:search_prerequisites(prerequisites(), prerequesites_target1())
+            cfclient_evaluator:search_prerequisites(
+              prerequisites(),
+              prerequesites_target1(),
+              cfclient_config:get_config()
+            )
           )
         }
       },
@@ -1917,7 +1916,11 @@ search_prerequisites() ->
           end,
           ?_assertEqual(
             false,
-            cfclient_evaluator:search_prerequisites(prerequisites(), prerequesites_target1())
+            cfclient_evaluator:search_prerequisites(
+              prerequisites(),
+              prerequesites_target1(),
+              cfclient_config:get_config()
+            )
           )
         }
       },
@@ -1940,7 +1943,11 @@ search_prerequisites() ->
           end,
           ?_assertEqual(
             false,
-            cfclient_evaluator:search_prerequisites(prerequisites(), prerequesites_target1())
+            cfclient_evaluator:search_prerequisites(
+              prerequisites(),
+              prerequesites_target1(),
+              cfclient_config:get_config()
+            )
           )
         }
       },
@@ -1963,76 +1970,85 @@ search_prerequisites() ->
           end,
           ?_assertEqual(
             false,
-            cfclient_evaluator:search_prerequisites(prerequisites(), prerequesites_target2())
+            cfclient_evaluator:search_prerequisites(
+              prerequisites(),
+              prerequesites_target2(),
+              cfclient_config:get_config()
+            )
           )
         }
       }
     ]
   }.
 
-check_prerequisite_test() ->
-  PrerequisiteFlag =
-    #{
-      defaultServe => #{variation => <<"true">>},
-      environment => <<"dev">>,
-      feature => <<"myprereqflag">>,
-      kind => <<"boolean">>,
-      offVariation => <<"false">>,
-      prerequisites => [],
-      project => <<"erlangcustomrules">>,
-      rules => [],
-      state => <<"on">>,
-      variationToTargetMap
-      =>
-      [
+check_prerequisite() ->
+    fun () ->
+      Config = cfclient_config:get_config(),
+      PrerequisiteFlag =
         #{
-          targets
+          defaultServe => #{variation => <<"true">>},
+          environment => <<"dev">>,
+          feature => <<"myprereqflag">>,
+          kind => <<"boolean">>,
+          offVariation => <<"false">>,
+          prerequisites => [],
+          project => <<"erlangcustomrules">>,
+          rules => [],
+          state => <<"on">>,
+          variationToTargetMap
           =>
           [
-            #{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
-            #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}
+            #{
+              targets
+              =>
+              [
+                #{identifier => <<"target_identifier_2">>, name => <<"target_2">>},
+                #{identifier => <<"target_identifier_1">>, name => <<"target_1">>}
+              ],
+              variation => <<"A cool string identifier">>
+            }
           ],
-          variation => <<"A cool string identifier">>
-        }
-      ],
-      variations
-      =>
-      [
-        #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
+          variations
+          =>
+          [
+            #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
+            #{
+              identifier => <<"A cool string identifier">>,
+              name => <<"False">>,
+              value => <<"A cool string value">>
+            }
+          ],
+          version => 2
+        },
+      PrerequisiteFlagIdentifier = maps:get(feature, PrerequisiteFlag),
+      Prerequisite =
         #{
-          identifier => <<"A cool string identifier">>,
-          name => <<"False">>,
-          value => <<"A cool string value">>
-        }
-      ],
-      version => 2
-    },
-  PrerequisiteFlagIdentifier = maps:get(feature, PrerequisiteFlag),
-  Prerequisite =
-    #{
-      'ParentFeature' => <<"1bab7f57-195c-4a3a-8157-1ede2d422130">>,
-      feature => <<"myprereqflag">>,
-      variations => [<<"A cool string identifier">>]
-    },
-  %% Prerequisite matched
-  Target1 = #{identifier => <<"target_identifier_1">>, name => <<"target_1">>, anonymous => <<"">>},
-  ?assertEqual(
-    true,
-    cfclient_evaluator:check_prerequisite(
-      PrerequisiteFlag,
-      PrerequisiteFlagIdentifier,
-      Prerequisite,
-      Target1
-    )
-  ),
-  %% Prerequisite did not match
-  Target2 = #{identifier => <<"target_identifier_3">>, name => <<"target_3">>, anonymous => <<"">>},
-  ?assertEqual(
-    false,
-    cfclient_evaluator:check_prerequisite(
-      PrerequisiteFlag,
-      PrerequisiteFlagIdentifier,
-      Prerequisite,
-      Target2
-    )
-  ).
+          'ParentFeature' => <<"1bab7f57-195c-4a3a-8157-1ede2d422130">>,
+          feature => <<"myprereqflag">>,
+          variations => [<<"A cool string identifier">>]
+        },
+      %% Prerequisite matched
+      Target1 = #{identifier => <<"target_identifier_1">>, name => <<"target_1">>, anonymous => <<"">>},
+      ?assertEqual(
+        true,
+        cfclient_evaluator:check_prerequisite(
+          PrerequisiteFlag,
+          PrerequisiteFlagIdentifier,
+          Prerequisite,
+          Target1,
+          Config
+        )
+      ),
+      %% Prerequisite did not match
+      Target2 = #{identifier => <<"target_identifier_3">>, name => <<"target_3">>, anonymous => <<"">>},
+      ?assertEqual(
+        false,
+        cfclient_evaluator:check_prerequisite(
+          PrerequisiteFlag,
+          PrerequisiteFlagIdentifier,
+          Prerequisite,
+          Target2,
+          Config
+        )
+      )
+    end.
