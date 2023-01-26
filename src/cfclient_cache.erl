@@ -86,8 +86,14 @@ format_key({segment, Identifier}) -> <<"segments/", Identifier/binary>>.
 -spec cache_segment(segment()) -> ok | {error, outdated}.
 cache_segment(#{identifier := Id} = Value) -> set_value({segment, Id}, Value).
 
+-spec cache_segment(segment(), map()) -> ok | {error, outdated}.
+cache_segment(#{identifier := Id} = Value, Config) -> set_value({segment, Id}, Value, Config).
+
 -spec cache_flag(flag()) -> ok | {error, outdated}.
 cache_flag(#{feature := Id} = Value) -> set_value({flag, Id}, Value).
+
+-spec cache_flag(flag(), map()) -> ok | {error, outdated}.
+cache_flag(#{feature := Id} = Value, Config) -> set_value({flag, Id}, Value, Config).
 
 -spec set_pid(pid()) -> ok.
 set_pid(_) -> ok.
