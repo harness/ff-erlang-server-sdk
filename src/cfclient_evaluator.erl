@@ -311,7 +311,8 @@ search_variation_map([], _) -> false.
 search_rules_for_inclusion([Rule | Tail], Target) ->
   #{clauses := Clauses, serve := Serve} = Rule,
   case is_rule_included_or_excluded(Clauses, Target) of
-    excluded -> excluded;
+    excluded ->
+      excluded;
 
     included ->
       % Check if percentage rollout applies to this rule
