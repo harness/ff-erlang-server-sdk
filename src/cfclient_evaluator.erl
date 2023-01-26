@@ -563,6 +563,8 @@ get_variation([#{identifier := Id} = Head | _Tail], Id) -> {ok, Head};
 get_variation([_Head | Tail], Id) -> get_variation(Tail, Id).
 
 -spec identifier_matches(map(), [map()]) -> boolean().
+identifier_matches(_, []) -> false;
+
 identifier_matches(#{identifier := Id}, Values) ->
   lists:any(fun (#{identifier := I}) -> Id == I end, Values).
 
