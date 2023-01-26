@@ -16,19 +16,12 @@
 start_link(Args) -> supervisor:start_link(?MODULE, Args).
 
 init(Args) ->
-  ApiKey = proplists:get_value(api_key, Args),
-  Config = proplists:get_value(config, Args),
   ChildSpecs =
     [
-      %% Feature/Group Cache
-      #{id => lru, start => {lru, start_link, [[{max_size, 32000000}]]}},
-      analytics_children(Config),
       #{
         id => cfclient_instance,
-        start => {cfclient_instance, start_link, [{api_key, ApiKey}, {config, Config}]}
-      },
-      %% Poll Processor
-      #{id => cfclient_poll_server, start => {cfclient_poll_server, start_link, []}}
+        start => {cfclient_instance, start_link, [Args]}
+      }
     ],
   SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
   {ok, {SupFlags, lists:flatten(ChildSpecs)}}.
