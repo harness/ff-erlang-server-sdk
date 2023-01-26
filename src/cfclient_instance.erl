@@ -81,6 +81,6 @@ start_analytics(_) ->
     ok.
 
 % Ensure value is binary
-to_binary(Value) when is_binary(Value) -> Value;
-to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
-to_binary(Value) when is_list(Value) -> list_to_binary(Value).
+% to_binary(Value) when is_binary(Value) -> Value;
+% to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
+% to_binary(Value) when is_list(Value) -> list_to_binary(Value).
