@@ -149,9 +149,8 @@ evaluate(FlagId, Target, Config) ->
     {ok, Id :: binary(), Value :: term()} | {error, atom()}.
 %% Evaluate for off state
 evaluate_flag(off, #{state := <<"off">>} = Flag, _Target) ->
-  #{offVariation := OffVariation} = Flag,
   ?LOG_DEBUG("Flag state off for flag ~p, returning default 'off' variation", [Flag]),
-  get_default_off_variation(Flag, OffVariation);
+  return_default_off_variation(Flag);
 
 evaluate_flag(off, #{state := <<"on">>} = Flag, Target) ->
   ?LOG_DEBUG("Flag state on for flag ~p", [Flag]),
@@ -177,7 +176,7 @@ evaluate_flag(prerequisites, #{prerequisites := Prereqs} = Flag, Target) when is
 
     _ ->
       ?LOG_DEBUG("Prerequisites not met for flag ~p, target ~p", [Flag, Target]),
-      get_default_off_variation(Flag, maps:get(offVariation, Flag))
+      return_default_off_variation(Flag)
   end;
 
 evaluate_flag(prerequisites, Flag, Target) ->
@@ -250,10 +249,8 @@ evaluate_flag(default_on, Flag, Target) ->
       {ok, Id, Value}
   end.
 
--spec get_default_off_variation(flag(), binary()) ->
-  {ok, Id :: binary(), Value :: term()} | {error, not_found}.
-get_default_off_variation(Flag, Id) ->
-  #{variations := Variations} = Flag,
+return_default_off_variation(Flag) ->
+  #{variations := Variations, offVariation := Id} = Flag,
   case search_by_id(Variations, Id) of
     false ->
       ?LOG_ERROR("Default off variation not found for flag ~p, id ~s", [Flag, Id]),
