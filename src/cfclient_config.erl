@@ -129,7 +129,7 @@ normalize_config(K, V, Acc) -> maps:put(K, V, Acc).
 normalize_url(V) -> string:trim(V, trailing, "/").
 
 % @doc Authenticate with server and merge project attributes into config
--spec authenticate(binary() | undefined, map()) ->
+-spec authenticate(binary() | string() | undefined, map()) ->
   {ok, Config :: map()} | {error, Response :: term()}.
 authenticate(undefined, Config) ->
   ?LOG_INFO("api_key undefined"),
