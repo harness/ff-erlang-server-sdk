@@ -198,7 +198,6 @@ target_attribute_to_metric(K, V) ->
 % get_metric(Key) ->
 %   Config = cfclient_config:get_config(),
 %   get_metric(Key, Config).
-
 -spec get_metric(term(), map()) -> {ok, cfclient:target()} | {error, undefined}.
 get_metric(Key, Config) ->
   MetricsCacheTable = cfclient_config:get_value(metrics_cache_table, Config),

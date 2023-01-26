@@ -34,42 +34,45 @@
 %        'clauses' := list(),
 %        'serve' := cfapi_serve:cfapi_serve()
 %      }.
-
 % "attribute": "identifier",
 %    "negate": false,
 %    "op": "equal",
 %    "values": [
 %        "one"
 %    ]
-
 -type target() :: cfclient:target().
+
 % -type flag() :: cfapi_feature_config:cfapi_feature_config().
-
--type flag() ::
-    #{
-       'createdAt' => integer(), % added
-       'defaultServe' := cfapi_serve:cfapi_serve(),
-       'environment' := binary(),
-       'excluded' => list(), % added
-       'feature' := binary(),
-       'identifier' => binary(), % added
-       'included' => list(), % added
-       'kind' := binary(),
-       'modifiedAt' => integer(), % added
-       'name' => binary(),
-       'offVariation' := binary(),
-       'prerequisites' => list(),
-       'project' := binary(),
-       'rules' => [map()],
-       'state' := binary() | map(),
-       % 'state' := cfapi_feature_state:cfapi_feature_state(),
-       'tags' => list(), % added
-       'variationToTargetMap' => list() | null,
-       'variations' := list(),
-       'version' => integer()
-     }.
-
+-type flag() :: #{
+                % added
+                createdAt => integer(),
+                defaultServe := cfapi_serve:cfapi_serve(),
+                environment := binary(),
+                % added
+                excluded => list(),
+                feature := binary(),
+                % added
+                identifier => binary(),
+                % added
+                included => list(),
+                kind := binary(),
+                % added
+                modifiedAt => integer(),
+                name => binary(),
+                offVariation := binary(),
+                prerequisites => list(),
+                project := binary(),
+                rules => [map()],
+                state := binary() | map(),
+                % 'state' := cfapi_feature_state:cfapi_feature_state(),
+                % added
+                tags => list(),
+                variationToTargetMap => list() | null,
+                variations := list(),
+                version => integer()
+              }.
 -type segment() :: cfapi_segment:cfapi_segment().
+
 % -type cfapi_segment() ::
 %     #{ 'identifier' := binary(),
 %        'name' := binary(),
@@ -121,12 +124,10 @@ number_variation(FlagId, Target, Config) ->
   {ok, Id :: binary(), Value :: map()} | {error, Reason :: atom()}.
 json_variation(FlagId, Target, Config) ->
   case evaluate(FlagId, Target, Config) of
-    {ok, VariationId, Variation} ->
-      try {ok, VariationId, jsx:decode(Variation, [])} catch
+    {ok, VariationId, Variation} -> try {ok, VariationId, jsx:decode(Variation, [])} catch
         error : badarg ->
           ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
           {error, json_decode} end;
-
     {error, Reason} -> {error, Reason}
   end.
 
@@ -165,7 +166,6 @@ evaluate_flag(#{state := <<"on">>} = Flag, Target, off) ->
 %   #{feature := Feature} = Flag,
 %   ?LOG_WARNING("Flag state ignored for ~p", [Feature]),
 %   evaluate_flag(Flag, Target, prerequisites);
-
 % Evaluate prerequisites
 evaluate_flag(#{prerequisites := []} = Flag, Target, prerequisites) ->
   ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
@@ -183,7 +183,6 @@ evaluate_flag(#{prerequisites := Prereq} = Flag, Target, prerequisites) when Pre
   end;
 
 evaluate_flag(Flag, Target, prerequisites) -> evaluate_flag(Flag, Target, target_rules);
-
 % Evaluate target rules
 evaluate_flag(#{variationToTargetMap := []} = Flag, Target, target_rules) ->
   ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
@@ -227,7 +226,6 @@ evaluate_flag(#{rules := Rules} = Flag, Target, group_rules) when Rules /= null 
   end;
 
 evaluate_flag(Flag, Target, group_rules) -> evaluate_flag(Flag, Target, default_on);
-
 % Default "on" variation
 evaluate_flag(Flag, Target, default_on) ->
   #{variations := Variations, defaultServe := DefaultServe} = Flag,
@@ -238,7 +236,10 @@ evaluate_flag(Flag, Target, default_on) ->
       {error, not_found};
 
     {ok, #{value := Value}} ->
-      ?LOG_DEBUG("Default on variation returned for flag ~p, target ~p, id ~s: ~p", [Flag, Target, Id, Value]),
+      ?LOG_DEBUG(
+        "Default on variation returned for flag ~p, target ~p, id ~s: ~p",
+        [Flag, Target, Id, Value]
+      ),
       {ok, Id, Value}
   end.
 
@@ -267,18 +268,17 @@ get_target_or_group_variation(Flag, Id) ->
       ?LOG_ERROR("Target matched rule for flag ~p but variation id ~p not found", [Flag, Id]),
       {error, not_found};
 
-    {ok, #{value := Value}} ->
-      {ok, Id, Value}
+    {ok, #{value := Value}} -> {ok, Id, Value}
   end.
 
 
--spec evaluate_target_rule([variation_map()], target()) -> TargetVariationId :: binary() | not_found.
-evaluate_target_rule(VariationMap, #{identifier := Id}) ->
-  search_variation_map(VariationMap, Id);
-
+-spec evaluate_target_rule([variation_map()], target()) ->
+  TargetVariationId :: binary() | not_found.
+evaluate_target_rule(VariationMap, #{identifier := Id}) -> search_variation_map(VariationMap, Id);
 evaluate_target_rule(_, _) -> not_found.
 
--spec search_variation_map([variation_map()], binary()) -> TargetVariationId :: binary() | not_found.
+-spec search_variation_map([variation_map()], binary()) ->
+  TargetVariationId :: binary() | not_found.
 search_variation_map([Head | Tail], Id) ->
   #{variation := Variation, targets := Targets} = Head,
   case lists:any(fun (#{identifier := I}) -> Id == I end, Targets) of
@@ -300,7 +300,8 @@ evaluate_target_group_rules(Rules0, Target) ->
   search_rules_for_inclusion(Rules, Target).
 
 
--spec search_rules_for_inclusion([rule()], target()) -> Variation :: binary() | excluded | not_found.
+-spec search_rules_for_inclusion([rule()], target()) ->
+  Variation :: binary() | excluded | not_found.
 search_rules_for_inclusion([Rule | Tail], Target) ->
   #{clauses := Clauses, serve := Serve} = Rule,
   case is_rule_included_or_excluded(Clauses, Target) of
@@ -347,8 +348,7 @@ search_group(excluded, Target, #{excluded := Values} = Group) when is_list(Value
     false -> search_group(included, Target, Group)
   end;
 
-search_group(excluded, Target, Group) ->
-    search_group(included, Target, Group);
+search_group(excluded, Target, Group) -> search_group(included, Target, Group);
 
 search_group(included, Target, #{included := Values} = Group) when is_list(Values) ->
   case identifier_matches(Target, Values) of
@@ -356,8 +356,7 @@ search_group(included, Target, #{included := Values} = Group) when is_list(Value
     false -> search_group(custom_rules, Target, Group)
   end;
 
-search_group(included, Target, Group) ->
-  search_group(custom_rules, Target, Group);
+search_group(included, Target, Group) -> search_group(custom_rules, Target, Group);
 
 search_group(custom_rules, Target, #{rules := Values}) when is_list(Values) ->
   case search_group_custom_rules(Values, Target) of
@@ -373,8 +372,7 @@ search_group_custom_rules([Rule | Tail], Target) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Rule,
   #{identifier := TargetId, name := TargetName} = Target,
   TargetAttributes = maps:get(attributes, Target, #{}),
-  TargetAttribute =
-    get_attribute_value(TargetAttributes, RuleAttribute, TargetId, TargetName),
+  TargetAttribute = get_attribute_value(TargetAttributes, RuleAttribute, TargetId, TargetName),
   case is_custom_rule_match(Op, TargetAttribute, RuleValue) of
     true -> true;
     false -> search_group_custom_rules(Tail, Target)
@@ -417,18 +415,18 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(Ta
 
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
   lists:any(fun (TA) -> lists:member(TA, RuleValue) end, TargetAttribute).
-  % Search =
-  %   fun
-  %     F([Head | Tail]) ->
-  %       case lists:member(Head, RuleValue) of
-  %         true -> true;
-  %         false -> F(Tail)
-  %       end;
-  %     F([]) -> false
-  %   end,
-  % Search(TargetAttribute).
 
 
+% Search =
+%   fun
+%     F([Head | Tail]) ->
+%       case lists:member(Head, RuleValue) of
+%         true -> true;
+%         false -> F(Tail)
+%       end;
+%     F([]) -> false
+%   end,
+% Search(TargetAttribute).
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetId, TargetName)
 when is_map(TargetCustomAttributes), map_size(TargetCustomAttributes) > 0 ->
@@ -539,10 +537,7 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) -
       lists:member(VariationId, PrerequisiteVariations);
 
     {error, Reason} ->
-      ?LOG_ERROR(
-        "Could not evaluate prerequisite flag ~p: ~p",
-        [PrerequisiteFlagId, Reason]
-      ),
+      ?LOG_ERROR("Could not evaluate prerequisite flag ~p: ~p", [PrerequisiteFlagId, Reason]),
       false
   end.
 

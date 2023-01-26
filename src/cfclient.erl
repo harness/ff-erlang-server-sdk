@@ -9,11 +9,18 @@
 
 -include("cfclient_config.hrl").
 
--export([bool_variation/3, bool_variation/4,
-         string_variation/3, string_variation/4,
-         number_variation/3, number_variation/4,
-         json_variation/3, json_variation/4
-        ]).
+-export(
+  [
+    bool_variation/3,
+    bool_variation/4,
+    string_variation/3,
+    string_variation/4,
+    number_variation/3,
+    number_variation/4,
+    json_variation/3,
+    json_variation/4
+  ]
+).
 
 -type target() :: #{
                   identifier := binary(),
@@ -22,10 +29,8 @@
                   attributes := #{atom() := binary() | atom() | list()} | null
                 }.
 
-
 -spec bool_variation(binary() | string(), target(), boolean()) -> boolean().
-bool_variation(FlagKey, Target, Default) ->
-  bool_variation(default, FlagKey, Target, Default).
+bool_variation(FlagKey, Target, Default) -> bool_variation(default, FlagKey, Target, Default).
 
 -spec bool_variation(atom() | map(), binary() | string(), target(), boolean()) -> boolean().
 bool_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
@@ -67,8 +72,7 @@ bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 
 
 -spec string_variation(binary() | string(), target(), binary()) -> binary().
-string_variation(FlagKey, Target, Default) ->
-  string_variation(default, FlagKey, Target, Default).
+string_variation(FlagKey, Target, Default) -> string_variation(default, FlagKey, Target, Default).
 
 -spec string_variation(atom() | map(), binary() | list(), target(), binary()) -> binary().
 string_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
@@ -110,8 +114,7 @@ string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 
 
 -spec number_variation(binary() | list(), target(), number()) -> number().
-number_variation(FlagKey, Target, Default) ->
-  number_variation(default, FlagKey, Target, Default).
+number_variation(FlagKey, Target, Default) -> number_variation(default, FlagKey, Target, Default).
 
 -spec number_variation(atom() | map(), binary() | list(), target(), number()) -> number().
 number_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
@@ -153,8 +156,7 @@ number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 
 
 -spec json_variation(binary() | list(), target(), map()) -> map().
-json_variation(FlagKey, Target, Default) ->
-  json_variation(default, FlagKey, Target, Default).
+json_variation(FlagKey, Target, Default) -> json_variation(default, FlagKey, Target, Default).
 
 -spec json_variation(atom() | map(), binary() | list(), target(), map()) -> map().
 json_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
@@ -198,10 +200,7 @@ json_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 % Convert target identifier to binary, as users can provide it as a string,
 % binary, or atom, but client API works in binary.
 normalize_target(#{identifier := Id} = Target) when is_binary(Id) -> Target;
-
-normalize_target(#{identifier := Id} = Target) ->
-  Target#{identifier := to_binary(Id)};
-
+normalize_target(#{identifier := Id} = Target) -> Target#{identifier := to_binary(Id)};
 normalize_target(Target) -> maps:put(identifier, <<>>, Target).
 
 to_binary(Value) when is_binary(Value) -> Value;

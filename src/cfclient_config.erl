@@ -11,7 +11,9 @@
 
 -include("cfclient_config.hrl").
 
--export([get_config/0, get_config/1, set_config/1, set_config/2, normalize/1, get_value/1, get_value/2]).
+-export(
+  [get_config/0, get_config/1, set_config/1, set_config/2, normalize/1, get_value/1, get_value/2]
+).
 -export([create_tables/1, authenticate/2, defaults/0, parse_jwt/1, init/1]).
 
 % Config defaults
@@ -32,13 +34,14 @@
 
 % Interval in milliseconds for polling data from CF Server
 -define(DEFAULT_POLL_INTERVAL, 60000).
+
 % Enable polling for updated metrics from CF Server
 -define(DEFAULT_POLL_ENABLED, true).
 
 % Boolean for enabling events stream
 -define(DEFAULT_STREAM_ENABLED, true).
-
 -define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000).
+
 % Enable analytics send to CF Server
 -define(DEFAULT_ANALYTICS_ENABLED, true).
 
@@ -80,7 +83,6 @@ normalize(Config0) ->
   Config1 = maps:from_list(Config0),
   Config2 = maps:merge(defaults(), Config1),
   Config = normalize_config(Config2),
-
   case maps:get(name, Config) of
     default -> Config;
 
@@ -98,16 +100,11 @@ init(Config0) when is_list(Config0) ->
   cfclient_config:set_config(Config),
   ok.
 
+
 -spec add_prefix(atom() | binary() | string(), atom()) -> atom().
-add_prefix(Name, Table) when is_atom(Name) ->
-    add_prefix(atom_to_list(Name), Table);
-
-add_prefix(Name, Table) when is_binary(Name) ->
-    add_prefix(binary_to_list(Name), Table);
-
-add_prefix(Name, Table) when is_list(Name) ->
-    list_to_atom(Name ++ "_" ++ atom_to_list(Table)).
-
+add_prefix(Name, Table) when is_atom(Name) -> add_prefix(atom_to_list(Name), Table);
+add_prefix(Name, Table) when is_binary(Name) -> add_prefix(binary_to_list(Name), Table);
+add_prefix(Name, Table) when is_list(Name) -> list_to_atom(Name ++ "_" ++ atom_to_list(Table)).
 
 -spec normalize_config(map()) -> map().
 normalize_config(Config) -> maps:fold(fun normalize_config/3, #{}, Config).
@@ -132,7 +129,8 @@ normalize_config(K, V, Acc) -> maps:put(K, V, Acc).
 normalize_url(V) -> string:trim(V, trailing, "/").
 
 % @doc Authenticate with server and merge project attributes into config
--spec authenticate(binary() | undefined, map()) -> {ok, Config :: map()} | {error, Response :: term()}.
+-spec authenticate(binary() | undefined, map()) ->
+  {ok, Config :: map()} | {error, Response :: term()}.
 authenticate(undefined, Config) ->
   ?LOG_DEBUG("ApiKey undefined"),
   {ok, Config};
@@ -191,15 +189,17 @@ get_config(Name) ->
   [{Name, Config}] = ets:lookup(?CONFIG_TABLE, Name),
   Config.
 
+
 -spec set_config(map()) -> ok.
 set_config(Config) ->
-    Name = maps:get(name, Config, default),
-    set_config(Name, Config).
+  Name = maps:get(name, Config, default),
+  set_config(Name, Config).
+
 
 -spec set_config(atom(), map()) -> ok.
 set_config(Name, Config) ->
-    true = ets:insert(?CONFIG_TABLE, {Name, Config}),
-    ok.
+  true = ets:insert(?CONFIG_TABLE, {Name, Config}),
+  ok.
 
 
 -spec get_value(atom() | string()) -> string() | term().

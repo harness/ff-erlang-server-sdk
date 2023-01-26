@@ -16,13 +16,7 @@
 start_link(Args) -> supervisor:start_link(?MODULE, Args).
 
 init(Args) ->
-  ChildSpecs =
-    [
-      #{
-        id => cfclient_instance,
-        start => {cfclient_instance, start_link, [Args]}
-      }
-    ],
+  ChildSpecs = [#{id => cfclient_instance, start => {cfclient_instance, start_link, [Args]}}],
   SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
   {ok, {SupFlags, lists:flatten(ChildSpecs)}}.
 

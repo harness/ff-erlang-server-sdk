@@ -18,18 +18,14 @@
 -export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2]).
 
 -spec start_link(proplists:proplist()) -> {ok, pid()} | ignore | {error, term()}.
-start_link(Args) ->
-  gen_server:start_link(?MODULE, Args, []).
-
+start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
   ApiKey = proplists:get_value(api_key, Args),
   Config0 = proplists:get_value(config, Args, []),
   Config1 = cfclient_config:normalize(Config0),
-
   ok = cfclient_config:create_tables(Config1),
   cfclient_config:set_config(Config1),
-
   case cfclient_config:authenticate(ApiKey, Config1) of
     {ok, Config} ->
       cfclient_config:set_config(Config),
@@ -41,6 +37,7 @@ init(Args) ->
       ?LOG_ERROR("Authentication failed: ~p", [Reason]),
       {stop, authenticate}
   end.
+
 
 handle_info(metrics, Config) ->
   ?LOG_INFO("Metrics triggered"),
@@ -69,16 +66,18 @@ handle_call(_, _From, State) -> {reply, ok, State}.
 handle_cast(_, State) -> {noreply, State}.
 
 start_poll(#{poll_enabled := true} = Config) ->
-    #{analytics_push_interval := Interval} = Config,
-    erlang:send_after(Interval, self(), poll);
-start_poll(_) ->
-    ok.
+  #{analytics_push_interval := Interval} = Config,
+  erlang:send_after(Interval, self(), poll);
+
+start_poll(_) -> ok.
+
 
 start_analytics(#{analytics_enabled := true} = Config) ->
-    #{analytics_push_interval := Interval} = Config,
-    erlang:send_after(Interval, self(), metrics);
-start_analytics(_) ->
-    ok.
+  #{analytics_push_interval := Interval} = Config,
+  erlang:send_after(Interval, self(), metrics);
+
+start_analytics(_) -> ok.
+
 
 % Ensure value is binary
 % to_binary(Value) when is_binary(Value) -> Value;

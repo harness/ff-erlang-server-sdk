@@ -1,23 +1,24 @@
 % @doc
 % Functions to manage Flag and Segment cache.
 % @end
-
 -module(cfclient_cache).
 
 -include_lib("kernel/include/logger.hrl").
 
 -include("cfclient_config.hrl").
 
--export([
-         cache_flag/1,
-         cache_flag/2,
-         cache_segment/1,
-         cache_segment/2,
-         get_value/1,
-         get_value/2,
-         set_pid/1,
-         set_value/2
-        ]).
+-export(
+  [
+    cache_flag/1,
+    cache_flag/2,
+    cache_segment/1,
+    cache_segment/2,
+    get_value/1,
+    get_value/2,
+    set_pid/1,
+    set_value/2
+  ]
+).
 
 -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type segment() :: cfapi_segment:cfapi_segment().
