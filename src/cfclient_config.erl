@@ -11,8 +11,8 @@
 
 -include("cfclient_config.hrl").
 
--export([get_config/0, get_config/1]).
--export([create_tables/1, authenticate/2, defaults/0, parse_jwt/1]).
+-export([get_config/0, get_config/1, set_config/1, set_config/2, normalize/1, get_value/1, get_value/2]).
+-export([create_tables/1, authenticate/2, defaults/0, parse_jwt/1, init/1]).
 
 % Config defaults
 % Config endpoint for Prod
@@ -32,19 +32,16 @@
 
 % Interval in milliseconds for polling data from CF Server
 -define(DEFAULT_POLL_INTERVAL, 60000).
+% Enable polling for updated metrics from CF Server
+-define(DEFAULT_POLL_ENABLED, true).
 
 % Boolean for enabling events stream
 -define(DEFAULT_STREAM_ENABLED, true).
 
-% Boolean for enabling analytics send to CF Server
--define(DEFAULT_ANALYTICS_ENABLED, true).
 -define(DEFAULT_ANALYTICS_PUSH_INTERVAL, 60000).
+% Enable analytics send to CF Server
+-define(DEFAULT_ANALYTICS_ENABLED, true).
 
-% -spec init(string(), map() | list()) -> ok.
-% init(ApiKey, Opts) when is_list(ApiKey), is_list(Opts) -> init(ApiKey, maps:from_list(Opts));
-% init(ApiKey, Opts) when is_list(ApiKey), is_map(Opts) ->
-%   Config = normalize_config(maps:merge(defaults(), Opts)),
-%   application:set_env(cfclient, config, Config).
 -spec defaults() -> map().
 defaults() ->
   #{
@@ -59,17 +56,20 @@ defaults() ->
     read_timeout => ?DEFAULT_READ_TIMEOUT,
     % Timout writing data to CF Server, in milliseconds
     write_timeout => ?DEFAULT_WRITE_TIMEOUT,
-    % Polling data from CF Server, in milliseconds
+    % How often to poll data from CF Server, in milliseconds
     poll_interval => ?DEFAULT_POLL_INTERVAL,
+    % Enable polling updates from CF Server
+    poll_enabled => ?DEFAULT_POLL_ENABLED,
     % Enable events stream
     stream_enabled => ?DEFAULT_STREAM_ENABLED,
     % Enable sending analytics to CF Server
     analytics_enabled => ?DEFAULT_ANALYTICS_ENABLED,
+    % How often to push data to CF Server, in milliseconds
     analytics_push_interval => ?DEFAULT_ANALYTICS_PUSH_INTERVAL,
     % ETS table for configuration
     config_table => ?CONFIG_TABLE,
     cache_table => ?CACHE_TABLE,
-    target_table => ?METRICS_TARGET_TABLE,
+    metrics_target_table => ?METRICS_TARGET_TABLE,
     metrics_cache_table => ?METRICS_CACHE_TABLE,
     metrics_counter_table => ?METRICS_COUNTER_TABLE
   }.
@@ -78,20 +78,36 @@ defaults() ->
 -spec normalize(proplists:proplist()) -> map().
 normalize(Config0) ->
   Config1 = maps:from_list(Config0),
-  Config2 = normalize_config(maps:merge(defaults(), Config1)),
-  case maps:get(name, Config2) of
-    default -> Config2;
+  Config2 = maps:merge(defaults(), Config1),
+  Config = normalize_config(Config2),
+
+  case maps:get(name, Config) of
+    default -> Config;
 
     Name ->
       % Add name prefix to tables
-      Tables =
-        [config_table, cache_table, target_table, metrics_cache_table, metrics_counter_table],
-      Prefixed = maps:map(fun (_K, V) -> add_prefix(Name, V) end, maps:with(Tables, Config2)),
-      maps:merge(Config2, Prefixed)
+      Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
+      Prefixed = maps:map(fun (_K, V) -> add_prefix(Name, V) end, maps:with(Tables, Config)),
+      maps:merge(Config, Prefixed)
   end.
 
 
-add_prefix(Name, Table) -> list_to_atom(atom_to_list(Name) ++ "_" ++ atom_to_list(Table)).
+-spec init(proplists:proplist()) -> ok.
+init(Config0) when is_list(Config0) ->
+  Config = cfclient_config:normalize(Config0),
+  cfclient_config:set_config(Config),
+  ok.
+
+-spec add_prefix(atom() | binary() | string(), atom()) -> atom().
+add_prefix(Name, Table) when is_atom(Name) ->
+    add_prefix(atom_to_list(Name), Table);
+
+add_prefix(Name, Table) when is_binary(Name) ->
+    add_prefix(binary_to_list(Name), Table);
+
+add_prefix(Name, Table) when is_list(Name) ->
+    list_to_atom(Name ++ "_" ++ atom_to_list(Table)).
+
 
 -spec normalize_config(map()) -> map().
 normalize_config(Config) -> maps:fold(fun normalize_config/3, #{}, Config).
@@ -116,17 +132,19 @@ normalize_config(K, V, Acc) -> maps:put(K, V, Acc).
 normalize_url(V) -> string:trim(V, trailing, "/").
 
 % @doc Authenticate with server and merge project attributes into config
--spec authenticate(binary(), map()) -> {ok, Config :: map()} | {error, Response :: term()}.
+-spec authenticate(binary() | undefined, map()) -> {ok, Config :: map()} | {error, Response :: term()}.
+authenticate(undefined, Config) ->
+  ?LOG_DEBUG("ApiKey undefined"),
+  {ok, Config};
+
 authenticate(ApiKey, Config) ->
-  Name = maps:get(name, Config, default),
-  ConfigUrl = maps:get(config_url, Config),
+  #{config_url := ConfigUrl} = Config,
   Opts = #{cfg => #{host => ConfigUrl, params => #{apiKey => ApiKey}}},
   case cfapi_client_api:authenticate(ctx:new(), Opts) of
     {ok, #{authToken := AuthToken}, _} ->
       {ok, Project} = cfclient_config:parse_jwt(AuthToken),
       MergedConfig =
         maps:merge(Config, #{api_key => ApiKey, auth_token => AuthToken, project => Project}),
-      true = ets:insert(?CONFIG_TABLE, {Name, MergedConfig}),
       {ok, MergedConfig};
 
     {error, Response, _} -> {error, Response}
@@ -152,15 +170,15 @@ create_tables(Config) ->
   #{
     config_table := ConfigTable,
     cache_table := CacheTable,
+    metrics_target_table := MetricsTargetTable,
     metrics_cache_table := MetricsCacheTable,
-    metrics_counter_table := MetricsCounterTable,
-    metrics_target_table := MetricsTargetTable
+    metrics_counter_table := MetricsCounterTable
   } = Config,
   ConfigTable = ets:new(ConfigTable, [named_table, set, public, {read_concurrency, true}]),
   CacheTable = ets:new(CacheTable, [named_table, set, public, {read_concurrency, true}]),
+  MetricsTargetTable = ets:new(MetricsTargetTable, [named_table, set, public]),
   MetricsCacheTable = ets:new(MetricsCacheTable, [named_table, set, public]),
   MetricsCounterTable = ets:new(MetricsCounterTable, [named_table, set, public]),
-  MetricsTargetTable = ets:new(MetricsTargetTable, [named_table, set, public]),
   ok.
 
 
@@ -172,6 +190,16 @@ get_config(Name) ->
   ?LOG_DEBUG("Loading config for ~p", [Name]),
   [{Name, Config}] = ets:lookup(?CONFIG_TABLE, Name),
   Config.
+
+-spec set_config(map()) -> ok.
+set_config(Config) ->
+    Name = maps:get(name, Config, default),
+    set_config(Name, Config).
+
+-spec set_config(atom(), map()) -> ok.
+set_config(Name, Config) ->
+    true = ets:insert(?CONFIG_TABLE, {Name, Config}),
+    ok.
 
 
 -spec get_value(atom() | string()) -> string() | term().
