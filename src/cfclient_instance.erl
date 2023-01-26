@@ -19,8 +19,7 @@
 
 -spec start_link(proplists:proplist()) -> {ok, pid()} | ignore | {error, term()}.
 start_link(Args) ->
-  Name = proplists:get_value(name, Args, ?MODULE),
-  gen_server:start_link({local, Name}, ?MODULE, Args, []).
+  gen_server:start_link(?MODULE, Args, []).
 
 
 init(Args) ->
