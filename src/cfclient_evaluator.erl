@@ -426,17 +426,17 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(Ta
   lists:member(TargetAttribute, RuleValue);
 
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
-  Search =
-    fun
-      F([Head | Tail]) ->
-        case lists:member(Head, RuleValue) of
-          true -> true;
-          false -> F(Tail)
-        end;
-
-      F([]) -> false
-    end,
-  Search(TargetAttribute).
+  lists:any(fun (TA) -> lists:member(TA, RuleValue) end, TargetAttribute).
+  % Search =
+  %   fun
+  %     F([Head | Tail]) ->
+  %       case lists:member(Head, RuleValue) of
+  %         true -> true;
+  %         false -> F(Tail)
+  %       end;
+  %     F([]) -> false
+  %   end,
+  % Search(TargetAttribute).
 
 
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
