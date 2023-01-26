@@ -236,12 +236,13 @@ evaluate_flag(group_rules, Flag, Target) -> evaluate_flag(default_on, Flag, Targ
 evaluate_flag(default_on, Flag, Target) ->
   #{variations := Variations, defaultServe := DefaultServe} = Flag,
   #{variation := Id} = DefaultServe,
-  case get_variation(Variations, Id) of
-    {error, not_found} ->
+
+  case search_by_id(Variations, Id) of
+    false ->
       ?LOG_ERROR("Default on variation not found for flag ~p, target ~p, id ~s", [Flag, Target, Id]),
       {error, not_found};
 
-    {ok, #{value := Value}} ->
+    {value, #{value := Value}} ->
       ?LOG_DEBUG(
         "Default on variation returned for flag ~p, target ~p, id ~s: ~p",
         [Flag, Target, Id, Value]
@@ -249,17 +250,16 @@ evaluate_flag(default_on, Flag, Target) ->
       {ok, Id, Value}
   end.
 
-
 -spec get_default_off_variation(flag(), binary()) ->
   {ok, Id :: binary(), Value :: term()} | {error, not_found}.
 get_default_off_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
-  case get_variation(Variations, Id) of
-    {error, not_found} ->
+  case search_by_id(Variations, Id) of
+    false ->
       ?LOG_ERROR("Default off variation not found for flag ~p, id ~s", [Flag, Id]),
       {error, not_found};
 
-    {ok, #{value := Value}} ->
+    {value, #{value := Value}} ->
       ?LOG_DEBUG("Default off variation returned for flag ~p, id ~s: ~p", [Flag, Id, Value]),
       {ok, Id, Value}
   end.
@@ -269,12 +269,12 @@ get_default_off_variation(Flag, Id) ->
   {ok, Id :: binary(), term()} | {error, not_found}.
 get_target_or_group_variation(Flag, Id) ->
   #{variations := Variations} = Flag,
-  case get_variation(Variations, Id) of
-    {error, not_found} ->
+  case search_by_id(Variations, Id) of
+    false ->
       ?LOG_ERROR("Target matched rule for flag ~p but variation id ~p not found", [Flag, Id]),
       {error, not_found};
 
-    {ok, #{value := Value}} -> {ok, Id, Value}
+    {value, #{value := Value}} -> {ok, Id, Value}
   end.
 
 
@@ -547,11 +547,9 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target) -
       false
   end.
 
-
--spec get_variation([map()], binary()) -> {ok, map()} | {error, not_found}.
-get_variation([], _Id) -> {error, not_found};
-get_variation([#{identifier := Id} = Head | _Tail], Id) -> {ok, Head};
-get_variation([_Head | Tail], Id) -> get_variation(Tail, Id).
+-spec search_by_id([map()], binary()) -> {value, map()} | false.
+search_by_id(Values, Id) ->
+  lists:search(fun (#{identifier := I}) -> I == Id end, Values).
 
 -spec identifier_matches(map(), [map()]) -> boolean().
 identifier_matches(_, []) -> false;
