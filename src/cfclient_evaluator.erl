@@ -135,7 +135,7 @@ json_variation(FlagId, Target, Config) ->
 
 %% Internal functions
 
--spec evaluate(binary(), target(), map()) ->
+-spec evaluate(binary(), target(), config()) ->
   {ok, Id :: binary(), Value :: term()} | {error, unknown_flag}.
 evaluate(FlagId, Target, Config) ->
   case cfclient_cache:get_value({flag, FlagId}, Config) of
