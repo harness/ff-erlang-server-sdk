@@ -491,8 +491,8 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
 
 -spec apply_percentage_rollout(Variations :: list(), binary(), binary(), integer()) ->
   binary() | percentage_rollout_excluded.
-apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, AccumulatorIn) ->
-  Percentage = AccumulatorIn + maps:get(weight, Head),
+apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, Acc) ->
+  Percentage = Acc + maps:get(weight, Head),
   case should_rollout(BucketBy, TargetValue, Percentage) of
     true -> maps:get(variation, Head);
     false -> apply_percentage_rollout(Tail, BucketBy, TargetValue, Percentage)
