@@ -168,7 +168,9 @@ evaluate_flag(#{state := <<"on">>} = Flag, Target, off) ->
 %   #{feature := Feature} = Flag,
 %   ?LOG_WARNING("Flag state ignored for ~p", [Feature]),
 %   evaluate_flag(Flag, Target, prerequisites);
-% Evaluate prerequisites
+
+%% Evaluate prerequisites
+
 evaluate_flag(#{prerequisites := []} = Flag, Target, prerequisites) ->
   ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(Flag, Target, target_rules);
@@ -185,6 +187,7 @@ evaluate_flag(#{prerequisites := Prereq} = Flag, Target, prerequisites) when Pre
   end;
 
 evaluate_flag(Flag, Target, prerequisites) -> evaluate_flag(Flag, Target, target_rules);
+
 % Evaluate target rules
 evaluate_flag(#{variationToTargetMap := []} = Flag, Target, target_rules) ->
   ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
