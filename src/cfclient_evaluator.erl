@@ -510,7 +510,7 @@ should_rollout(BucketBy, TargetValue, Percentage) ->
 
 -spec search_prerequisites(Prerequisites :: list(), binary()) -> boolean().
 search_prerequisites([Head | Tail], Target) ->
-  Id = maps:get(feature, Head),
+  #{feature := Id} = Head,
   % Get prerequisite from cache
   case cfclient_cache:get_value({flag, Id}) of
     {error, undefined} ->
