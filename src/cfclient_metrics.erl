@@ -20,7 +20,7 @@ record(_, _, _, _, _) -> ok.
 
 
 % @doc Gather metrics and send them to server.
-% Called periodically.
+% Called periodically by cfclient_instance.
 -spec process_metrics(config()) -> ok | noop | {error, api}.
 process_metrics(Config) ->
   ?LOG_INFO("Gathering and sending metrics"),
@@ -49,8 +49,7 @@ process_metrics(Config) ->
       {error, api}
   end.
 
-
-% @doc Send metrics to the server via API
+% @doc Send metrics to the server via API.
 -spec post_metrics([map()], [map()], config()) -> {ok, term()} | {error, term()} | noop.
 post_metrics([], [], _Config) -> noop;
 
@@ -68,11 +67,10 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
   end.
 
 
-
+% @doc Add evaluation metrics to cache
 -spec cache_metrics(binary(), cfclient:target(), binary(), binary(), config()) -> ok.
 cache_metrics(FlagId, Target, VariationId, VariationValue, Config) ->
   #{metrics_cache_table := CacheTable, metrics_counter_table := CounterTable} = Config,
-  % Record unique evaluation
   Evaluation =
     #{
       feature_name => FlagId,
@@ -91,6 +89,7 @@ cache_metrics(FlagId, Target, VariationId, VariationValue, Config) ->
   ok.
 
 
+% @doc Add target to metrics cache.
 -spec cache_target(cfclient:target(), config()) -> ok | noop.
 cache_target(#{anonymous := <<"true">>} = Target, _Config) ->
   ?LOG_DEBUG("Metrics cache target skipped for anonymous target ~w", [Target]),
