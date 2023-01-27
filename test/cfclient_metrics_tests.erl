@@ -16,18 +16,18 @@
 config() ->
     cfclient_config:get_config(?MODULE).
 
-create_metric_data_test_() ->
-  {"Create Metric Data",
+record_metric_data_test_() ->
+  {"Record Metric Data",
    setup,
    fun
      () ->
         Config = [{name, ?MODULE}, {poll_enabled, false}],
         {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
-        ?debugFmt("Started cfclient instance ~p", [Pid]),
+        % ?debugFmt("Started cfclient instance ~p", [Pid]),
         Pid
    end,
    fun (Pid) ->
-           ?debugFmt("Stopping cfclient instance ~p", [Pid]),
+           % ?debugFmt("Stopping cfclient instance ~p", [Pid]),
            gen_server:stop(Pid)
    end,
    [
@@ -58,8 +58,8 @@ create_metric_data_test_() ->
          %     attributes => #{location => <<"us">>}
          %   },
          Config = cfclient_config:get_config(?MODULE),
-         cfclient_metrics:enqueue(<<"flag1">>, UniqueEvaluationTarget1, <<"true">>, <<"true">>, Config),
-         cfclient_metrics:enqueue(<<"flag1">>, UniqueEvaluationTarget1, <<"false">>, <<"false">>, Config),
+         cfclient_metrics:record(<<"flag1">>, UniqueEvaluationTarget1, <<"true">>, <<"true">>, Config),
+         cfclient_metrics:record(<<"flag1">>, UniqueEvaluationTarget1, <<"false">>, <<"false">>, Config),
          % Evaluation1 =
          %   #{
          %     feature_name => <<"Flag1">>,
@@ -110,9 +110,8 @@ create_metric_data_test_() ->
            }
          ],
 
-         {ok, Metrics0} = cfclient_metrics:collect_metrics_data(Config),
-         Metrics = lists:map(fun (M) -> maps:put(timestamp, Timestamp, M) end, Metrics0),
-         ?assertEqual(ExpectedMetrics, Metrics)
+         {ok, Metrics} = cfclient_metrics:collect_metrics_data(Timestamp, Config),
+         ?assertMatch(ExpectedMetrics, Metrics)
 
          % ?assertEqual(
          %   ExpectedMetrics,
@@ -130,8 +129,8 @@ create_metric_data_test_() ->
    ]
   }.
 
-create_metric_target_data_test_not() ->
-  %% As we are mocking the cache calls just hard code the arguments here. The values aren't used anyway.
+create_metric_target_data_test_() ->
+  %% Hard code arguments here. As we are mocking the cache calls, the values aren't used.
   UnusedCachePID = self(),
   UnusedKeys = [<<"not_used">>, <<"also_not_used">>, <<"yep_not_used">>],
   %%-------------------- Three Public Targets --------------------
@@ -182,17 +181,12 @@ create_metric_target_data_test_not() ->
     ],
   ?assertEqual(
     ExpectedMetricTargetData,
-    sort_metric_target_list(
+    sort_by_identifier(
       cfclient_metrics:create_metric_target_data(UnusedKeys, UnusedCachePID, [])
     )
   ),
   %%-------------------- No Targets --------------------
   ?assertEqual([], cfclient_metrics:create_metric_target_data([], UnusedCachePID, [])).
-
-%% helper function that allows us to compare list equality for metric target data
-
-sort_metric_target_list(MetricTargetData) ->
-  lists:sort(fun (A, B) -> maps:get(identifier, A) =< maps:get(identifier, B) end, MetricTargetData).
 
 create_metric_target_test() ->
   %%-------------------- Target with binary attributes --------------------
@@ -279,3 +273,7 @@ start_lru_cache() ->
   Size = 32000000,
   CacheName = cfclient_metrics,
   lru:start_link({local, CacheName}, [{max_size, Size}]).
+
+% @doc Put data in order so that we can compare lists
+sort_by_identifier(Data) ->
+  lists:sort(fun (#{identifier := A}, #{identifier := B}) -> A =< B end, Data).
