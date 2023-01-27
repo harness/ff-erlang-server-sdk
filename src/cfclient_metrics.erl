@@ -24,11 +24,6 @@ record(_, _, _, _, _) -> ok.
 -spec process_metrics(config()) -> ok | noop | {error, api}.
 process_metrics(Config) ->
   ?LOG_INFO("Gathering and sending metrics"),
-  #{
-    metrics_cache_table := CacheTable,
-    metrics_target_table := TargetTable,
-    metrics_counter_table := CounterTable
-  } = Config,
   {ok, MetricsData} = collect_metrics_data(Config),
   {ok, MetricsTargetData} = collect_metrics_target_data(Config),
   case post_metrics(MetricsData, MetricsTargetData, Config) of
@@ -39,9 +34,7 @@ process_metrics(Config) ->
     {ok, Response} ->
       ?LOG_INFO("Posted metrics: ~p", [Response]),
       % TODO: race condition, will lose any metrics made during call to post_metrics
-      ets:delete_all_objects(CacheTable),
-      ets:delete_all_objects(CounterTable),
-      ets:delete_all_objects(TargetTable),
+      clear_caches(Config),
       ok;
 
     {error, Response} ->
@@ -215,3 +208,16 @@ get_counter(Key, Config) ->
 % @doc Get contents of ETS table
 -spec list_table(ets:table()) -> {ok, list()} | {error, Reason :: term()}.
 list_table(TableName) -> try {ok, ets:tab2list(TableName)} catch error : R -> {error, R} end.
+
+% @doc Delete all objects in metrics caches.
+-spec clear_caches(config()) -> ok.
+clear_caches(Config) ->
+    #{
+      metrics_cache_table := CacheTable,
+      metrics_target_table := TargetTable,
+      metrics_counter_table := CounterTable
+     } = Config,
+    ets:delete_all_objects(CacheTable),
+    ets:delete_all_objects(CounterTable),
+    ets:delete_all_objects(TargetTable),
+    ok.
