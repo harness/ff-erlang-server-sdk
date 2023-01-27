@@ -154,9 +154,6 @@ evaluate(FlagId, Target, Config) ->
   config()
 ) ->
   {ok, Id :: binary(), Value :: term()} | {error, atom()}.
-
-%% Evaluate for off state
-
 evaluate_flag(off, #{state := <<"off">>} = Flag, _Target, _Config) ->
   ?LOG_DEBUG("Flag state off for flag ~p, returning default 'off' variation", [Flag]),
   return_default_off_variation(Flag);
@@ -165,12 +162,6 @@ evaluate_flag(off, #{state := <<"on">>} = Flag, Target, Config) ->
   ?LOG_DEBUG("Flag state on for flag ~p", [Flag]),
   evaluate_flag(prerequisites, Flag, Target, Config);
 
-% % TODO: type mismatch with state, which is declared as a map, match any state here
-% evaluate_flag(Flag, Target, off) ->
-%   #{feature := Feature} = Flag,
-%   ?LOG_WARNING("Flag state ignored for ~p", [Feature]),
-%   evaluate_flag(Flag, Target, prerequisites);
-%% Evaluate prerequisites
 evaluate_flag(prerequisites, #{prerequisites := []} = Flag, Target, Config) ->
   ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(target_rules, Flag, Target, Config);
@@ -191,7 +182,6 @@ evaluate_flag(prerequisites, Flag, Target, Config) ->
   ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(target_rules, Flag, Target, Config);
 
-% Evaluate target rules
 evaluate_flag(target_rules, #{variationToTargetMap := []} = Flag, Target, Config) ->
   ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(group_rules, Flag, Target, Config);
@@ -208,8 +198,8 @@ evaluate_flag(target_rules, #{variationToTargetMap := TM} = Flag, Target, Config
 
     TargetVariationId ->
       ?LOG_DEBUG("Target rules map matched flag ~p, target ~p", [Flag, Target]),
-      %% Return both variation identifier and not just the value, because
-      %% prerequisites compares on variation identifier
+      % Return both variation identifier and value, because
+      % prerequisites compares on variation identifier
       return_target_or_group_variation(Flag, TargetVariationId)
   end;
 
@@ -217,7 +207,6 @@ evaluate_flag(target_rules, Flag, Target, Config) ->
   ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(group_rules, Flag, Target, Config);
 
-% Evaluate group rules
 evaluate_flag(group_rules, #{rules := []} = Flag, Target, Config) ->
   ?LOG_DEBUG("Group rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(default_on, Flag, Target, Config);
@@ -238,7 +227,7 @@ evaluate_flag(group_rules, #{rules := Rules} = Flag, Target, Config) when Rules 
   end;
 
 evaluate_flag(group_rules, Flag, Target, Config) -> evaluate_flag(default_on, Flag, Target, Config);
-%% Default "on" variation
+
 evaluate_flag(default_on, Flag, Target, _Config) ->
   #{variations := Variations, defaultServe := #{variation := Id}} = Flag,
   case search_by_id(Variations, Id) of
@@ -410,24 +399,14 @@ is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
 is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
   binary:match(TargetAttribute, hd(RuleValue)) /= nomatch;
 
-% We don't get the head of RuleValue here as `In` can have multiple values
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_binary(TargetAttribute) ->
+  % In operator can have multiple values
   lists:member(TargetAttribute, RuleValue);
 
 is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(TargetAttribute) ->
   lists:any(fun (TA) -> lists:member(TA, RuleValue) end, TargetAttribute).
 
 
-% Search =
-%   fun
-%     F([Head | Tail]) ->
-%       case lists:member(Head, RuleValue) of
-%         true -> true;
-%         false -> F(Tail)
-%       end;
-%     F([]) -> false
-%   end,
-% Search(TargetAttribute).
 -spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetId, TargetName)
 when is_map(TargetCustomAttributes), map_size(TargetCustomAttributes) > 0 ->
@@ -454,11 +433,12 @@ custom_attribute_to_binary(Value) when is_number(Value) -> list_to_binary(mochin
 
 custom_attribute_to_binary(Value) when is_list(Value) ->
   case io_lib:char_list(Value) of
-    % If user supplies a string/list then log an error as not supported input
+    % If user supplies a string/list then log an error as it is not a supported input
     true ->
       ?LOG_ERROR(
-        "Using strings/lists for element values in the target custom attributes list is not supported"
+        "Using strings/lists for element values in target custom attributes list is not supported"
       ),
+      % TODO: deal with return value properly
       not_ok;
 
     false -> [custom_attribute_list_elem_to_binary(X) || X <- Value]
@@ -477,6 +457,7 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   ?LOG_ERROR(
     "Using strings/lists for element values in the target custom attributes list is not supported"
   ),
+  % TODO: deal with return value properly
   not_ok.
 
 
@@ -538,7 +519,7 @@ check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target, C
       lists:member(VariationId, PrerequisiteVariations);
 
     {error, Reason} ->
-      ?LOG_ERROR("Could not evaluate prerequisite flag ~p: ~p", [PrerequisiteFlagId, Reason]),
+      ?LOG_ERROR("Prerequsite flag evaluation failed for ~p: ~p", [PrerequisiteFlagId, Reason]),
       false
   end.
 
