@@ -22,12 +22,10 @@ record_metric_data_test_() ->
       () ->
         Config = [{name, ?MODULE}, {poll_enabled, false}],
         {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
-        % ?debugFmt("Started cfclient instance ~p", [Pid]),
         Pid
     end,
     fun
       (Pid) ->
-        % ?debugFmt("Stopping cfclient instance ~p", [Pid]),
         gen_server:stop(Pid)
     end,
     [
@@ -145,10 +143,7 @@ record_metric_data_test_() ->
   }.
 
 
-create_metric_target_data_test_() ->
-  %% Hard code arguments here. As we are mocking the cache calls, the values aren't used.
-  UnusedCachePID = self(),
-  UnusedKeys = [<<"not_used">>, <<"also_not_used">>, <<"yep_not_used">>],
+format_metrics_target_data_test() ->
   %%-------------------- Three Public Targets --------------------
   PublicTarget1 =
     #{
@@ -166,7 +161,7 @@ create_metric_target_data_test_() ->
       attributes => #{preference => <<"marketing">>, location => <<"emea">>}
     },
   PublicTarget2Attributes =
-    [#{key => preference, value => <<"marketing">>}, #{key => location, value => <<"emea">>}],
+    [#{key => location, value => <<"emea">>}, #{key => preference, value => <<"marketing">>}],
   PublicTarget3 =
     #{
       identifier => <<"target_3">>,
@@ -175,8 +170,7 @@ create_metric_target_data_test_() ->
       attributes => #{location => <<"emea">>}
     },
   PublicTarget3Attributes = [#{key => location, value => <<"emea">>}],
-  %% Mock calls to the metrics target cache to return the above targets
-  meck:sequence(lru, get, 2, [PublicTarget1, PublicTarget2, PublicTarget3]),
+
   ExpectedMetricTargetData =
     [
       #{
@@ -195,12 +189,12 @@ create_metric_target_data_test_() ->
         attributes => PublicTarget3Attributes
       }
     ],
-  ?assertEqual(
-    ExpectedMetricTargetData,
-    sort_by_identifier(cfclient_metrics:create_metric_target_data(UnusedKeys, UnusedCachePID, []))
-  ),
-  %%-------------------- No Targets --------------------
-  ?assertEqual([], cfclient_metrics:create_metric_target_data([], UnusedCachePID, [])).
+  MetricTargetData0 = [cfclient_metrics:format_target(T) || T <- [PublicTarget1, PublicTarget2, PublicTarget3]],
+  MetricTargetdata = lists:map(fun normalize_target_data/1, MetricTargetData0),
+  ?assertEqual(ExpectedMetricTargetData, MetricTargetdata).
+
+normalize_target_data(Data) ->
+  maps:update_with(attributes, fun sort_by_key/1, Data).
 
 
 create_metric_target_test() ->
@@ -222,17 +216,18 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     SingleBinaryExpectedTarget,
-    cfclient_metrics:create_metric_target(SingleBinaryTarget)
+    cfclient_metrics:format_target(SingleBinaryTarget)
   ),
   %% Multiple binary attributes
   MultipleBinaryTarget =
     #{
       identifier => <<"target_3333">>,
       name => <<"target_name_1444">>,
-      attributes => #{preference => <<"marketing">>, location => <<"emea">>}
+      attributes => #{location => <<"emea">>, preference => <<"marketing">>}
     },
   MultipleBinaryAttributes =
-    [#{key => preference, value => <<"marketing">>}, #{key => location, value => <<"emea">>}],
+    [#{key => location, value => <<"emea">>},
+     #{key => preference, value => <<"marketing">>}],
   MultipleBinaryExpectedTarget =
     #{
       identifier => <<"target_3333">>,
@@ -241,7 +236,7 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     MultipleBinaryExpectedTarget,
-    cfclient_metrics:create_metric_target(MultipleBinaryTarget)
+    cfclient_metrics:format_target(MultipleBinaryTarget)
   ),
   %%-------------------- Target with atom attributes --------------------
   %% Single atom attribute
@@ -260,17 +255,18 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     SingleAtomAttributeExpectedTarget,
-    cfclient_metrics:create_metric_target(SingleAtomAttributeTarget)
+    cfclient_metrics:format_target(SingleAtomAttributeTarget)
   ),
   %% Multiple atom attributes
   MultipleAtomAttributeTarget =
     #{
       identifier => <<"target_3333">>,
       name => <<"target_name_1444">>,
-      attributes => #{preference => marketing, location => emea}
+      attributes => #{location => emea, preference => marketing}
     },
   MultipleAtomAttributes =
-    [#{key => preference, value => <<"marketing">>}, #{key => location, value => <<"emea">>}],
+    [#{key => location, value => <<"emea">>},
+     #{key => preference, value => <<"marketing">>}],
   MultipleAtomAttributeExpectedTarget =
     #{
       identifier => <<"target_3333">>,
@@ -279,17 +275,12 @@ create_metric_target_test() ->
     },
   ?assertEqual(
     MultipleAtomAttributeExpectedTarget,
-    cfclient_metrics:create_metric_target(MultipleAtomAttributeTarget)
+    cfclient_metrics:format_target(MultipleAtomAttributeTarget)
   ).
-
-%% Used for metric data - we just get more value spinning up a real cache vs mocking calls.
-
-start_lru_cache() ->
-  Size = 32000000,
-  CacheName = cfclient_metrics,
-  lru:start_link({local, CacheName}, [{max_size, Size}]).
-
 
 % @doc Put data in order so that we can compare lists
 sort_by_identifier(Data) ->
   lists:sort(fun (#{identifier := A}, #{identifier := B}) -> A =< B end, Data).
+
+sort_by_key(Data) ->
+  lists:sort(fun (#{key := A}, #{key := B}) -> A =< B end, Data).

@@ -125,8 +125,8 @@ collect_metrics_data(Timestamp, Config) ->
 % TODO: We pass in the target here, but so far only using the Global
 % target per ff-server requirements. We will, however, want to add an option to
 % the config to disable that global config and use the actual target.
-% So for the moment the UniqueEvaluationTarget is unreferenced.
-format_metric(Evaluation, _UniqueEvaluationTarget, Count, Timestamp) ->
+% So for the moment the Target is unreferenced.
+format_metric(Evaluation, _Target, Count, Timestamp) ->
   #{
     feature_name := FeatureName,
     variation_value := VariationValue,
@@ -157,27 +157,27 @@ collect_metrics_target_data(Config) ->
   #{metrics_target_table := Table} = Config,
   case list_table(Table) of
     {ok, Pairs} ->
-      Metrics = lists:map(fun ({_Id, Target}) -> create_metric_target(Target) end, Pairs),
+      Metrics = lists:map(fun ({_Id, Target}) -> format_target(Target) end, Pairs),
       {ok, Metrics};
 
     {error, Reason} -> {error, Reason}
   end.
 
 
--spec create_metric_target(cfclient:target()) -> map().
-create_metric_target(Target) ->
-  Attributes = target_attributes_to_metrics(Target),
+-spec format_target(cfclient:target()) -> map().
+format_target(Target) ->
   #{identifier := Id} = Target,
+  Attributes = target_attributes_to_metrics(Target),
   Name = maps:get(name, Target, Id),
   #{identifier => Id, name => Name, attributes => Attributes}.
 
 
 -spec target_attributes_to_metrics(cfclient:target()) -> map().
 target_attributes_to_metrics(#{attributes := Values}) ->
-  maps:map(fun target_attribute_to_metric/2, Values).
+  lists:map(fun target_attribute_to_metric/1, maps:to_list(Values)).
 
--spec target_attribute_to_metric(binary(), term()) -> map().
-target_attribute_to_metric(K, V) ->
+-spec target_attribute_to_metric({binary(), term()}) -> map().
+target_attribute_to_metric({K, V}) ->
   #{key => K, value => cfclient_evaluator:custom_attribute_to_binary(V)}.
 
 % -spec get_metric(term()) -> {ok, cfclient:target()} | {error, undefined}.
