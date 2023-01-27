@@ -7,9 +7,11 @@
 
 -export([process_metrics/1, enqueue/5]).
 
+-type config() :: map().
+
 % @doc Gather metrics and send them to server.
 % Called periodically.
--spec process_metrics(map()) -> ok | noop | {error, api}.
+-spec process_metrics(config()) -> ok | noop | {error, api}.
 process_metrics(Config) ->
   ?LOG_INFO("Gathering and sending metrics"),
   #{
@@ -39,7 +41,7 @@ process_metrics(Config) ->
 
 
 % @doc Send metrics to the server via API
--spec post_metrics([map()], [map()], map()) -> {ok, term()} | {error, term()} | noop.
+-spec post_metrics([map()], [map()], config()) -> {ok, term()} | {error, term()} | noop.
 post_metrics([], [], _Config) -> noop;
 
 post_metrics(MetricsData, MetricsTargetData, Config) ->
@@ -56,7 +58,7 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
   end.
 
 
--spec enqueue(binary(), cfclient:target(), binary(), binary(), map()) -> atom().
+-spec enqueue(binary(), cfclient:target(), binary(), binary(), config()) -> atom().
 enqueue(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config) ->
   case maps:get(analytics_enabled, Config) of
     true ->
@@ -77,7 +79,7 @@ enqueue(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config) ->
   end.
 
 
--spec cache_metrics(binary(), cfclient:target(), binary(), binary(), map()) -> ok.
+-spec cache_metrics(binary(), cfclient:target(), binary(), binary(), config()) -> ok.
 cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config) ->
   #{metrics_cache_table := MetricsCacheTable, metrics_counter_table := MetricsCounterTable} =
     Config,
@@ -101,7 +103,7 @@ cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue, Confi
   ok.
 
 
--spec cache_target(cfclient:target(), map()) -> ok | noop.
+-spec cache_target(cfclient:target(), config()) -> ok | noop.
 cache_target(#{anonymous := <<"true">>} = Target, _Config) ->
   ?LOG_DEBUG("Not caching anonymous target ~p for metrics", [Target]),
   noop;
@@ -113,7 +115,7 @@ cache_target(Target, Config) ->
   ok.
 
 
--spec collect_metrics_data(atom(), map()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+-spec collect_metrics_data(atom(), config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
 collect_metrics_data(Table, Config) ->
   Timestamp = os:system_time(millisecond),
   case list_table(Table) of
@@ -198,7 +200,7 @@ target_attribute_to_metric(K, V) ->
 % get_metric(Key) ->
 %   Config = cfclient_config:get_config(),
 %   get_metric(Key, Config).
--spec get_metric(term(), map()) -> {ok, cfclient:target()} | {error, undefined}.
+-spec get_metric(term(), config()) -> {ok, cfclient:target()} | {error, undefined}.
 get_metric(Key, Config) ->
   MetricsCacheTable = cfclient_config:get_value(metrics_cache_table, Config),
   case ets:lookup(MetricsCacheTable, Key) of
