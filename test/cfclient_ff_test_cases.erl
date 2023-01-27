@@ -92,9 +92,7 @@ evaluate_test(Test, TestFile) ->
     <<"boolean">> ->
       {Id, ?_assertEqual(Expected, cfclient:bool_variation(Id, Target, false), Target)};
 
-    <<"string">> ->
-      {Id, ?_assertEqual(Expected, cfclient:string_variation(Id, Target, "blue"))};
-
+    <<"string">> -> {Id, ?_assertEqual(Expected, cfclient:string_variation(Id, Target, "blue"))};
     <<"int">> -> {Id, ?_assertEqual(Expected, cfclient:number_variation(Id, Target, 100))};
 
     <<"json">> ->

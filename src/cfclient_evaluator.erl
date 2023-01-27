@@ -1,5 +1,6 @@
-% @doc
-% @end
+%% @doc
+%% @end
+
 -module(cfclient_evaluator).
 
 -include_lib("kernel/include/logger.hrl").

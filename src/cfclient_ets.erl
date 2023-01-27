@@ -1,3 +1,7 @@
+%% @doc
+%% Functions to make it easier to mock ets
+%% @end
+
 -module(cfclient_ets).
 
 -export([lookup/2, get/2]).

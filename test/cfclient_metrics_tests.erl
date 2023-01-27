@@ -24,10 +24,7 @@ record_metric_data_test_() ->
         {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
         Pid
     end,
-    fun
-      (Pid) ->
-        gen_server:stop(Pid)
-    end,
+    fun (Pid) -> gen_server:stop(Pid) end,
     [
       {
         "Two Unique Evaluations on same flag",
@@ -170,7 +167,6 @@ format_metrics_target_data_test() ->
       attributes => #{location => <<"emea">>}
     },
   PublicTarget3Attributes = [#{key => location, value => <<"emea">>}],
-
   ExpectedMetricTargetData =
     [
       #{
@@ -189,13 +185,13 @@ format_metrics_target_data_test() ->
         attributes => PublicTarget3Attributes
       }
     ],
-  MetricTargetData0 = [cfclient_metrics:format_target(T) || T <- [PublicTarget1, PublicTarget2, PublicTarget3]],
+  MetricTargetData0 =
+    [cfclient_metrics:format_target(T) || T <- [PublicTarget1, PublicTarget2, PublicTarget3]],
   MetricTargetdata = lists:map(fun normalize_target_data/1, MetricTargetData0),
   ?assertEqual(ExpectedMetricTargetData, MetricTargetdata).
 
-normalize_target_data(Data) ->
-  maps:update_with(attributes, fun sort_by_key/1, Data).
 
+normalize_target_data(Data) -> maps:update_with(attributes, fun sort_by_key/1, Data).
 
 create_metric_target_test() ->
   %%-------------------- Target with binary attributes --------------------
@@ -214,10 +210,7 @@ create_metric_target_test() ->
       name => <<"target_name_2345">>,
       attributes => SingleBinaryAttributes
     },
-  ?assertEqual(
-    SingleBinaryExpectedTarget,
-    cfclient_metrics:format_target(SingleBinaryTarget)
-  ),
+  ?assertEqual(SingleBinaryExpectedTarget, cfclient_metrics:format_target(SingleBinaryTarget)),
   %% Multiple binary attributes
   MultipleBinaryTarget =
     #{
@@ -226,18 +219,14 @@ create_metric_target_test() ->
       attributes => #{location => <<"emea">>, preference => <<"marketing">>}
     },
   MultipleBinaryAttributes =
-    [#{key => location, value => <<"emea">>},
-     #{key => preference, value => <<"marketing">>}],
+    [#{key => location, value => <<"emea">>}, #{key => preference, value => <<"marketing">>}],
   MultipleBinaryExpectedTarget =
     #{
       identifier => <<"target_3333">>,
       name => <<"target_name_1444">>,
       attributes => MultipleBinaryAttributes
     },
-  ?assertEqual(
-    MultipleBinaryExpectedTarget,
-    cfclient_metrics:format_target(MultipleBinaryTarget)
-  ),
+  ?assertEqual(MultipleBinaryExpectedTarget, cfclient_metrics:format_target(MultipleBinaryTarget)),
   %%-------------------- Target with atom attributes --------------------
   %% Single atom attribute
   SingleAtomAttributeTarget =
@@ -265,8 +254,7 @@ create_metric_target_test() ->
       attributes => #{location => emea, preference => marketing}
     },
   MultipleAtomAttributes =
-    [#{key => location, value => <<"emea">>},
-     #{key => preference, value => <<"marketing">>}],
+    [#{key => location, value => <<"emea">>}, #{key => preference, value => <<"marketing">>}],
   MultipleAtomAttributeExpectedTarget =
     #{
       identifier => <<"target_3333">>,
@@ -278,9 +266,9 @@ create_metric_target_test() ->
     cfclient_metrics:format_target(MultipleAtomAttributeTarget)
   ).
 
+
 % @doc Put data in order so that we can compare lists
 sort_by_identifier(Data) ->
   lists:sort(fun (#{identifier := A}, #{identifier := B}) -> A =< B end, Data).
 
-sort_by_key(Data) ->
-  lists:sort(fun (#{key := A}, #{key := B}) -> A =< B end, Data).
+sort_by_key(Data) -> lists:sort(fun (#{key := A}, #{key := B}) -> A =< B end, Data).

@@ -1,3 +1,7 @@
+%% @doc
+%%
+%% @end
+
 -module(cfclient_metrics).
 
 -include_lib("kernel/include/logger.hrl").

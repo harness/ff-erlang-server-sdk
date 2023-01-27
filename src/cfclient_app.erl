@@ -1,5 +1,6 @@
-% @doc cfclient public API
-% @end
+%% @doc cfclient public API
+%% @end
+
 -module(cfclient_app).
 
 -behaviour(application).

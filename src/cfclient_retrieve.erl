@@ -1,6 +1,7 @@
-% @doc
-% Pull Feature and Target configuration from Feature Flags API.
-% @end
+%% @doc
+%% Pull Feature and Target configuration from Feature Flags API.
+%% @end
+
 -module(cfclient_retrieve).
 
 -export([retrieve_flags/1, retrieve_segments/1]).
