@@ -28,11 +28,12 @@
                   anonymous => boolean(),
                   attributes := #{atom() := binary() | atom() | list()} | null
                 }.
+-type config() :: map().
 
 -spec bool_variation(binary() | string(), target(), boolean()) -> boolean().
 bool_variation(FlagKey, Target, Default) -> bool_variation(default, FlagKey, Target, Default).
 
--spec bool_variation(atom() | map(), binary() | string(), target(), boolean()) -> boolean().
+-spec bool_variation(atom() | config(), binary() | string(), target(), boolean()) -> boolean().
 bool_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
   bool_variation(Config, list_to_binary(FlagKey), Target, Default);
 
@@ -74,7 +75,7 @@ bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 -spec string_variation(binary() | string(), target(), binary()) -> binary().
 string_variation(FlagKey, Target, Default) -> string_variation(default, FlagKey, Target, Default).
 
--spec string_variation(atom() | map(), binary() | list(), target(), binary()) -> binary().
+-spec string_variation(atom() | config(), binary() | list(), target(), binary()) -> binary().
 string_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
   string_variation(Config, list_to_binary(FlagKey), Target, Default);
 
@@ -116,7 +117,7 @@ string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 -spec number_variation(binary() | list(), target(), number()) -> number().
 number_variation(FlagKey, Target, Default) -> number_variation(default, FlagKey, Target, Default).
 
--spec number_variation(atom() | map(), binary() | list(), target(), number()) -> number().
+-spec number_variation(atom() | config(), binary() | list(), target(), number()) -> number().
 number_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
   number_variation(Config, list_to_binary(FlagKey), Target, Default);
 
@@ -158,7 +159,7 @@ number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 -spec json_variation(binary() | list(), target(), map()) -> map().
 json_variation(FlagKey, Target, Default) -> json_variation(default, FlagKey, Target, Default).
 
--spec json_variation(atom() | map(), binary() | list(), target(), map()) -> map().
+-spec json_variation(atom() | config(), binary() | list(), target(), map()) -> map().
 json_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
   json_variation(Config, list_to_binary(FlagKey), Target, Default);
 
