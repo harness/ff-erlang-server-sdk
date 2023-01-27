@@ -45,14 +45,8 @@ bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:bool_variation(FlagKey, Target, Config) of
-      {ok, VariationIdentifier, Variation} ->
-        cfclient_metrics:record(
-          FlagKey,
-          Target,
-          VariationIdentifier,
-          atom_to_binary(Variation),
-          Config
-        ),
+      {ok, VariationId, Variation} ->
+        cfclient_metrics:record(FlagKey, Target, VariationId, atom_to_binary(Variation), Config),
         Variation;
 
       {error, Reason} ->
@@ -87,14 +81,8 @@ string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:string_variation(FlagKey, Target, Config) of
-      {ok, VariationIdentifier, Variation} ->
-        cfclient_metrics:record(
-          FlagKey,
-          Target,
-          VariationIdentifier,
-          list_to_binary(Variation),
-          Config
-        ),
+      {ok, VariationId, Variation} ->
+        cfclient_metrics:record(FlagKey, Target, VariationId, Variation, Config),
         Variation;
 
       {error, Reason} ->
@@ -129,11 +117,11 @@ number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:number_variation(FlagKey, Target, Config) of
-      {ok, VariationIdentifier, Variation} ->
+      {ok, VariationId, Variation} ->
         cfclient_metrics:record(
           FlagKey,
           Target,
-          VariationIdentifier,
+          VariationId,
           list_to_binary(mochinum:digits(Variation)),
           Config
         ),
@@ -171,14 +159,8 @@ json_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
   try
     case cfclient_evaluator:json_variation(FlagKey, Target, Config) of
-      {ok, VariationIdentifier, Variation} ->
-        cfclient_metrics:record(
-          FlagKey,
-          Target,
-          VariationIdentifier,
-          jsx:encode(Variation),
-          Config
-        ),
+      {ok, VariationId, Variation} ->
+        cfclient_metrics:record(FlagKey, Target, VariationId, jsx:encode(Variation), Config),
         Variation;
 
       {error, Reason} ->
@@ -204,6 +186,7 @@ normalize_target(#{identifier := Id} = Target) when is_binary(Id) -> Target;
 normalize_target(#{identifier := Id} = Target) -> Target#{identifier := to_binary(Id)};
 normalize_target(Target) -> maps:put(identifier, <<>>, Target).
 
+% Convert value to binary
 to_binary(Value) when is_binary(Value) -> Value;
 to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
 to_binary(Value) when is_list(Value) -> list_to_binary(Value).
