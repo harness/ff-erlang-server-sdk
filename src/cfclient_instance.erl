@@ -23,10 +23,10 @@ init(Args) ->
   Config0 = proplists:get_value(config, Args, []),
   Config1 = cfclient_config:normalize(Config0),
   ok = cfclient_config:create_tables(Config1),
-  cfclient_config:set_config(Config1),
+  ok = cfclient_config:set_config(Config1),
   case cfclient_config:authenticate(ApiKey, Config1) of
     {ok, Config} ->
-      cfclient_config:set_config(Config),
+      ok = cfclient_config:set_config(Config),
       start_poll(Config),
       start_analytics(Config),
       {ok, Config};
