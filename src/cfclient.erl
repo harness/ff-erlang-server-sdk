@@ -45,7 +45,7 @@ bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:bool_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        cfclient_metrics:enqueue(
+        cfclient_metrics:record(
           FlagKey,
           Target,
           VariationIdentifier,
@@ -87,7 +87,7 @@ string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:string_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        cfclient_metrics:enqueue(
+        cfclient_metrics:record(
           FlagKey,
           Target,
           VariationIdentifier,
@@ -129,7 +129,7 @@ number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:number_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        cfclient_metrics:enqueue(
+        cfclient_metrics:record(
           FlagKey,
           Target,
           VariationIdentifier,
@@ -171,7 +171,7 @@ json_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   try
     case cfclient_evaluator:json_variation(FlagKey, Target, Config) of
       {ok, VariationIdentifier, Variation} ->
-        cfclient_metrics:enqueue(
+        cfclient_metrics:record(
           FlagKey,
           Target,
           VariationIdentifier,

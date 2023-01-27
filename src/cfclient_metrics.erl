@@ -5,9 +5,19 @@
 -include("cfclient_config.hrl").
 -include("cfclient_metrics_attributes.hrl").
 
--export([process_metrics/1, enqueue/5]).
+-export([process_metrics/1, record/5]).
 
 -type config() :: map().
+
+% @doc Record metrics for request 
+-spec record(binary(), cfclient:target(), binary(), binary(), config()) -> atom().
+record(FlagId, Target, VariationId, VariationValue, #{analytics_enabled := true} = Config) ->
+  cache_metrics(FlagId, Target, VariationId, VariationValue, Config),
+  cache_target(Target, Config),
+  ok;
+
+record(_, _, _, _, _) -> ok.
+
 
 % @doc Gather metrics and send them to server.
 % Called periodically.
@@ -57,14 +67,6 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
     {error, Response, _} -> {error, Response}
   end.
 
-
--spec enqueue(binary(), cfclient:target(), binary(), binary(), config()) -> atom().
-enqueue(FlagId, Target, VariationId, VariationValue, #{analytics_enabled := true} = Config) ->
-  cache_metrics(FlagId, Target, VariationId, VariationValue, Config),
-  cache_target(Target, Config),
-  ok;
-
-enqueue(_, _, _, _, _) -> ok.
 
 
 -spec cache_metrics(binary(), cfclient:target(), binary(), binary(), config()) -> ok.
