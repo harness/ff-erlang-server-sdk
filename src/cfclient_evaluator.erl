@@ -275,14 +275,14 @@ evaluate_target_rule(VariationMap, #{identifier := Id}) -> search_variation_map(
 evaluate_target_rule(_, _) -> false.
 
 -spec search_variation_map([variation_map()], binary()) -> TargetVariationId :: binary() | false.
+search_variation_map([], _) -> false;
+
 search_variation_map([Head | Tail], Id) ->
   #{variation := Variation, targets := Targets} = Head,
   case identifier_matches_any(Targets, Id) of
     true -> Variation;
     _ -> search_variation_map(Tail, Id)
-  end;
-
-search_variation_map([], _) -> false.
+  end.
 
 
 -spec search_rules_for_inclusion([rule()], target(), config()) ->
@@ -358,6 +358,8 @@ search_group(custom_rules, _, _) -> false.
 
 
 -spec search_group_custom_rules(CustomRules :: [map()], target()) -> boolean().
+search_group_custom_rules([], _) -> false;
+
 search_group_custom_rules([Rule | Tail], Target) ->
   #{attribute := RuleAttribute, values := RuleValue, op := Op} = Rule,
   #{identifier := TargetId, name := TargetName} = Target,
@@ -366,9 +368,7 @@ search_group_custom_rules([Rule | Tail], Target) ->
   case is_custom_rule_match(Op, TargetAttribute, RuleValue) of
     true -> true;
     false -> search_group_custom_rules(Tail, Target)
-  end;
-
-search_group_custom_rules([], _) -> false.
+  end.
 
 
 -spec is_custom_rule_match(Operator :: binary(), binary() | [binary()], [binary()]) -> boolean().
