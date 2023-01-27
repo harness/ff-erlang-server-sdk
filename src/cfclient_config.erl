@@ -214,8 +214,9 @@ set_config(Name, Config) ->
   ok.
 
 
--spec get_value(atom() | string()) -> string() | term().
-get_value(Key) when is_list(Key) -> get_value(list_to_atom(Key));
+-spec get_value(atom() | binary() | string()) -> term().
+get_value(Key) when is_binary(Key) -> get_value(binary_to_existing_atom(Key));
+get_value(Key) when is_list(Key) -> get_value(list_to_existing_atom(Key));
 get_value(Key) when is_atom(Key) -> get_value(Key, #{}).
 
 -spec get_value(atom(), map()) -> term().
