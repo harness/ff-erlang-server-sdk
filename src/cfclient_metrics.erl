@@ -24,7 +24,8 @@ record(_, _, _, _, _) -> ok.
 -spec process_metrics(config()) -> ok | noop | {error, api}.
 process_metrics(Config) ->
   ?LOG_INFO("Gathering and sending metrics"),
-  {ok, MetricsData} = collect_metrics_data(Config),
+  Timestamp = os:system_time(millisecond),
+  {ok, MetricsData} = collect_metrics_data(Timestamp, Config),
   {ok, MetricsTargetData} = collect_metrics_target_data(Config),
   case post_metrics(MetricsData, MetricsTargetData, Config) of
     noop ->
@@ -95,10 +96,9 @@ cache_target(Target, Config) ->
   ok.
 
 
--spec collect_metrics_data(config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
-collect_metrics_data(Config) ->
+-spec collect_metrics_data(integer(), config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+collect_metrics_data(Timestamp, Config) ->
   #{metrics_cache_table := Table} = Config,
-  Timestamp = os:system_time(millisecond),
   case list_table(Table) of
     {ok, Pairs} ->
       Metrics =
