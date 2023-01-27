@@ -1,7 +1,7 @@
-% @doc
-%
-% @end
-% Created : 04. Sep 2022 10:43 AM
+%% @doc
+%%
+%% @end
+%% Created : 04. Sep 2022 10:43 AM
 
 -module(cfclient_config).
 
@@ -10,11 +10,24 @@
 -include("cfclient_config.hrl").
 
 -export(
-  [get_config/0, get_config/1, set_config/1, set_config/2, normalize/1, get_value/1, get_value/2]
+  [
+    authenticate/2,
+    create_tables/1,
+    defaults/0,
+    get_config/0,
+    get_config/1,
+    get_value/1,
+    get_value/2,
+    init/1,
+    normalize/1,
+    parse_jwt/1,
+    set_config/1,
+    set_config/2
+  ]
 ).
--export([create_tables/1, authenticate/2, defaults/0, parse_jwt/1, init/1]).
 
-% Config defaults
+%% Config defaults
+
 % Config endpoint for Prod
 -define(DEFAULT_CONFIG_URL, "https://config.ff.harness.io/api/1.0").
 
@@ -46,6 +59,7 @@
 -spec defaults() -> map().
 defaults() ->
   #{
+    % Name used to access config
     name => default,
     % Config endpoint for prod
     config_url => ?DEFAULT_CONFIG_URL,
@@ -85,7 +99,7 @@ normalize(Config0) ->
     default -> Config;
 
     Name ->
-      % Add name prefix to tables
+      % Add name prefix to data tables
       Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
       Prefixed = maps:map(fun (_K, V) -> add_prefix(Name, V) end, maps:with(Tables, Config)),
       maps:merge(Config, Prefixed)
