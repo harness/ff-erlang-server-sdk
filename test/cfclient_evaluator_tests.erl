@@ -1982,7 +1982,8 @@ search_prerequisites() ->
   }.
 
 check_prerequisite() ->
-    fun () ->
+  fun
+    () ->
       Config = cfclient_config:get_config(),
       PrerequisiteFlag =
         #{
@@ -2028,7 +2029,8 @@ check_prerequisite() ->
           variations => [<<"A cool string identifier">>]
         },
       %% Prerequisite matched
-      Target1 = #{identifier => <<"target_identifier_1">>, name => <<"target_1">>, anonymous => <<"">>},
+      Target1 =
+        #{identifier => <<"target_identifier_1">>, name => <<"target_1">>, anonymous => <<"">>},
       ?assertEqual(
         true,
         cfclient_evaluator:check_prerequisite(
@@ -2040,7 +2042,8 @@ check_prerequisite() ->
         )
       ),
       %% Prerequisite did not match
-      Target2 = #{identifier => <<"target_identifier_3">>, name => <<"target_3">>, anonymous => <<"">>},
+      Target2 =
+        #{identifier => <<"target_identifier_3">>, name => <<"target_3">>, anonymous => <<"">>},
       ?assertEqual(
         false,
         cfclient_evaluator:check_prerequisite(
@@ -2051,4 +2054,4 @@ check_prerequisite() ->
           Config
         )
       )
-    end.
+  end.
