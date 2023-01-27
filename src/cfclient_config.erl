@@ -101,7 +101,7 @@ normalize(Config0) ->
     Name ->
       % Add name prefix to data tables
       Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
-      Prefixed = maps:map(fun (_K, V) -> add_prefix(Name, V) end, maps:with(Tables, Config)),
+      Prefixed = maps:map(fun (_K, V) -> prefix_name(Name, V) end, maps:with(Tables, Config)),
       maps:merge(Config, Prefixed)
   end.
 
@@ -113,10 +113,10 @@ init(Config0) when is_list(Config0) ->
   ok.
 
 
--spec add_prefix(atom() | binary() | string(), atom()) -> atom().
-add_prefix(Name, Table) when is_atom(Name) -> add_prefix(atom_to_list(Name), Table);
-add_prefix(Name, Table) when is_binary(Name) -> add_prefix(binary_to_list(Name), Table);
-add_prefix(Name, Table) when is_list(Name) -> list_to_atom(Name ++ "_" ++ atom_to_list(Table)).
+-spec prefix_name(atom() | binary() | string(), atom()) -> atom().
+prefix_name(Name, Table) when is_atom(Name) -> prefix_name(atom_to_list(Name), Table);
+prefix_name(Name, Table) when is_binary(Name) -> prefix_name(binary_to_list(Name), Table);
+prefix_name(Name, Table) when is_list(Name) -> list_to_atom(Name ++ "_" ++ atom_to_list(Table)).
 
 -spec normalize_config(map()) -> map().
 normalize_config(Config) -> maps:fold(fun normalize_config/3, #{}, Config).
