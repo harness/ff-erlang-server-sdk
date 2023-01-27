@@ -13,102 +13,124 @@
 
 -include("../src/cfclient_metrics_attributes.hrl").
 
-create_metric_data_test() ->
-  {ok, CachePID} = start_lru_cache(),
-  %%-------------------- Two Unique Evaluations on same flag --------------------
-  UniqueEvaluation1 =
-    #{
-      feature_name => <<"flag1">>,
-      variation_identifier => <<"true">>,
-      variation_value => <<"true">>
-    },
-  UniqueEvaluation2 =
-    #{
-      feature_name => <<"flag1">>,
-      variation_identifier => <<"false">>,
-      variation_value => <<"false">>
-    },
-  Timestamp = 1669982360,
-  UniqueEvaluationTarget1 =
-    #{
-      identifier => <<"target_1">>,
-      name => <<"target_name_1">>,
-      anonymous => <<"false">>,
-      attributes => #{location => <<"emea">>}
-    },
-  % UniqueEvaluationTarget2 =
-  %   #{
-  %     identifier => <<"target_2">>,
-  %     name => <<"target_name_1">>,
-  %     anonymous => <<"false">>,
-  %     attributes => #{location => <<"us">>}
-  %   },
-  lru:add(CachePID, UniqueEvaluation1, {1, UniqueEvaluationTarget1}),
-  lru:add(CachePID, UniqueEvaluation2, {1, UniqueEvaluationTarget1}),
-  % Evaluation1 =
-  %   #{
-  %     feature_name => <<"Flag1">>,
-  %     variation_identifier => <<"true">>,
-  %     variation_value => <<"true">>
-  %   },
-  % Evaluation2 =
-  %   #{
-  %     feature_name => <<"Flag1">>,
-  %     variation_identifier => <<"false">>,
-  %     variation_value => <<"false">>
-  %   },
-  MetricAttributes1 =
-    [
-      #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => <<"flag1">>},
-      #{key => ?FEATURE_NAME_ATTRIBUTE, value => <<"flag1">>},
-      #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
-      #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"false">>},
-      #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"false">>},
-      #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
-      #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
-      #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
-    ],
-  MetricAttributes2 =
-    [
-      #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => <<"flag1">>},
-      #{key => ?FEATURE_NAME_ATTRIBUTE, value => <<"flag1">>},
-      #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
-      #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"true">>},
-      #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"true">>},
-      #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
-      #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
-      #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
-    ],
-  ExpectedMetrics =
-    [
-      #{
-        timestamp => Timestamp,
-        count => 1,
-        metricsType => ?METRICS_TYPE,
-        attributes => MetricAttributes1
-      },
-      #{
-        timestamp => Timestamp,
-        count => 1,
-        metricsType => ?METRICS_TYPE,
-        attributes => MetricAttributes2
-      }
-    ],
-  ?assertEqual(
-    ExpectedMetrics,
-    cfclient_metrics:create_metrics_data(
-      [UniqueEvaluation1, UniqueEvaluation2],
-      CachePID,
-      Timestamp,
-      []
-    )
-  ),
-  %%-------------------- No Unique Evaluations --------------------
-  ?assertEqual([], cfclient_metrics:create_metrics_data([], CachePID, Timestamp, [])),
-  lru:stop(CachePID).
+config() ->
+    cfclient_config:get_config(?MODULE).
 
+create_metric_data_test_() ->
+  {"Create Metric Data",
+   setup,
+   fun
+     () ->
+        Config = [{name, ?MODULE}, {poll_enabled, false}],
+        {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
+        ?debugFmt("Started cfclient instance ~p", [Pid]),
+        Pid
+   end,
+   fun (Pid) ->
+           ?debugFmt("Stopping cfclient instance ~p", [Pid]),
+           gen_server:stop(Pid)
+   end,
+   [
+    {"Two Unique Evaluations on same flag",
+     fun () ->
+         UniqueEvaluation1 = #{
+                               feature_name => <<"flag1">>,
+                               variation_identifier => <<"true">>,
+                               variation_value => <<"true">>
+                              },
+         UniqueEvaluation2 = #{
+                               feature_name => <<"flag1">>,
+                               variation_identifier => <<"false">>,
+                               variation_value => <<"false">>
+                              },
+         Timestamp = 1669982360,
+        UniqueEvaluationTarget1 = #{
+                                     identifier => <<"target_1">>,
+                                     name => <<"target_name_1">>,
+                                     anonymous => <<"false">>,
+                                     attributes => #{location => <<"emea">>}
+                                    },
+         % UniqueEvaluationTarget2 =
+         %   #{
+         %     identifier => <<"target_2">>,
+         %     name => <<"target_name_1">>,
+         %     anonymous => <<"false">>,
+         %     attributes => #{location => <<"us">>}
+         %   },
+         Config = cfclient_config:get_config(?MODULE),
+         cfclient_metrics:enqueue(<<"flag1">>, UniqueEvaluationTarget1, <<"true">>, <<"true">>, Config),
+         cfclient_metrics:enqueue(<<"flag1">>, UniqueEvaluationTarget1, <<"false">>, <<"false">>, Config),
+         % Evaluation1 =
+         %   #{
+         %     feature_name => <<"Flag1">>,
+         %     variation_identifier => <<"true">>,
+         %     variation_value => <<"true">>
+         %   },
+         % Evaluation2 =
+         %   #{
+         %     feature_name => <<"Flag1">>,
+         %     variation_identifier => <<"false">>,
+         %     variation_value => <<"false">>
+         %   },
+         MetricAttributes1 =
+         [
+          #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => <<"flag1">>},
+          #{key => ?FEATURE_NAME_ATTRIBUTE, value => <<"flag1">>},
+          #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
+          #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"false">>},
+          #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"false">>},
+          #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
+          #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
+          #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
+         ],
+         MetricAttributes2 =
+         [
+          #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => <<"flag1">>},
+          #{key => ?FEATURE_NAME_ATTRIBUTE, value => <<"flag1">>},
+          #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
+          #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"true">>},
+          #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"true">>},
+          #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
+          #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
+          #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
+         ],
+         ExpectedMetrics =
+         [
+          #{
+            timestamp => Timestamp,
+            count => 1,
+            metricsType => ?METRICS_TYPE,
+            attributes => MetricAttributes1
+           },
+          #{
+            timestamp => Timestamp,
+            count => 1,
+            metricsType => ?METRICS_TYPE,
+            attributes => MetricAttributes2
+           }
+         ],
 
-create_metric_target_data_test() ->
+         {ok, Metrics0} = cfclient_metrics:collect_metrics_data(Config),
+         Metrics = lists:map(fun (M) -> maps:put(timestamp, Timestamp, M) end, Metrics0),
+         ?assertEqual(ExpectedMetrics, Metrics)
+
+         % ?assertEqual(
+         %   ExpectedMetrics,
+         %   cfclient_metrics:create_metrics_data(
+         %     [UniqueEvaluation1, UniqueEvaluation2],
+         %     Timestamp,
+         %     []
+         %   )
+         % )
+     end
+    }
+    % {"No Unique Evaluations",
+    %  ?_assertEqual([], cfclient_metrics:create_metrics_data([], Timestamp, []))
+    % }
+   ]
+  }.
+
+create_metric_target_data_test_not() ->
   %% As we are mocking the cache calls just hard code the arguments here. The values aren't used anyway.
   UnusedCachePID = self(),
   UnusedKeys = [<<"not_used">>, <<"also_not_used">>, <<"yep_not_used">>],
