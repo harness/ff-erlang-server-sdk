@@ -156,7 +156,7 @@ number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   end.
 
 
--spec json_variation(binary() | list(), target(), map()) -> map().
+-spec json_variation(binary() | string(), target(), map()) -> map().
 json_variation(FlagKey, Target, Default) -> json_variation(default, FlagKey, Target, Default).
 
 -spec json_variation(atom() | config(), binary() | list(), target(), map()) -> map().
