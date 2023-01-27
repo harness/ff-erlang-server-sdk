@@ -89,8 +89,8 @@ cache_target(#{anonymous := <<"true">>} = Target, _Config) ->
   noop;
 
 cache_target(Target, Config) ->
-  #{identifier := Id} = Target,
   #{metrics_target_table := MetricsTargetTable} = Config,
+  #{identifier := Id} = Target,
   true = ets:insert(MetricsTargetTable, {Id, Target}),
   ok.
 
