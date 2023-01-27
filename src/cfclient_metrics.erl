@@ -15,12 +15,12 @@
 process_metrics(Config) ->
   ?LOG_INFO("Gathering and sending metrics"),
   #{
-    metrics_cache_table := MetricsCacheTable,
-    metrics_target_table := MetricsTargetTable,
-    metrics_counter_table := MetricsCounterTable
+    metrics_cache_table := CacheTable,
+    metrics_target_table := TargetTable,
+    metrics_counter_table := CounterTable
   } = Config,
-  {ok, MetricsData} = collect_metrics_data(MetricsCacheTable, Config),
-  {ok, MetricsTargetData} = collect_metrics_target_data(MetricsTargetTable),
+  {ok, MetricsData} = collect_metrics_data(Config),
+  {ok, MetricsTargetData} = collect_metrics_target_data(Config),
   case post_metrics(MetricsData, MetricsTargetData, Config) of
     noop ->
       ?LOG_DEBUG("No metrics to post"),
@@ -29,9 +29,9 @@ process_metrics(Config) ->
     {ok, Response} ->
       ?LOG_INFO("Posted metrics: ~p", [Response]),
       % TODO: race condition, will lose any metrics made during call to post_metrics
-      ets:delete_all_objects(MetricsCacheTable),
-      ets:delete_all_objects(MetricsCounterTable),
-      ets:delete_all_objects(MetricsTargetTable),
+      ets:delete_all_objects(CacheTable),
+      ets:delete_all_objects(CounterTable),
+      ets:delete_all_objects(TargetTable),
       ok;
 
     {error, Response} ->
@@ -59,64 +59,51 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
 
 
 -spec enqueue(binary(), cfclient:target(), binary(), binary(), config()) -> atom().
-enqueue(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config) ->
-  case maps:get(analytics_enabled, Config) of
-    true ->
-      ?LOG_DEBUG(
-        "Analytics enabled: flag ~p, target ~p, variation ~p",
-        [FlagIdentifier, Target, VariationValue]
-      ),
-      cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config),
-      cache_target(Target, Config),
-      ok;
+enqueue(FlagId, Target, VariationId, VariationValue, #{analytics_enabled := true} = Config) ->
+  cache_metrics(FlagId, Target, VariationId, VariationValue, Config),
+  cache_target(Target, Config),
+  ok;
 
-    _ ->
-      ?LOG_DEBUG(
-        "Analytics disabled: flag ~p, target ~p, variation ~p",
-        [FlagIdentifier, Target, VariationValue]
-      ),
-      ok
-  end.
+enqueue(_, _, _, _, _) -> ok.
 
 
 -spec cache_metrics(binary(), cfclient:target(), binary(), binary(), config()) -> ok.
-cache_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue, Config) ->
-  #{metrics_cache_table := MetricsCacheTable, metrics_counter_table := MetricsCounterTable} =
-    Config,
-  % Record unique evaluations, a combination of Flag, Variation identifier,
-  % and variation value.
+cache_metrics(FlagId, Target, VariationId, VariationValue, Config) ->
+  #{metrics_cache_table := CacheTable, metrics_counter_table := CounterTable} = Config,
+  % Record unique evaluation
   Evaluation =
     #{
-      feature_name => FlagIdentifier,
-      variation_identifier => VariationIdentifier,
+      feature_name => FlagId,
+      variation_identifier => VariationId,
       variation_value => VariationValue
     },
-  % In the cache, we store unique evaluations to two data points:
+  % We store unique evaluations to two places:
   % 1. A counter so we can count how many times it has occurred.
   % 2. The target for the unique evaluation.
   %    At present, we use the so called Global Target when posting metrics to
   %    FF-server, but we cache the actual target as in the future we want to
-  %    enable real target posting for when we need to debug.
-  true = ets:insert(MetricsCacheTable, {Evaluation, Target}),
-  Counter = ets:update_counter(MetricsCounterTable, Evaluation, 1),
-  ?LOG_DEBUG("Counter ~p = ~w", [Evaluation, Counter]),
+  %    enable real target posting for debugging.
+  true = ets:insert(CacheTable, {Evaluation, Target}),
+  Counter = ets:update_counter(CounterTable, Evaluation, 1, {0, 0}),
+  ?LOG_DEBUG("Metrics counter ~w = ~w", [Evaluation, Counter]),
   ok.
 
 
 -spec cache_target(cfclient:target(), config()) -> ok | noop.
 cache_target(#{anonymous := <<"true">>} = Target, _Config) ->
-  ?LOG_DEBUG("Not caching anonymous target ~p for metrics", [Target]),
+  ?LOG_DEBUG("Metrics cache target skipped for anonymous target ~w", [Target]),
   noop;
 
 cache_target(Target, Config) ->
-  #{identifier := Identifier} = Target,
+  #{identifier := Id} = Target,
   #{metrics_target_table := MetricsTargetTable} = Config,
-  true = ets:insert(MetricsTargetTable, {Identifier, Target}),
+  true = ets:insert(MetricsTargetTable, {Id, Target}),
   ok.
 
 
--spec collect_metrics_data(atom(), config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
-collect_metrics_data(Table, Config) ->
+-spec collect_metrics_data(config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+collect_metrics_data(Config) ->
+  #{metrics_cache_table := Table} = Config,
   Timestamp = os:system_time(millisecond),
   case list_table(Table) of
     {ok, Pairs} ->
@@ -125,11 +112,11 @@ collect_metrics_data(Table, Config) ->
           fun
             ({Evaluation, Target}) ->
               Count =
-                case get_metric(Evaluation, Config) of
+                case get_counter(Evaluation, Config) of
                   {ok, Value} -> Value;
                   {error, undefined} -> 1
                 end,
-              create_metric(Evaluation, Target, Count, Timestamp)
+              format_metric(Evaluation, Target, Count, Timestamp)
           end,
           Pairs
         ),
@@ -143,13 +130,13 @@ collect_metrics_data(Table, Config) ->
 % target per ff-server requirements. We will, however, want to add an option to
 % the config to disable that global config and use the actual target.
 % So for the moment the UniqueEvaluationTarget is unreferenced.
-create_metric(UniqueEvaluation, _UniqueEvaluationTarget, Count, TimeStamp) ->
+format_metric(Evaluation, _UniqueEvaluationTarget, Count, Timestamp) ->
   #{
     feature_name := FeatureName,
     variation_value := VariationValue,
     variation_identifier := VariationId
-  } = UniqueEvaluation,
-  MetricAttributes =
+  } = Evaluation,
+  Attributes =
     [
       #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => FeatureName},
       #{key => ?FEATURE_NAME_ATTRIBUTE, value => FeatureName},
@@ -161,11 +148,11 @@ create_metric(UniqueEvaluation, _UniqueEvaluationTarget, Count, TimeStamp) ->
       #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
     ],
   #{
-    timestamp => TimeStamp,
+    timestamp => Timestamp,
     count => Count,
     %% Camel case to honour the API.
     metricsType => ?METRICS_TYPE,
-    attributes => MetricAttributes
+    attributes => Attributes
   }.
 
 
@@ -215,12 +202,15 @@ get_metric(Key, Config) ->
 %     [] -> {error, undefined};
 %     [Value] -> {ok, Value}
 %   end.
-% -spec get_counter(term()) -> {ok, integer()} | {error, undefined}.
-% get_counter(Key) ->
-%   case ets:lookup(?METRICS_COUNTER_TABLE, Key) of
-%     [] -> {error, undefined};
-%     [Value] -> {ok, Value}
-%   end.
+
+-spec get_counter(term(), config()) -> {ok, integer()} | {error, undefined}.
+get_counter(Key, Config) ->
+  #{metrics_counter_table := Table} = Config,
+  case ets:lookup(Table, Key) of
+    [] -> {error, undefined};
+    [{Key, Value}] -> {ok, Value}
+  end.
+
 % @doc Get contents of ETS table
 -spec list_table(ets:table()) -> {ok, list()} | {error, Reason :: term()}.
 list_table(TableName) -> try {ok, ets:tab2list(TableName)} catch error : R -> {error, R} end.
