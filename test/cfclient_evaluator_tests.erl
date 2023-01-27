@@ -324,7 +324,7 @@ variations_string() ->
             )
         end,
         ?_assertEqual(
-          {ok, <<"Dont_serve_it">>, "don't serve it"},
+          {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
           cfclient_evaluator:string_variation(<<"My_string_flag">>, existing_target_a(), config())
         )
       },
@@ -349,7 +349,7 @@ variations_string() ->
                 )
             end,
             ?_assertEqual(
-              {ok, <<"Dont_serve_it">>, "don't serve it"},
+              {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
               cfclient_evaluator:string_variation(
                 <<"My_string_flag">>,
                 existing_target_a(),
@@ -360,7 +360,7 @@ variations_string() ->
           {
             "Target not found",
             ?_assertEqual(
-              {ok, <<"Serve_it">>, "serve it"},
+              {ok, <<"Serve_it">>, <<"serve it">>},
               cfclient_evaluator:string_variation(
                 <<"My_string_flag">>,
                 non_existent_target(),
@@ -376,7 +376,7 @@ variations_string() ->
           {
             "Target excluded",
             ?_assertEqual(
-              {ok, <<"Serve_it">>, "serve it"},
+              {ok, <<"Serve_it">>, <<"serve it">>},
               cfclient_evaluator:string_variation(
                 <<"My_string_flag">>,
                 target_excluded_from_group(),
@@ -387,7 +387,7 @@ variations_string() ->
           {
             "Target included",
             ?_assertEqual(
-              {ok, <<"Dont_serve_it">>, "don't serve it"},
+              {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
               cfclient_evaluator:string_variation(
                 <<"My_string_flag">>,
                 target_included_from_group(),
@@ -399,7 +399,7 @@ variations_string() ->
             "Target included by custom rules",
             [
               ?_assertEqual(
-                {ok, <<"Dont_serve_it">>, "don't serve it"},
+                {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
                 cfclient_evaluator:string_variation(
                   <<"My_string_flag">>,
                   custom_rules_starts_with(),
@@ -407,7 +407,7 @@ variations_string() ->
                 )
               ),
               ?_assertEqual(
-                {ok, <<"Dont_serve_it">>, "don't serve it"},
+                {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
                 cfclient_evaluator:string_variation(
                   <<"My_string_flag">>,
                   custom_rules_equal(),
@@ -415,7 +415,7 @@ variations_string() ->
                 )
               ),
               ?_assertEqual(
-                {ok, <<"Dont_serve_it">>, "don't serve it"},
+                {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
                 cfclient_evaluator:string_variation(
                   <<"My_string_flag">>,
                   custom_rules_equal_sensitive(),
@@ -423,7 +423,7 @@ variations_string() ->
                 )
               ),
               ?_assertEqual(
-                {ok, <<"Dont_serve_it">>, "don't serve it"},
+                {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
                 cfclient_evaluator:string_variation(
                   <<"My_string_flag">>,
                   custom_rules_in(),
@@ -431,7 +431,7 @@ variations_string() ->
                 )
               ),
               ?_assertEqual(
-                {ok, <<"Dont_serve_it">>, "don't serve it"},
+                {ok, <<"Dont_serve_it">>, <<"don't serve it">>},
                 cfclient_evaluator:string_variation(
                   <<"My_string_flag">>,
                   custom_rules_ends_with(),
@@ -461,7 +461,7 @@ variations_string() ->
               )
           end,
           ?_assertEqual(
-            {ok, <<"Serve_it">>, "serve it"},
+            {ok, <<"Serve_it">>, <<"serve it">>},
             cfclient_evaluator:string_variation(<<"My_string_flag">>, existing_target_a, config())
           )
         }
