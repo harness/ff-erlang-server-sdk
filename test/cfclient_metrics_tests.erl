@@ -92,8 +92,8 @@ record_metric_data_test_() ->
                 #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => <<"flag1">>},
                 #{key => ?FEATURE_NAME_ATTRIBUTE, value => <<"flag1">>},
                 #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
-                #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"false">>},
-                #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"false">>},
+                #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"true">>},
+                #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"true">>},
                 #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
                 #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
                 #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
@@ -103,8 +103,8 @@ record_metric_data_test_() ->
                 #{key => ?FEATURE_IDENTIFIER_ATTRIBUTE, value => <<"flag1">>},
                 #{key => ?FEATURE_NAME_ATTRIBUTE, value => <<"flag1">>},
                 #{key => ?TARGET_ATTRIBUTE, value => ?TARGET_GLOBAL_IDENTIFIER},
-                #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"true">>},
-                #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"true">>},
+                #{key => ?VARIATION_IDENTIFIER_ATTRIBUTE, value => <<"false">>},
+                #{key => ?VARIATION_VALUE_ATTRIBUTE, value => <<"false">>},
                 #{key => ?SDK_VERSION_ATTRIBUTE, value => ?SDK_VERSION_ATTRIBUTE_VALUE},
                 #{key => ?SDK_TYPE_ATTRIBUTE, value => ?SDK_TYPE_ATTRIBUTE_VALUE},
                 #{key => ?SDK_LANGUAGE_ATTRIBUTE, value => ?SDK_LANGUAGE_ATTRIBUTE_VALUE}
@@ -112,16 +112,16 @@ record_metric_data_test_() ->
             ExpectedMetrics =
               [
                 #{
-                  timestamp => Timestamp,
+                  attributes => MetricAttributes1,
                   count => 1,
                   metricsType => ?METRICS_TYPE,
-                  attributes => MetricAttributes1
+                  timestamp => Timestamp
                 },
                 #{
-                  timestamp => Timestamp,
+                  attributes => MetricAttributes2,
                   count => 1,
                   metricsType => ?METRICS_TYPE,
-                  attributes => MetricAttributes2
+                  timestamp => Timestamp
                 }
               ],
             {ok, Metrics} = cfclient_metrics:collect_metrics_data(Timestamp, Config),
