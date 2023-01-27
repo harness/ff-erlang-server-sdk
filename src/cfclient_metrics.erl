@@ -9,7 +9,7 @@
 
 -type config() :: map().
 
-% @doc Record metrics for request 
+% @doc Record metrics for request
 -spec record(binary(), cfclient:target(), binary(), binary(), config()) -> atom().
 record(FlagId, Target, VariationId, VariationValue, #{analytics_enabled := true} = Config) ->
   cache_metrics(FlagId, Target, VariationId, VariationValue, Config),
@@ -42,6 +42,7 @@ process_metrics(Config) ->
       ?LOG_ERROR("Error posting metrics: ~p", [Response]),
       {error, api}
   end.
+
 
 % @doc Send metrics to the server via API.
 -spec post_metrics([map()], [map()], config()) -> {ok, term()} | {error, term()} | noop.
@@ -96,7 +97,8 @@ cache_target(Target, Config) ->
   ok.
 
 
--spec collect_metrics_data(integer(), config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+-spec collect_metrics_data(integer(), config()) ->
+  {ok, Metrics :: [map()]} | {error, Reason :: term()}.
 collect_metrics_data(Timestamp, Config) ->
   #{metrics_cache_table := Table} = Config,
   case list_table(Table) of
@@ -196,7 +198,6 @@ get_metric(Key, Config) ->
 %     [] -> {error, undefined};
 %     [Value] -> {ok, Value}
 %   end.
-
 -spec get_counter(term(), config()) -> {ok, integer()} | {error, undefined}.
 get_counter(Key, Config) ->
   #{metrics_counter_table := Table} = Config,
@@ -205,6 +206,7 @@ get_counter(Key, Config) ->
     [{Key, Value}] -> {ok, Value}
   end.
 
+
 % @doc Get contents of ETS table
 -spec list_table(ets:table()) -> {ok, list()} | {error, Reason :: term()}.
 list_table(TableName) -> try {ok, ets:tab2list(TableName)} catch error : R -> {error, R} end.
@@ -212,12 +214,12 @@ list_table(TableName) -> try {ok, ets:tab2list(TableName)} catch error : R -> {e
 % @doc Delete all objects in metrics caches.
 -spec clear_caches(config()) -> ok.
 clear_caches(Config) ->
-    #{
-      metrics_cache_table := CacheTable,
-      metrics_target_table := TargetTable,
-      metrics_counter_table := CounterTable
-     } = Config,
-    ets:delete_all_objects(CacheTable),
-    ets:delete_all_objects(CounterTable),
-    ets:delete_all_objects(TargetTable),
-    ok.
+  #{
+    metrics_cache_table := CacheTable,
+    metrics_target_table := TargetTable,
+    metrics_counter_table := CounterTable
+  } = Config,
+  ets:delete_all_objects(CacheTable),
+  ets:delete_all_objects(CounterTable),
+  ets:delete_all_objects(TargetTable),
+  ok.
