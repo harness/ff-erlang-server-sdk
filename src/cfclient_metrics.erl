@@ -152,8 +152,9 @@ format_metric(Evaluation, _UniqueEvaluationTarget, Count, Timestamp) ->
   }.
 
 
--spec collect_metrics_target_data(atom()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
-collect_metrics_target_data(Table) ->
+-spec collect_metrics_target_data(config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
+collect_metrics_target_data(Config) ->
+  #{metrics_target_table := Table} = Config,
   case list_table(Table) of
     {ok, Pairs} ->
       Metrics = lists:map(fun ({_Id, Target}) -> create_metric_target(Target) end, Pairs),
