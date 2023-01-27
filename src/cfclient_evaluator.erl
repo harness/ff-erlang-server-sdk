@@ -105,11 +105,10 @@ bool_variation(FlagId, Target, Config) ->
 
 
 -spec string_variation(binary(), target(), config()) ->
-  {ok, Id :: binary(), Value :: string()} | {error, Reason :: atom()}.
+  {ok, Id :: binary(), Value :: binary()} | {error, Reason :: atom()}.
 string_variation(FlagId, Target, Config) ->
   case evaluate(FlagId, Target, Config) of
-    % TODO: return binary?
-    {ok, VariationId, Variation} -> {ok, VariationId, binary_to_list(Variation)};
+    {ok, VariationId, Variation} -> {ok, VariationId, Variation};
     {error, Reason} -> {error, Reason}
   end.
 
