@@ -229,7 +229,3 @@ get_value(Key, Opts) ->
       Config = get_config(),
       maps:get(Key, Config)
   end.
-
-
-% -spec clear_config() -> ok.
-% clear_config() -> application:unset_env(cfclient, config).
