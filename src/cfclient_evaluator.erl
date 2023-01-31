@@ -246,6 +246,7 @@ evaluate_flag(default_on, Flag, Target, _Config) ->
   end.
 
 
+-spec return_default_off_variation(flag()) -> {ok, Id :: binary(), term()} | {error, not_found}.
 return_default_off_variation(Flag) ->
   #{variations := Variations, offVariation := Id} = Flag,
   case search_by_id(Variations, Id) of
