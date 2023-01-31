@@ -376,6 +376,7 @@ search_group_custom_rules([Rule | Tail], Target) ->
 -spec is_custom_rule_match(Operator :: binary(), binary() | [binary()], [binary()]) -> boolean().
 % No target attribute, don't attempt match
 is_custom_rule_match(_, TargetAttribute, _) when byte_size(TargetAttribute) == 0 -> false;
+
 % Equal case sensitive
 is_custom_rule_match(?EQUAL_SENSITIVE_OPERATOR, TargetAttribute, RuleValue) ->
   string:equal(TargetAttribute, hd(RuleValue), false);
@@ -397,7 +398,7 @@ is_custom_rule_match(?ENDS_WITH_OPERATOR, TargetAttribute, RuleValue) ->
     ),
   string:equal(Suffix, RuleValue, false);
 
-%% Contains
+% Contains
 is_custom_rule_match(?CONTAINS_OPERATOR, TargetAttribute, RuleValue) ->
   binary:match(TargetAttribute, hd(RuleValue)) /= nomatch;
 
