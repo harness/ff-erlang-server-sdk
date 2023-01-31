@@ -437,7 +437,7 @@ custom_attribute_to_binary(Value) when is_list(Value) ->
   case io_lib:char_list(Value) of
     % If user supplies a string/list then log an error as it is not a supported input
     true ->
-      ?LOG_ERROR(
+      ?LOG_WARNING(
         "Using strings/lists for element values in target custom attributes list is not supported"
       ),
       % TODO: deal with return value properly
@@ -456,7 +456,7 @@ custom_attribute_list_elem_to_binary(Element) when is_number(Element) ->
 custom_attribute_list_elem_to_binary(Element) when is_binary(Element) -> Element;
 
 custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
-  ?LOG_ERROR(
+  ?LOG_WARNING(
     "Using strings/lists for element values in the target custom attributes list is not supported"
   ),
   % TODO: deal with return value properly
@@ -492,7 +492,7 @@ search_prerequisites([Head | Tail], Target, Config) ->
   % Get prerequisite from cache
   case cfclient_cache:get_value({flag, Id}, Config) of
     {error, undefined} ->
-      ?LOG_ERROR("Flag has prerequisites, but prerequisite not in cache: ~p", [Id]),
+      ?LOG_ERROR("Flag has prerequisites, but prerequisite is not in cache: ~p", [Id]),
       false;
 
     {ok, PrerequisiteFlag} ->
