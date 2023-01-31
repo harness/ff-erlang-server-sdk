@@ -9,8 +9,10 @@
 -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type segment() :: cfapi_segment:cfapi_segment().
 
+-type config() :: map().
+
 % @doc Retrieve all features from Feature Flags API.
--spec retrieve_flags(map()) -> {ok, [flag()]} | {error, Reason :: term()}.
+-spec retrieve_flags(config()) -> {ok, [flag()]} | {error, Reason :: term()}.
 retrieve_flags(Config) ->
   #{auth_token := AuthToken, project := Project, config_url := ConfigUrl} = Config,
   #{environment := Env, clusterIdentifier := Cluster} = Project,
@@ -26,7 +28,7 @@ retrieve_flags(Config) ->
 
 
 % @doc Retrieve all segments from Feature Flags API.
--spec retrieve_segments(map()) -> {ok, [segment()]} | {error, Reason :: term()}.
+-spec retrieve_segments(config()) -> {ok, [segment()]} | {error, Reason :: term()}.
 retrieve_segments(Config) ->
   #{auth_token := AuthToken, project := Project, config_url := ConfigUrl} = Config,
   #{environment := Env, clusterIdentifier := Cluster} = Project,
