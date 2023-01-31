@@ -1,4 +1,7 @@
-%% @doc cfclient top level supervisor.
+%% @doc
+%% Top level supervisor for cfclient.
+%%
+%% Called by application, starting up the default client instance.
 %% @end
 
 -module(cfclient_sup).

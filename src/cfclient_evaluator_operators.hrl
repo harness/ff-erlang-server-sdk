@@ -1,4 +1,5 @@
 %% @doc
+%% Define operators for rule matching.
 %% @end
 
 % Group Rule Association Operator - camel case from ff-server

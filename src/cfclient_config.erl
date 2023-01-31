@@ -1,7 +1,6 @@
 %% @doc
-%%
+%% Functions to manage client configuration.
 %% @end
-%% Created : 04. Sep 2022 10:43 AM
 
 -module(cfclient_config).
 

@@ -1,4 +1,5 @@
 %% @doc
+%% Functions to evaluate flag rules.
 %% @end
 
 -module(cfclient_evaluator).
@@ -199,8 +200,8 @@ evaluate_flag(target_rules, #{variationToTargetMap := TM} = Flag, Target, Config
 
     TargetVariationId ->
       ?LOG_DEBUG("Target rules map matched flag ~p, target ~p", [Flag, Target]),
-      % Return both variation identifier and value, because
-      % prerequisites compares on variation identifier
+      % Return both variation identifier and value, as prerequisites
+      % compare on identifier
       return_target_or_group_variation(Flag, TargetVariationId)
   end;
 
@@ -426,7 +427,7 @@ get_attribute_value(_, <<"name">>, _, Name) -> Name;
 get_attribute_value(_, _, _, _) -> <<>>.
 
 
-% Convert custom attributes to binary
+% Convert custom attributes to binary.
 -spec custom_attribute_to_binary(binary() | atom() | number() | string()) -> binary().
 custom_attribute_to_binary(Value) when is_binary(Value) -> Value;
 custom_attribute_to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);

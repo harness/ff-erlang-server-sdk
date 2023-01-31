@@ -1,4 +1,5 @@
-%% @doc cfclient public API
+%% @doc
+%% cfclient application.
 %% @end
 
 -module(cfclient_app).

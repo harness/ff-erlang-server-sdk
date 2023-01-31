@@ -1,7 +1,6 @@
-%%%-------------------------------------------------------------------
-%%% @doc Public interface.
-%%% @end
-%%%-------------------------------------------------------------------
+%% @doc 
+%% Public interface for client.
+%% @end
 
 -module(cfclient).
 
@@ -30,6 +29,7 @@
                 }.
 -type config() :: map().
 
+% @doc Evaluate variation which returns a boolean.
 -spec bool_variation(binary() | string(), target(), boolean()) -> boolean().
 bool_variation(FlagKey, Target, Default) -> bool_variation(default, FlagKey, Target, Default).
 
@@ -65,7 +65,7 @@ bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
       Default
   end.
 
-
+% @doc Evaluate variation which returns a string.
 -spec string_variation(binary() | string(), target(), binary()) -> binary().
 string_variation(FlagKey, Target, Default) -> string_variation(default, FlagKey, Target, Default).
 
@@ -102,6 +102,7 @@ string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   end.
 
 
+% @doc Evaluate variation which returns a number.
 -spec number_variation(binary() | list(), target(), number()) -> number().
 number_variation(FlagKey, Target, Default) -> number_variation(default, FlagKey, Target, Default).
 
@@ -144,6 +145,7 @@ number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   end.
 
 
+% @doc Evaluate variation which returns a JSON object.
 -spec json_variation(binary() | string(), target(), map()) -> map().
 json_variation(FlagKey, Target, Default) -> json_variation(default, FlagKey, Target, Default).
 

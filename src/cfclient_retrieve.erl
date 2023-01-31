@@ -1,5 +1,5 @@
 %% @doc
-%% Pull Feature and Target configuration from Feature Flags API.
+%% Funcctions to pull feature and target configuration from server via the API.
 %% @end
 
 -module(cfclient_retrieve).
@@ -9,7 +9,7 @@
 -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type segment() :: cfapi_segment:cfapi_segment().
 
-% @doc Retrieve all features from FF API.
+% @doc Retrieve all features from Feature Flags API.
 -spec retrieve_flags(map()) -> {ok, [flag()]} | {error, Reason :: term()}.
 retrieve_flags(Config) ->
   #{auth_token := AuthToken, project := Project, config_url := ConfigUrl} = Config,
@@ -25,7 +25,7 @@ retrieve_flags(Config) ->
   end.
 
 
-% @doc Retrieve all segments from FF API.
+% @doc Retrieve all segments from Feature Flags API.
 -spec retrieve_segments(map()) -> {ok, [segment()]} | {error, Reason :: term()}.
 retrieve_segments(Config) ->
   #{auth_token := AuthToken, project := Project, config_url := ConfigUrl} = Config,

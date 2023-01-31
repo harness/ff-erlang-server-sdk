@@ -1,5 +1,14 @@
 %% @copyright (C) 2022, <COMPANY>
 %% @doc
+%% Feature flags client instance.
+%%
+%% It creates the ETS tables used to cache flag data from the server
+%% and flag usage metrics. It runs periodic tasks to pull data from
+%% the server and send metrics to it. 
+%%
+%% An instance is started by the cfclient application.
+%% More complex applications can start additional instances for a specific
+%% project.
 %%
 %% @end
 
@@ -13,6 +22,7 @@
 
 -define(SERVER, ?MODULE).
 
+% gen_server callbacks
 -export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2]).
 
 -spec start_link(proplists:proplist()) -> {ok, pid()} | ignore | {error, term()}.

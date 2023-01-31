@@ -1,5 +1,5 @@
 %% @doc
-%% Functions to manage Flag and Segment cache.
+%% Functions to manage cache of Flag and Segment data from server.
 %% @end
 
 -module(cfclient_cache).
@@ -41,7 +41,7 @@ get_value({Type, Identifier}, Config) ->
   end.
 
 
-% @doc Place flag or segment into cache with new value
+% @doc Store flag or segment into cache with new value.
 -spec set_value({flag, binary()} | {segment, binary()}, flag() | segment()) ->
   ok | {error, outdated}.
 set_value({Type, Identifier}, Value) ->
@@ -80,7 +80,7 @@ is_outdated(Key, NewValue, Config) ->
   end.
 
 
-% @doc Create binary key from flag or segment
+% @doc Create binary key from flag or segment.
 -spec format_key({flag, binary()} | {segment, binary()}) -> binary().
 format_key({flag, Identifier}) -> <<"flags/", Identifier/binary>>;
 format_key({segment, Identifier}) -> <<"segments/", Identifier/binary>>.

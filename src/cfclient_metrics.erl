@@ -1,5 +1,5 @@
 %% @doc
-%%
+%% Functions to record, process, and send cached metric data.
 %% @end
 
 -module(cfclient_metrics).
@@ -13,7 +13,7 @@
 
 -type config() :: map().
 
-% @doc Record metrics for request
+% @doc Record metrics for request.
 -spec record(binary(), cfclient:target(), binary(), binary(), config()) -> atom().
 record(FlagId, Target, VariationId, VariationValue, #{analytics_enabled := true} = Config) ->
   cache_metrics(FlagId, Target, VariationId, VariationValue, Config),
@@ -48,7 +48,7 @@ process_metrics(Config) ->
   end.
 
 
-% @doc Send metrics to the server via API.
+% @doc Send metrics to server via API.
 -spec post_metrics([map()], [map()], config()) -> {ok, term()} | {error, term()} | noop.
 post_metrics([], [], _Config) -> noop;
 
@@ -66,7 +66,7 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
   end.
 
 
-% @doc Add evaluation metrics to cache
+% @doc Store evaluation metrics.
 -spec cache_metrics(binary(), cfclient:target(), binary(), binary(), config()) -> ok.
 cache_metrics(FlagId, Target, VariationId, VariationValue, Config) ->
   #{metrics_cache_table := CacheTable, metrics_counter_table := CounterTable} = Config,
@@ -76,11 +76,11 @@ cache_metrics(FlagId, Target, VariationId, VariationValue, Config) ->
       variation_identifier => VariationId,
       variation_value => VariationValue
     },
-  % We store unique evaluations to two places:
+  % We store metrics two places:
   % 1. A counter so we can count how many times it has occurred.
   % 2. The target for the unique evaluation.
-  %    At present, we use the so called Global Target when posting metrics to
-  %    FF-server, but we cache the actual target as in the future we want to
+  %    We currently use the so-called Global Target when posting metrics to the
+  %    server, but we store the actual target as in the future we want to
   %    enable real target posting for debugging.
   true = ets:insert(CacheTable, {Evaluation, Target}),
   Counter = ets:update_counter(CounterTable, Evaluation, 1, {0, 0}),
@@ -88,7 +88,7 @@ cache_metrics(FlagId, Target, VariationId, VariationValue, Config) ->
   ok.
 
 
-% @doc Add target to metrics cache.
+% @doc Store target metrics.
 -spec cache_target(cfclient:target(), config()) -> ok | noop.
 cache_target(#{anonymous := <<"true">>} = Target, _Config) ->
   ?LOG_DEBUG("Metrics cache target skipped for anonymous target ~w", [Target]),
@@ -101,6 +101,7 @@ cache_target(Target, Config) ->
   ok.
 
 
+% @doc Read all metrics from the cache and format them.
 -spec collect_metrics_data(integer(), config()) ->
   {ok, Metrics :: [map()]} | {error, Reason :: term()}.
 collect_metrics_data(Timestamp, Config) ->
@@ -125,11 +126,12 @@ collect_metrics_data(Timestamp, Config) ->
     {error, Reason} -> {error, Reason}
   end.
 
-
-% TODO: We pass in the target here, but so far only using the Global
-% target per ff-server requirements. We will, however, want to add an option to
-% the config to disable that global config and use the actual target.
-% So for the moment the Target is unreferenced.
+% @doc Format cached metric for sending to the server.
+% @end
+%
+% TODO: The Target parameter is currenly unused. We only use
+% the the Global target per ff-server requirements. In the future, we will add
+% an option to disable that global config and use the actual target.
 format_metric(Evaluation, _Target, Count, Timestamp) ->
   #{
     feature_name := FeatureName,
@@ -156,6 +158,7 @@ format_metric(Evaluation, _Target, Count, Timestamp) ->
   }.
 
 
+% @doc Read metrics target data from the cache and format it.
 -spec collect_metrics_target_data(config()) -> {ok, Metrics :: [map()]} | {error, Reason :: term()}.
 collect_metrics_target_data(Config) ->
   #{metrics_target_table := Table} = Config,
@@ -168,6 +171,7 @@ collect_metrics_target_data(Config) ->
   end.
 
 
+% @doc Format cached target data for sending to the server.
 -spec format_target(cfclient:target()) -> map().
 format_target(Target) ->
   #{identifier := Id} = Target,
@@ -212,7 +216,7 @@ get_counter(Key, Config) ->
   end.
 
 
-% @doc Get contents of ETS table
+% @doc Get all contents of ETS table.
 -spec list_table(ets:table()) -> {ok, list()} | {error, Reason :: term()}.
 list_table(TableName) -> try {ok, ets:tab2list(TableName)} catch error : R -> {error, R} end.
 
