@@ -1,5 +1,5 @@
 %% @doc
-%% Functions to make it easier to mock ets
+%% Functions to make it easier to mock ETS
 %% @end
 
 -module(cfclient_ets).
