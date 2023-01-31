@@ -1,4 +1,3 @@
-%% @copyright (C) 2022, <COMPANY>
 %% @doc
 %% Feature flags client instance.
 %%
