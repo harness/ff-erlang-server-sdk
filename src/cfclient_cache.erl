@@ -57,7 +57,6 @@ set_value({Type, Identifier}, Value) ->
   ok | {error, outdated}.
 set_value({Type, Identifier}, Value, Config) ->
   #{cache_table := CacheTable} = Config,
-  % TODO: set expiration
   case is_outdated({Type, Identifier}, Value, Config) of
     true ->
       % This should not happen
