@@ -1,4 +1,7 @@
-% Constants for Metrics Data
+%% @doc
+%% Define consstants for metrics data.
+%% @end
+
 -define(METRICS_TYPE, <<"FFMETRICS">>).
 
 %% Constants for Metrics Data Attributes
