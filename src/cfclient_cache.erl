@@ -21,8 +21,10 @@
   ]
 ).
 
--type flag() :: cfapi_feature_config:cfapi_feature_config().
+% -type flag() :: cfapi_feature_config:cfapi_feature_config().
+-type flag() :: cfclient_evaluator:flag().
 -type segment() :: cfapi_segment:cfapi_segment().
+-type config() :: cfclient:config().
 
 % @doc Get Flag or Segment from cache.
 -spec get_value({flag, binary()} | {segment, binary()}) ->
@@ -32,6 +34,8 @@ get_value({Type, Identifier}) ->
   get_value({Type, Identifier}, Config).
 
 
+-spec get_value({flag, binary()} | {segment, binary()}, config()) ->
+  {ok, flag() | segment()} | {error, undefined}.
 get_value({Type, Identifier}, Config) ->
   #{cache_table := CacheTable} = Config,
   Key = format_key({Type, Identifier}),
@@ -49,7 +53,7 @@ set_value({Type, Identifier}, Value) ->
   set_value({Type, Identifier}, Value, Config).
 
 
--spec set_value({flag, binary()} | {segment, binary()}, flag() | segment(), map()) ->
+-spec set_value({flag, binary()} | {segment, binary()}, flag() | segment(), config()) ->
   ok | {error, outdated}.
 set_value({Type, Identifier}, Value, Config) ->
   #{cache_table := CacheTable} = Config,
@@ -68,7 +72,7 @@ set_value({Type, Identifier}, Value, Config) ->
   end.
 
 
--spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment(), map()) -> boolean().
+-spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment(), config()) -> boolean().
 is_outdated(Key, NewValue, Config) ->
   case get_value(Key, Config) of
     {error, undefined} -> false;
@@ -88,13 +92,13 @@ format_key({segment, Identifier}) -> <<"segments/", Identifier/binary>>.
 -spec cache_segment(segment()) -> ok | {error, outdated}.
 cache_segment(#{identifier := Id} = Value) -> set_value({segment, Id}, Value).
 
--spec cache_segment(segment(), map()) -> ok | {error, outdated}.
+-spec cache_segment(segment(), config()) -> ok | {error, outdated}.
 cache_segment(#{identifier := Id} = Value, Config) -> set_value({segment, Id}, Value, Config).
 
 -spec cache_flag(flag()) -> ok | {error, outdated}.
 cache_flag(#{feature := Id} = Value) -> set_value({flag, Id}, Value).
 
--spec cache_flag(flag(), map()) -> ok | {error, outdated}.
+-spec cache_flag(flag(), config()) -> ok | {error, outdated}.
 cache_flag(#{feature := Id} = Value, Config) -> set_value({flag, Id}, Value, Config).
 
 -spec set_pid(pid()) -> ok.

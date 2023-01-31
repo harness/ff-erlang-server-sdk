@@ -25,6 +25,8 @@
   ]
 ).
 
+-type config() :: map().
+
 %% Config defaults
 
 % Config endpoint for Prod
@@ -174,7 +176,7 @@ parse_jwt(JwtToken) ->
   end.
 
 
--spec create_tables(map()) -> ok.
+-spec create_tables(config()) -> ok.
 create_tables(Config) ->
   #{
     config_table := ConfigTable,
@@ -191,23 +193,23 @@ create_tables(Config) ->
   ok.
 
 
--spec get_config() -> map().
+-spec get_config() -> config().
 get_config() -> get_config(default).
 
--spec get_config(atom()) -> map().
+-spec get_config(atom()) -> config().
 get_config(Name) ->
   ?LOG_DEBUG("Loading config for ~p", [Name]),
   [{Name, Config}] = ets:lookup(?CONFIG_TABLE, Name),
   Config.
 
 
--spec set_config(map()) -> ok.
+-spec set_config(config()) -> ok.
 set_config(Config) ->
   Name = maps:get(name, Config, default),
   set_config(Name, Config).
 
 
--spec set_config(atom(), map()) -> ok.
+-spec set_config(atom(), config()) -> ok.
 set_config(Name, Config) ->
   true = ets:insert(?CONFIG_TABLE, {Name, Config}),
   ok.
