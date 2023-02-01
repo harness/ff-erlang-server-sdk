@@ -1,7 +1,14 @@
 Erlang SDK For Harness Feature Flags
 ========================
 
+[Harness](https://www.harness.io/) is a feature management platform that helps
+teams to build better software and to test features quicker.
+
+This repository contains our Feature Flags SDK for Erlang and other BEAM
+languages such as Elixir.
+
 ## Table of Contents
+
 **[Intro](#Intro)**<br>
 **[Requirements](#Requirements)**<br>
 **[Quickstart](#Quickstart)**<br>
@@ -11,12 +18,7 @@ Erlang SDK For Harness Feature Flags
 
 ## Intro
 
-[Harness](https://www.harness.io/) is a feature management platform that helps
-teams to build better software and to test features quicker.
-
-Use this README to get started with our Feature Flags (FF) SDK for Erlang.
-This guide outlines the basics of getting started with the SDK and provides a full
-code sample for you to try out. This sample doesn’t include configuration
+This sample doesn’t include configuration
 options. For in depth steps and configuring the SDK, e.g. disabling
 streaming or using our Relay Proxy, see the 
 [Erlang SDK Reference](https://ngdocs.harness.io/article/hwoxb6x2oe-Erlang-sdk-reference).
@@ -31,7 +33,7 @@ For a sample FF Erlang SDK Project for Elixir, see our
 
 ## Requirements
 
-Erlang OTP 22 or newer
+Erlang OTP 22 or newer.
 
 ## Quickstart
 
@@ -41,28 +43,64 @@ To follow along with our test code sample, make sure you have:
   called `harnessappdemodarkmode`
 - [Created a server SDK key and made a copy of it](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_3_create_an_sdk_key)
 
-### Install the SDK
+### Install the SDK (Erlang)
 
-Install the Erlang SDK to [rebar3](https://www.rebar3.org/).
+Add this library as a dependency to your `rebar.config`.
 
-Add the dependency to your `rebar.config`.
-```Erlang
+```erlang
 {deps, [
   {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {branch, "0.1.0"}}}
 ]}.
 ```
 
 Add the dependency to your project's `app.src`.
-```Erlang
+```erlang
 {applications,
   [kernel, stdlib, cfclient]
 },
 ```
 
+### Install the SDK (Elixir)
+
+Add the library to `mix.exs` `deps()`:
+
+```elixir
+{:cfclient, github: "harness/ff-erlang-server-sdk"},
+```
+
+## Configuration
+
+### Erlang
+
+Configure the application environment in `sys.config`:
+
+```erlang
+[
+  {cfclient, [
+      {api_key, "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"},
+  ]}
+].
+```
+
+### Elixir
+
+Configure the application environment in e.g. `config/dev.exs`:
+
+```elixir
+config :cfclient,
+  api_key: "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"
+```
+
+
+Normally there is a single project per application. If different parts of
+your application need their own key, then you can start up additional client
+instances, passing in a `name` and `api_key` for each. When you call
+client API functions, pass the name as the first parameter.
+
 ### Code Sample
 
 The following is a complete code example that you can use to test the
-`harnessappdemodarkmode` Flag you created on the Harness Platform. When you run
+`harnessappdemodarkmode` flag you created via harness.io. When you run
 the code it will:
 
 - Connect to the FF service.
@@ -70,24 +108,10 @@ the code it will:
   Every time the harnessappdemodarkmode Flag is toggled on or off on the
   Harness Platform, the updated value is reported.
 
-```Erlang
+```erlang
 -module(getting_started).
 
-%% API
--export([start/0]).
-
-start(SDKKey) ->
-  logger:set_primary_config(level, info),
-  case cfclient:start(SDKKey) of
-    ok ->
-      logger:info("Erlang SDK Successfuly Started"),
-      get_flag_loop();
-    {not_ok, Error} ->
-      logger:error("Error when starting Erlang SDK: ~p~n", [Error]),
-      not_ok
-  end.
-
-get_flag_loop() ->
+get_flag() ->
   Target = #{
     identifier => "Harness_Target_1",
     name => "HT_1",
@@ -102,12 +126,12 @@ get_flag_loop() ->
   logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n",
     [FlagIdentifier, maps:get(identifier, Target), Result]),
   timer:sleep(10000),
-  get_flag_loop().
+  get_flag().
 ```
 
 ### Running the example
 
-In the SDK project directory run the following using rebar3.
+In the SDK project directory run the following:
 
 ```console
 rebar3 shell
@@ -124,8 +148,8 @@ evaluation using the Target.
 You can create [Group Rules](https://docs.harness.io/article/5qz1qrugyk-add-target-groups)
 based on these attributes.
 
-Note: `attribute` keys must be `atoms` and the values must either be
-`binaries` or `atoms` or a list of `binaries` or `atoms`.
+Note: `attribute` keys must be `atoms` and the values must either be `binaries`
+or `atoms` or a list of `binaries` or `atoms`.
 
 ```erlang
   TargetBetaGroup = #{'identifier' => <<"my_target">>,
