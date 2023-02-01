@@ -172,7 +172,7 @@ parse_jwt(JwtToken) ->
   DecodedJwt = base64url:decode(JwtString),
   case unicode:characters_to_binary(DecodedJwt, utf8) of
     UnicodeJwt when is_binary(UnicodeJwt) ->
-      Result = jsx:decode(string:trim(UnicodeJwt), [attempt_atom]),
+      Result = jsx:decode(string:trim(UnicodeJwt), [{labels, atom}]),
       {ok, Result};
 
     _ -> {error, unicode}
