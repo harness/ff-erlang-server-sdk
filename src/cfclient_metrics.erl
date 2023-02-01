@@ -91,7 +91,7 @@ record_metrics(FlagId, Target, VariationId, VariationValue, Config) ->
 
 % @doc Store target metrics.
 -spec record_target(cfclient:target(), config()) -> ok | noop.
-record_target(#{anonymous := <<"true">>} = Target, _Config) ->
+record_target(#{anonymous := true} = Target, _Config) ->
   ?LOG_DEBUG("Metrics target skipped for anonymous target ~w", [Target]),
   noop;
 
