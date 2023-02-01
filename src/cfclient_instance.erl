@@ -36,6 +36,7 @@ init(Args) ->
   case cfclient_config:authenticate(ApiKey, Config1) of
     {ok, Config} ->
       ok = cfclient_config:set_config(Config),
+      retrieve_flags(Config),
       start_poll(Config),
       start_analytics(Config),
       {ok, Config};
@@ -56,14 +57,7 @@ handle_info(metrics, Config) ->
 handle_info(poll, Config) ->
   ?LOG_DEBUG("Poll triggered"),
   #{poll_interval := PollInterval} = Config,
-  case cfclient_retrieve:retrieve_flags(Config) of
-    {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
-    {error, Reason} -> ?LOG_WARNING("Could not retrive flags from API: ~p", [Reason])
-  end,
-  case cfclient_retrieve:retrieve_segments(Config) of
-    {ok, Segments} -> [cfclient_cache:cache_segment(S, Config) || S <- Segments];
-    {error, Reason1} -> ?LOG_WARNING("Could not retrive segments from API: ~p", [Reason1])
-  end,
+  retrieve_flags(Config),
   erlang:send_after(PollInterval, self(), poll),
   {noreply, Config}.
 
@@ -85,6 +79,19 @@ start_analytics(#{analytics_enabled := true} = Config) ->
 
 start_analytics(_) -> ok.
 
+-spec retrieve_flags(cfclient:config()) -> ok.
+retrieve_flags(#{poll_enabled := true} = Config) ->
+  case cfclient_retrieve:retrieve_flags(Config) of
+    {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
+    {error, Reason} -> ?LOG_WARNING("Could not retrive flags from API: ~p", [Reason])
+  end,
+  case cfclient_retrieve:retrieve_segments(Config) of
+    {ok, Segments} -> [cfclient_cache:cache_segment(S, Config) || S <- Segments];
+    {error, Reason1} -> ?LOG_WARNING("Could not retrive segments from API: ~p", [Reason1])
+  end,
+  ok;
+
+retrieve_flags(_) -> ok.
 
 % Ensure value is binary
 % to_binary(Value) when is_binary(Value) -> Value;
