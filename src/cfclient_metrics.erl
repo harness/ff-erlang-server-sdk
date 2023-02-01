@@ -183,8 +183,10 @@ format_target(Target) ->
 
 
 -spec target_attributes_to_metrics(cfclient:target()) -> [map()].
-target_attributes_to_metrics(#{attributes := Values}) ->
-  lists:map(fun target_attribute_to_metric/1, maps:to_list(Values)).
+target_attributes_to_metrics(#{attributes := Values}) when is_map(Values) ->
+  lists:map(fun target_attribute_to_metric/1, maps:to_list(Values));
+
+target_attributes_to_metrics(_) -> [].
 
 -spec target_attribute_to_metric({binary(), term()}) -> map().
 target_attribute_to_metric({K, V}) ->
