@@ -6,7 +6,7 @@
     {vsn, "0.1.0"},
     {registered, []},
     {mod, {cfclient_app, []}},
-    {applications, [kernel, stdlib, cfapi, lru]},
+    {applications, [kernel, stdlib, cfapi]},
     {env, []},
     {modules, []},
     {licenses, ["Apache-2.0"]},
