@@ -411,7 +411,7 @@ is_custom_rule_match(?IN_OPERATOR, TargetAttribute, RuleValue) when is_list(Targ
   lists:any(fun (TA) -> lists:member(TA, RuleValue) end, TargetAttribute).
 
 
--spec get_attribute_value(map(), binary(), binary(), binary()) -> binary().
+-spec get_attribute_value(map(), binary(), binary(), binary()) -> binary() | [binary()].
 get_attribute_value(TargetCustomAttributes, RuleAttribute, TargetId, TargetName)
 when is_map(TargetCustomAttributes), map_size(TargetCustomAttributes) > 0 ->
   % Check if rule attribute matches custom attributes.
@@ -430,7 +430,7 @@ get_attribute_value(_, _, _, _) -> <<>>.
 
 
 % Convert custom attributes to binary.
--spec custom_attribute_to_binary(binary() | atom() | number() | string()) -> binary().
+-spec custom_attribute_to_binary(binary() | atom() | number() | string()) -> binary() | [binary()].
 custom_attribute_to_binary(Value) when is_binary(Value) -> Value;
 custom_attribute_to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
 custom_attribute_to_binary(Value) when is_number(Value) -> list_to_binary(mochinum:digits(Value));
