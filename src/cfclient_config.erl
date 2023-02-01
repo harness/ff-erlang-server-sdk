@@ -141,7 +141,7 @@ normalize_config(K, V, Acc) -> maps:put(K, V, Acc).
 % Strip trailing / from URL
 normalize_url(V) -> string:trim(V, trailing, "/").
 
-% @doc Authenticate with server and merge project attributes into config
+% @doc with Authenticate with server and merge project attributes into config
 -spec authenticate(binary() | string() | undefined, map()) ->
   {ok, Config :: map()} | {error, Response :: term()}.
 authenticate(undefined, Config) ->
