@@ -47,14 +47,14 @@ init(Args) ->
 
 
 handle_info(metrics, Config) ->
-  ?LOG_INFO("Metrics triggered"),
+  ?LOG_DEBUG("Metrics triggered"),
   #{analytics_push_interval := AnalyticsPushInterval} = Config,
   cfclient_metrics:process_metrics(Config),
   erlang:send_after(AnalyticsPushInterval, self(), metrics),
   {noreply, Config};
 
 handle_info(poll, Config) ->
-  ?LOG_INFO("Poll triggered"),
+  ?LOG_DEBUG("Poll triggered"),
   #{poll_interval := PollInterval} = Config,
   case cfclient_retrieve:retrieve_flags(Config) of
     {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
