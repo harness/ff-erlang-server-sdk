@@ -153,7 +153,7 @@ authenticate(ApiKey, Config) when is_list(ApiKey) ->
 
 authenticate(ApiKey, Config) ->
   #{config_url := ConfigUrl} = Config,
-  Opts = #{cfg => #{host => ConfigUrl, params => #{apiKey => ApiKey}}},
+  Opts = #{cfg => #{host => ConfigUrl}, params => #{apiKey => ApiKey}},
   case cfapi_client_api:authenticate(ctx:new(), Opts) of
     {ok, #{authToken := AuthToken}, _} ->
       {ok, Project} = cfclient_config:parse_jwt(AuthToken),
