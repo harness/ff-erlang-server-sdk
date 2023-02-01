@@ -37,7 +37,7 @@ process_metrics(Config) ->
       ok;
 
     {ok, Response} ->
-      ?LOG_INFO("Posted metrics to server: ~p", [Response]),
+      ?LOG_DEBUG("Posted metrics to server: ~p", [Response]),
       % TODO: race condition, will lose any metrics made during call to
       % post_metrics
       clear_caches(Config),
