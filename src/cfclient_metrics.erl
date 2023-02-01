@@ -55,13 +55,13 @@ post_metrics([], [], _Config) -> noop;
 
 post_metrics(MetricsData, MetricsTargetData, Config) ->
   #{auth_token := AuthToken, project := Project, events_url := EventsUrl} = Config,
-  #{environment := Environment, clusterIdentifier := ClusterID} = Project,
+  #{environment := Environment, clusterIdentifier := Cluster} = Project,
   Opts =
     #{
       cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => EventsUrl},
       params => #{metricsData => MetricsData, targetData => MetricsTargetData}
     },
-  case cfapi_metrics_api:post_metrics(ctx:new(), ClusterID, Environment, Opts) of
+  case cfapi_metrics_api:post_metrics(ctx:new(), #{cluster => Cluster}, Environment, Opts) of
     {ok, Response, _} -> {ok, Response};
     {error, Response, _} -> {error, Response}
   end.
