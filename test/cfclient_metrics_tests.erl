@@ -122,6 +122,9 @@ record_metric_data_test_() ->
                 }
               ],
             {ok, Metrics} = cfclient_metrics:collect_metrics_data(Timestamp, Config),
+            % TODO: Flaky because metrics may be returned in different order. Sort results.
+            ?debugFmt("ExpectedMetrics = ~p~n", [ExpectedMetrics]),
+            ?debugFmt("Metrics = ~p~n", [Metrics]),
             ?assertMatch(ExpectedMetrics, Metrics)
           % ?assertEqual(
           %   ExpectedMetrics,
