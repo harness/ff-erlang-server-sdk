@@ -8,7 +8,6 @@
 
 -type flag() :: cfapi_feature_config:cfapi_feature_config().
 -type segment() :: cfapi_segment:cfapi_segment().
-
 -type config() :: map().
 
 % @doc Retrieve all features from Feature Flags API.

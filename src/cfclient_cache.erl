@@ -71,7 +71,8 @@ set_value({Type, Identifier}, Value, Config) ->
   end.
 
 
--spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment(), config()) -> boolean().
+-spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment(), config()) ->
+  boolean().
 is_outdated(Key, NewValue, Config) ->
   case get_value(Key, Config) of
     {error, undefined} -> false;

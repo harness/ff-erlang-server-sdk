@@ -1,4 +1,4 @@
-%% @doc 
+%% @doc
 %% Public interface for client.
 %% @end
 
@@ -64,6 +64,7 @@ bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
       ),
       Default
   end.
+
 
 % @doc Evaluate variation which returns a string.
 -spec string_variation(binary() | string(), target(), binary()) -> binary().

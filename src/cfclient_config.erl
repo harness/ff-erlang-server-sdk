@@ -148,8 +148,7 @@ authenticate(undefined, Config) ->
   ?LOG_INFO("api_key undefined"),
   {ok, Config};
 
-authenticate(ApiKey, Config) when is_list(ApiKey) ->
-    authenticate(list_to_binary(ApiKey), Config);
+authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
 authenticate(ApiKey, Config) ->
   #{config_url := ConfigUrl} = Config,

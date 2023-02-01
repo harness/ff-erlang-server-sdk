@@ -3,7 +3,7 @@
 %%
 %% It creates the ETS tables used to cache flag data from the server
 %% and flag usage metrics. It runs periodic tasks to pull data from
-%% the server and send metrics to it. 
+%% the server and send metrics to it.
 %%
 %% An instance is started by the cfclient application.
 %% More complex applications can start additional instances for a specific
@@ -79,6 +79,7 @@ start_analytics(#{analytics_enabled := true} = Config) ->
 
 start_analytics(_) -> ok.
 
+
 -spec retrieve_flags(cfclient:config()) -> ok.
 retrieve_flags(#{poll_enabled := true} = Config) ->
   case cfclient_retrieve:retrieve_flags(Config) of
@@ -92,6 +93,7 @@ retrieve_flags(#{poll_enabled := true} = Config) ->
   ok;
 
 retrieve_flags(_) -> ok.
+
 
 % Ensure value is binary
 % to_binary(Value) when is_binary(Value) -> Value;

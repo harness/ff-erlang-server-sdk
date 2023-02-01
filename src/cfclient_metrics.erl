@@ -128,6 +128,7 @@ collect_metrics_data(Timestamp, Config) ->
     {error, Reason} -> {error, Reason}
   end.
 
+
 % @doc Format cached metric for sending to the server.
 % @end
 %
@@ -199,7 +200,6 @@ target_attribute_to_metric({K, V}) ->
 %     [] -> {error, undefined};
 %     [Value] -> {ok, Value}
 %   end.
-
 % -spec get_target(binary()) -> {ok, cfclient:target()} | {error, undefined}.
 % get_target(Key) ->
 %   case ets:lookup(?METRICS_TARGET_TABLE, Key) of
