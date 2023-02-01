@@ -38,6 +38,6 @@ retrieve_segments(Config) ->
       params => #{cluster => Cluster}
     },
   case cfapi_client_api:get_all_segments(ctx:new(), Env, Opts) of
-    {ok, Values} -> {ok, Values};
+    {ok, Values, _} -> {ok, Values};
     {error, Reason, _} -> {error, Reason}
   end.
