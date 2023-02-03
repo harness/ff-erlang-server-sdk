@@ -144,13 +144,13 @@ normalize_url(V) -> string:trim(V, trailing, "/").
 % @doc with Authenticate with server and merge project attributes into config
 -spec authenticate(binary() | string() | undefined | nil, map()) ->
   {ok, Config :: map()} | {error, Response :: term()}.
-authenticate(undefined, Config) ->
+authenticate(undefined, _Config) ->
   ?LOG_INFO("api_key undefined"),
-  {ok, Config};
+  {error, not_configured};
 
-authenticate(nil, Config) ->
+authenticate(nil, _Config) ->
   ?LOG_INFO("api_key undefined"),
-  {ok, Config};
+  {error, not_configured};
 
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
