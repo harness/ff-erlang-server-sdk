@@ -34,16 +34,20 @@ init(Args) ->
   ok = cfclient_config:create_tables(Config1),
   ok = cfclient_config:set_config(Config1),
   case cfclient_config:authenticate(ApiKey, Config1) of
+    {error, not_configured} ->
+      % Used during testing
+      {ok, Config1};
+
+    {error, Reason} ->
+      ?LOG_ERROR("Authentication failed: ~p", [Reason]),
+      {stop, authenticate};
+
     {ok, Config} ->
       ok = cfclient_config:set_config(Config),
       retrieve_flags(Config),
       start_poll(Config),
       start_analytics(Config),
-      {ok, Config};
-
-    {error, Reason} ->
-      ?LOG_ERROR("Authentication failed: ~p", [Reason]),
-      {stop, authenticate}
+      {ok, Config}
   end.
 
 
