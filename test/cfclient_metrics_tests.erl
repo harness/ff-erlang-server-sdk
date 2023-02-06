@@ -109,13 +109,13 @@ record_metric_data_test_() ->
             ExpectedMetrics =
               [
                 #{
-                  attributes => MetricAttributes1,
+                  attributes => MetricAttributes2,
                   count => 1,
                   metricsType => ?METRICS_TYPE,
                   timestamp => Timestamp
                 },
                 #{
-                  attributes => MetricAttributes2,
+                  attributes => MetricAttributes1,
                   count => 1,
                   metricsType => ?METRICS_TYPE,
                   timestamp => Timestamp
@@ -123,9 +123,7 @@ record_metric_data_test_() ->
               ],
             {ok, Metrics} = cfclient_metrics:collect_metrics_data(Timestamp, Config),
             % TODO: Flaky because metrics may be returned in different order. Sort results.
-            ?debugFmt("ExpectedMetrics = ~p~n", [ExpectedMetrics]),
-            ?debugFmt("Metrics = ~p~n", [Metrics]),
-            ?assertMatch(ExpectedMetrics, Metrics)
+            ?assertMatch(ExpectedMetrics, lists:sort(Metrics))
           % ?assertEqual(
           %   ExpectedMetrics,
           %   cfclient_metrics:create_metrics_data(
