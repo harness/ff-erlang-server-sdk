@@ -245,7 +245,7 @@ target_beta_groups = %{
 }
 
 target_alpha_group = %{
-  identifier: => "my_alpha_target",
+  identifier: "my_alpha_target",
   name: "my_alpha_target_name",
   anonymous: "",
   attributes: %{alpha: :alpha_group_1}
