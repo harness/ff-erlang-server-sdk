@@ -84,72 +84,128 @@ Configure the application environment in `sys.config`:
 
 ### Elixir
 
-Configure the application environment in e.g. `config/dev.exs`:
+Configure the application environment in `config/prod.exs`:
 
 ```elixir
 config :cfclient,
   api_key: "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"
 ```
 
+## Multiple Projects
 
-Normally there is a single project per application. If different parts of
-your application need their own key, then you can start up additional client
-instances, passing in a `name` and `api_key` for each. When you call
-client API functions, pass the name as the first parameter.
+Normally there is a single project per application. If different parts of your
+application need their own key, you can start up additional client instances,
+passing in a `name` and `api_key` for each. When you call client API
+functions, pass the name as the first parameter.
 
-### Code Sample
+### Erlang
 
-The following is a complete code example that you can use to test the
-`harnessappdemodarkmode` flag you created via harness.io. When you run
-the code it will:
-
-- Connect to the FF service.
-- Report the value of the Flag every 10 seconds until the connection is closed.
-  Every time the harnessappdemodarkmode Flag is toggled on or off on the
-  Harness Platform, the updated value is reported.
+In `sys.config`, define the project config:
 
 ```erlang
--module(getting_started).
+[
+    {myapp, [
+                {cfclient, [
+                    {api_key, "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"}
+                }
+            ] 
+        ]
+    }
+].
+```
 
-get_flag() ->
+In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
+for each project:
+
+```erlang
+init(Args) ->
+  HarnessArgs = application:get_env(myapp, cfclient, []),
+
+  ChildSpecs = [#{id => cfclient_instance, start => {cfclient_instance, start_link, [HarnessArgs]}}],
+  SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
+  {ok, {SupFlags, ChildSpecs}}.
+```
+
+### Elixir
+
+Define the `api_key`:
+
+config :myapp, :cfclient,
+  api_key: "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"
+
+In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance`:
+
+```elixir
+def start(_type, _args) do
+  harness_args = Application.get_env(:myapp, :cfclient, [])
+
+  children = [
+    %{id => :myapp_cfclient_instance, start => {:cfclient_instance, :start_link, [harness_args]}}
+  ]
+
+  opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+  Supervisor.start_link(children, opts)
+end
+```
+
+## Code Sample
+
+### Erlang
+
+Call the API to get the value of the `harnessappdemodarkmode` flag you created
+via https://www.harness.io/.
+
+```erlang
   Target = #{
     identifier => "Harness_Target_1",
     name => "HT_1",
 
     % Attribute keys must be atoms. 
-    % Values must be either binaries, atoms, or a list of binaries/atoms -
-    % see Targets with custom attributes section below.
+    % Values must be either binaries, atoms, or a list of binaries/atoms.
+    % See "Targets with custom attributes" below.
     attributes => #{email => <<"demo@harness.io">>}
   },
-  FlagIdentifier = "harnessappdemodarkmode",
+  FlagIdentifier = <<"harnessappdemodarkmode">>,
   Result = cfclient:bool_variation(FlagIdentifier, Target, false),
-  logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n",
+  logger:info("Varaion for Flag ~p with Target ~p is: ~p~n",
     [FlagIdentifier, maps:get(identifier, Target), Result]),
-  timer:sleep(10000),
-  get_flag().
 ```
 
-### Running the example
+### Elixir
 
-In the SDK project directory run the following:
+Call the API to get the value of the `harnessappdemodarkmode` flag you created
+via https://www.harness.io/.
 
-```console
-rebar3 shell
-1> getting_started:start("YOUR SDK KEY").
-Erlang SDK Successfuly Started
-Varaion for Flag "harnessappdemodarkmode" witih Target "Harness_Target_1" is: true
+```elixir
+target = %{
+  identifier: "Harness_Target_1",
+  name: "HT_1"
+
+  # Attribute keys must be atoms. 
+  # Values must be either binaries, atoms, or a list of binaries/atoms.
+  # See "targets with custom attributes" below.
+  attributes: %{email: "demo@harness.io"}
+}
+
+flag_identifier = "harnessappdemodarkmode"
+
+result = :cfclient.bool_variation(flag_identifier, target, false)
+Logger.info("Varaion for Flag #{flag_identifier} with Target #{inspect(target)} is: #{result)")
 ```
 
-### Targets with custom attributes
+## Targets with custom attributes
 
-You can use the `attributes` map to provide custom attributes. If the Target
+You can use the `attributes` map to provide custom attributes. If the target
 isn't anonymous, the attributes will shortly appear in the Harness UI after an
-evaluation using the Target.
+evaluation using the target.
+
 You can create [Group Rules](https://docs.harness.io/article/5qz1qrugyk-add-target-groups)
 based on these attributes.
 
 Note: `attribute` keys must be `atoms` and the values must either be `binaries`
 or `atoms` or a list of `binaries` or `atoms`.
+
+### Erlang:
 
 ```erlang
   TargetBetaGroup = #{'identifier' => <<"my_target">>,
@@ -160,7 +216,7 @@ or `atoms` or a list of `binaries` or `atoms`.
   TargetBetaGroups = #{'identifier' => <<"my_other_target">>,
     name => <<"my_other_target_name">>,
     anonymous => <<"">>,
-    attributes => #{beta => [<<"beta_group_1">>, 'beta_group_2'}]}
+    attributes => #{beta => [<<"beta_group_1">>, 'beta_group_2']}}
     },
   TargetAlphaGroup = #{'identifier' => <<"my_alpha_target">>,
     name => <<"my_alpha_target_name">>,
@@ -169,8 +225,34 @@ or `atoms` or a list of `binaries` or `atoms`.
     },
 ```
 
+### Elixir
 
-### Additional Reading
+```elixir
+target_beta_group = %{
+  identifier: "my_target",
+  name: "my_target_name",
+  anonymous: "",
+  attributes: %{beta: "beta_group_1"}
+}
+
+target_beta_groups = %{
+  identifier: "my_other_target",
+  name: "my_other_target_name",
+  anonymous: "",
+  attributes: %{
+    beta: ["beta_group_1", :beta_group_2]
+  }
+}
+
+target_alpha_group = %{
+  identifier: => "my_alpha_target",
+  name: "my_alpha_target_name",
+  anonymous: "",
+  attributes: %{alpha: :alpha_group_1}
+}
+```
+
+## Additional Reading
 
 For further examples and config options, see the [Erlang SDK Further
 Reading](https://github.com/harness/ff-erlang-server-sdk/raw/main/docs/further_reading.md).
@@ -178,7 +260,7 @@ Reading](https://github.com/harness/ff-erlang-server-sdk/raw/main/docs/further_r
 For more information about Feature Flags, see our [Feature Flags
 documentation](https://ngdocs.harness.io/article/0a2u2ppp8s-getting-started-with-feature-flags).
 
-### Contributing
+## Contributing
 
 In order to run the tests, pull the submodules:
 
