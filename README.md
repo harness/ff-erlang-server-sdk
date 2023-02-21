@@ -77,7 +77,7 @@ Configure the application environment in `sys.config`:
 ```erlang
 [
   {cfclient, [
-      {api_key, "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"},
+      {api_key, "YOUR_API_KEY"},
   ]}
 ].
 ```
@@ -88,7 +88,7 @@ Configure the application environment in `config/prod.exs`:
 
 ```elixir
 config :cfclient,
-  api_key: "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"
+  api_key: "YOUR_API_KEY"
 ```
 
 ## Multiple Projects
@@ -106,7 +106,7 @@ In `sys.config`, define the project config:
 [
     {myapp, [
                 {cfclient, [
-                    {api_key, "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"}
+                    {api_key, "YOUR_API_KEY"}
                 }
             ] 
         ]
@@ -131,7 +131,7 @@ init(Args) ->
 Define the `api_key`:
 
 config :myapp, :cfclient,
-  api_key: "b4fb299b-767c-4ccf-ad0a-b1ab06c987c3"
+  api_key: "YOUR_API_KEY"
 
 In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance`:
 
