@@ -61,7 +61,7 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
       cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => EventsUrl},
       params => #{metricsData => MetricsData, targetData => MetricsTargetData}
     },
-  case cfapi_metrics_api:post_metrics(ctx:new(), #{cluster => Cluster}, Environment, Opts) of
+  case cfapi_metrics_api:post_metrics(ctx:new(), #{cluster => binary_to_list(Cluster)}, Environment, Opts) of
     {ok, Response, _} -> {ok, Response};
     {error, Response, _} -> {error, Response}
   end.
