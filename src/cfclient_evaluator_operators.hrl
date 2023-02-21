@@ -1,6 +1,12 @@
-%% Group Rule Association Operator - camel case from ff-server
+%% @doc
+%% Define operators for rule matching.
+%% @end
+
+% Group Rule Association Operator - camel case from ff-server
 -define(SEGMENT_MATCH_OPERATOR, <<"segmentMatch">>).
+
 %% Custom Rule Operators
+
 -define(EQUAL_OPERATOR, <<"equal">>).
 -define(EQUAL_SENSITIVE_OPERATOR, <<"equal_sensitive">>).
 -define(STARTS_WITH_OPERATOR, <<"starts_with">>).

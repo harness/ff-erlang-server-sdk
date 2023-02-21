@@ -1,119 +1,105 @@
-%%%-------------------------------------------------------------------
-%%% @copyright (C) 2022, <COMPANY>
-%%% @doc
-%%%
-%%% @end
-%%%-------------------------------------------------------------------
+%% @doc
+%% Feature flags client instance.
+%%
+%% It creates the ETS tables used to cache flag data from the server
+%% and flag usage metrics. It runs periodic tasks to pull data from
+%% the server and send metrics to it.
+%%
+%% An instance is started by the cfclient application.
+%% More complex applications can start additional instances for a specific
+%% project.
+%%
+%% @end
+
 -module(cfclient_instance).
 
-%% API
--export([start/1, start/2, get_authtoken/0, get_project_value/1, stop/0]).
+-behaviour(gen_server).
 
--define(DEFAULT_OPTIONS, #{}).
--define(PARENTSUP, cfclient_sup).
+-include_lib("kernel/include/logger.hrl").
 
-%% Child references
--define(POLL_SERVER_CHILD_REF, cfclient_poll_server).
--define(LRU_CACHE_CHILD_REF, cfclient_lru).
--define(METRICS_GEN_SERVER_CHILD_REF, cfclient_metrics_server).
--define(METRICS_CACHE_CHILD_REF, cfclient_metrics_server_lru).
--define(METRIC_TARGET_CACHE_CHILD_REF, cfclient_metrics_server_target_lru).
+-include("cfclient_config.hrl").
 
+-define(SERVER, ?MODULE).
 
--spec start(ApiKey :: string()) -> ok.
-start(ApiKey) ->
-  start(ApiKey, ?DEFAULT_OPTIONS).
+% gen_server callbacks
+-export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2]).
 
--spec start(ApiKey :: string(), Options :: map()) -> ok | not_ok.
-start(ApiKey, Options) ->
-  logger:info("Starting Client"),
-  logger:info("Initializing Config"),
-  cfclient_config:init(ApiKey, Options),
-  case connect(ApiKey) of
-    {ok, AuthToken} ->
-      AuthToken,
-      parse_project_data(AuthToken),
-      start_children();
-    {not_ok, Error} ->
-      {not_ok, Error}
+-spec start_link(proplists:proplist()) -> {ok, pid()} | ignore | {error, term()}.
+start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
+
+init(Args) ->
+  ApiKey = proplists:get_value(api_key, Args),
+  Config0 = proplists:get_value(config, Args, []),
+  Config1 = cfclient_config:normalize(Config0),
+  ok = cfclient_config:create_tables(Config1),
+  ok = cfclient_config:set_config(Config1),
+  case cfclient_config:authenticate(ApiKey, Config1) of
+    {error, not_configured} ->
+      % Used during testing
+      {ok, Config1};
+
+    {error, Reason} ->
+      ?LOG_ERROR("Authentication failed: ~p", [Reason]),
+      {stop, authenticate};
+
+    {ok, Config} ->
+      ok = cfclient_config:set_config(Config),
+      retrieve_flags(Config),
+      start_poll(Config),
+      start_analytics(Config),
+      {ok, Config}
   end.
 
 
--spec connect(ApiKey :: string()) -> string() | {error, connect_failure, term()}.
-connect(ApiKey) ->
-  Opts = #{cfg => #{host => cfclient_config:get_value(config_url)}, params => #{apiKey => list_to_binary(ApiKey)}},
-  {_Status, ResponseBody, _Headers} = cfapi_client_api:authenticate(ctx:new(), Opts),
-  case cfapi_client_api:authenticate(ctx:new(), Opts) of
-    {ok, ResponseBody, _} ->
-      AuthToken = maps:get('authToken', ResponseBody),
-      application:set_env(cfclient, authtoken, AuthToken),
-      {ok, AuthToken};
-    {error, Response, _} ->
-      logger:error("Error when authorising API Key. Error response: ~p~n", [Response]),
-      {not_ok, Response}
-  end.
+handle_info(metrics, Config) ->
+  ?LOG_DEBUG("Metrics triggered"),
+  #{analytics_push_interval := AnalyticsPushInterval} = Config,
+  cfclient_metrics:process_metrics(Config),
+  erlang:send_after(AnalyticsPushInterval, self(), metrics),
+  {noreply, Config};
+
+handle_info(poll, Config) ->
+  ?LOG_DEBUG("Poll triggered"),
+  #{poll_interval := PollInterval} = Config,
+  retrieve_flags(Config),
+  erlang:send_after(PollInterval, self(), poll),
+  {noreply, Config}.
 
 
--spec get_authtoken() -> string() | {error, authtoken_not_found, term()}.
-get_authtoken() ->
-  {ok, AuthToken} = application:get_env(cfclient, authtoken),
-  binary_to_list(AuthToken).
+handle_call(_, _From, State) -> {reply, ok, State}.
 
--spec parse_project_data(JwtToken :: string()) -> ok.
-parse_project_data(JwtToken) ->
-  JwtString = lists:nth(2, string:split(JwtToken, ".", all)),
-  DecodedJwt = base64url:decode(JwtString),
-  UnicodeJwt = unicode:characters_to_binary(DecodedJwt, utf8),
-  Project = jsx:decode(string:trim(UnicodeJwt)),
-  application:set_env(cfclient, project, Project).
+handle_cast(_, State) -> {noreply, State}.
 
--spec get_project_value(Key :: string()) -> string() | {error, key_not_found, term()}.
-get_project_value(Key) ->
-  {ok, Project} = application:get_env(cfclient, project),
-  Value = maps:get(list_to_binary(Key), Project),
-  binary_to_list(Value).
+start_poll(#{poll_enabled := true} = Config) ->
+  #{analytics_push_interval := Interval} = Config,
+  erlang:send_after(Interval, self(), poll);
 
--spec stop() -> ok | {error, not_found, term()}.
-stop() ->
-  logger:debug("Stopping client"),
-  stop_children(supervisor:which_children(?PARENTSUP)),
-  unset_application_environment(application:get_all_env(cfclient)).
+start_poll(_) -> ok.
 
-%% Internal functions
--spec start_children() -> ok.
-start_children() ->
-  %% Start Feature/Group Cache
-  {ok, CachePID} = supervisor:start_child(?PARENTSUP, {lru, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-  cfclient_cache_repository:set_pid(CachePID),
-  case cfclient_config:get_value(analytics_enabled) of
-    %% If analytics are enabled then we need to start the metrics gen server along with two separate caches for metrics and metrics targets.
-    true ->
-      %% Start metrics and metrics target caches
-      {ok, MetricsCachePID} = supervisor:start_child(?PARENTSUP, {?METRICS_CACHE_CHILD_REF, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_metrics_server:set_metrics_cache_pid(MetricsCachePID),
-      {ok, MetricsTargetCachePID} = supervisor:start_child(?PARENTSUP, {?METRIC_TARGET_CACHE_CHILD_REF, {lru, start_link, [[{max_size, 32000000}]]}, permanent, 5000, worker, ['lru']}),
-      cfclient_metrics_server:set_metrics_target_cache_pid(MetricsTargetCachePID),
-      %% Start metrics gen server
-      {ok, _} = supervisor:start_child(?PARENTSUP, {?METRICS_GEN_SERVER_CHILD_REF, {cfclient_metrics_server, start_link, []}, permanent, 5000, worker, ['cfclient_metrics_server']});
-    false -> ok
+
+start_analytics(#{analytics_enabled := true} = Config) ->
+  #{analytics_push_interval := Interval} = Config,
+  erlang:send_after(Interval, self(), metrics);
+
+start_analytics(_) -> ok.
+
+
+-spec retrieve_flags(cfclient:config()) -> ok.
+retrieve_flags(#{poll_enabled := true} = Config) ->
+  case cfclient_retrieve:retrieve_flags(Config) of
+    {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
+    {error, Reason} -> ?LOG_WARNING("Could not retrive flags from API: ~p", [Reason])
   end,
-  %% Start Poll Processor
-  {ok, _} = supervisor:start_child(?PARENTSUP, {?POLL_SERVER_CHILD_REF, {cfclient_poll_server, start_link, []}, permanent, 5000, worker, ['cfclient_poll_server']}),
-  ok.
+  case cfclient_retrieve:retrieve_segments(Config) of
+    {ok, Segments} -> [cfclient_cache:cache_segment(S, Config) || S <- Segments];
+    {error, Reason1} -> ?LOG_WARNING("Could not retrive segments from API: ~p", [Reason1])
+  end,
+  ok;
 
--spec stop_children(Children :: list()) -> ok.
-stop_children([{Id, _, _, _} | Tail]) ->
-  supervisor:terminate_child(?PARENTSUP, Id),
-  supervisor:delete_child(?PARENTSUP, Id),
-  stop_children(Tail);
-stop_children([]) -> ok.
+retrieve_flags(_) -> ok.
 
 
--spec unset_application_environment(CfClientEnvironmentVariables :: list()) -> ok.
-unset_application_environment([{Key, _} | Tail]) ->
-  application:unset_env(cfclient, Key),
-  unset_application_environment(Tail);
-unset_application_environment([]) -> ok.
-
-
-
+% Ensure value is binary
+% to_binary(Value) when is_binary(Value) -> Value;
+% to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
+% to_binary(Value) when is_list(Value) -> list_to_binary(Value).

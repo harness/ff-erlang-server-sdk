@@ -1,178 +1,195 @@
-%%%-------------------------------------------------------------------
-%%% @doc `cfclient` module
-%%%
-%%% @end
-%%%-------------------------------------------------------------------
+%% @doc
+%% Public interface for client.
+%% @end
+
 -module(cfclient).
 
-%% API
--export([start/1, start/2, bool_variation/3, string_variation/3, retrieve_flags/0, retrieve_segments/0, stop/0, number_variation/3, json_variation/3]).
+-include_lib("kernel/include/logger.hrl").
 
--type target() ::
-#{identifier := binary(),
-name := binary(),
-anonymous => boolean(),
-attributes := #{atom() := binary() | atom() | list()}
-}.
+-include("cfclient_config.hrl").
 
--spec start(ApiKey :: string()) -> ok.
-start(ApiKey) ->
-  start(ApiKey, #{}).
+-export(
+  [
+    bool_variation/3,
+    bool_variation/4,
+    string_variation/3,
+    string_variation/4,
+    number_variation/3,
+    number_variation/4,
+    json_variation/3,
+    json_variation/4
+  ]
+).
 
--spec start(ApiKey :: string(), Options :: map()) -> ok.
-start(ApiKey, Options) ->
-  cfclient_instance:start(ApiKey, Options).
+-type target() :: #{
+                  identifier := binary(),
+                  name := binary(),
+                  anonymous => boolean(),
+                  attributes := #{atom() := binary() | atom() | list()} | null
+                }.
+-type config() :: map().
 
--spec bool_variation(FlagKey :: binary() | list(), Target :: target(), Default :: binary()) -> binary().
-bool_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
-  bool_variation(list_to_binary(FlagKey), Target, Default);
-bool_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  %% Users can provide TargetIdentifiers as lists (strings), binary or atoms so sanitise them to be binary as the Client API
-  %% works in binary.
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+% @doc Evaluate variation which returns a boolean.
+-spec bool_variation(binary() | string(), target(), boolean()) -> boolean().
+bool_variation(FlagKey, Target, Default) -> bool_variation(default, FlagKey, Target, Default).
+
+-spec bool_variation(atom() | config(), binary() | string(), target(), boolean()) -> boolean().
+bool_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  bool_variation(Config, list_to_binary(FlagKey), Target, Default);
+
+bool_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  bool_variation(Config, FlagKey, Target, Default);
+
+bool_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:bool_variation(FlagKey, SanitisedTarget) of
-      {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, atom_to_binary(Variation)),
+    case cfclient_evaluator:bool_variation(FlagKey, Target, Config) of
+      {ok, VariationId, Variation} ->
+        cfclient_metrics:record(FlagKey, Target, VariationId, atom_to_binary(Variation), Config),
         Variation;
-      not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, SanitisedTarget, Default]),
+
+      {error, Reason} ->
+        ?LOG_ERROR(
+          "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
+          [FlagKey, Target, Default, Reason]
+        ),
         Default
     end
   catch
-    _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n", [FlagKey, Target, Stacktrace, Default]),
+    _:_ : Stacktrace ->
+      ?LOG_ERROR(
+        "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
+        [FlagKey, Target, Default, Stacktrace]
+      ),
       Default
   end.
 
--spec string_variation(FlagKey :: binary() | list(), Target :: target(), Default :: binary()) -> binary().
-string_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
-  string_variation(list_to_binary(FlagKey), Target, Default);
-string_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+
+% @doc Evaluate variation which returns a string.
+-spec string_variation(binary() | string(), target(), binary()) -> binary().
+string_variation(FlagKey, Target, Default) -> string_variation(default, FlagKey, Target, Default).
+
+-spec string_variation(atom() | config(), binary() | list(), target(), binary()) -> binary().
+string_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  string_variation(Config, list_to_binary(FlagKey), Target, Default);
+
+string_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  string_variation(Config, FlagKey, Target, Default);
+
+string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:string_variation(FlagKey, SanitisedTarget) of
-      {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(Variation)),
+    case cfclient_evaluator:string_variation(FlagKey, Target, Config) of
+      {ok, VariationId, Variation} ->
+        cfclient_metrics:record(FlagKey, Target, VariationId, Variation, Config),
         Variation;
-      not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+
+      {error, Reason} ->
+        ?LOG_ERROR(
+          "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
+          [FlagKey, Target, Default, Reason]
+        ),
         Default
     end
   catch
-    _:_:Stacktrace ->
-      logger:error("Unknown Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+    _:_ : Stacktrace ->
+      ?LOG_ERROR(
+        "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
+        [FlagKey, Target, Default, Stacktrace]
+      ),
       Default
   end.
 
--spec number_variation(FlagKey :: binary() | list(), Target :: target(), Default :: number()) -> number().
-number_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
-  number_variation(list_to_binary(FlagKey), Target, Default);
-number_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+
+% @doc Evaluate variation which returns a number.
+-spec number_variation(binary() | list(), target(), number()) -> number().
+number_variation(FlagKey, Target, Default) -> number_variation(default, FlagKey, Target, Default).
+
+-spec number_variation(atom() | config(), binary() | list(), target(), number()) -> number().
+number_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  number_variation(Config, list_to_binary(FlagKey), Target, Default);
+
+number_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  number_variation(Config, FlagKey, Target, Default);
+
+number_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:number_variation(FlagKey, SanitisedTarget) of
-      {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, list_to_binary(mochinum:digits(Variation))),
+    case cfclient_evaluator:number_variation(FlagKey, Target, Config) of
+      {ok, VariationId, Variation} ->
+        cfclient_metrics:record(
+          FlagKey,
+          Target,
+          VariationId,
+          list_to_binary(mochinum:digits(Variation)),
+          Config
+        ),
         Variation;
-      not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+
+      {error, Reason} ->
+        ?LOG_ERROR(
+          "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
+          [FlagKey, Target, Default, Reason]
+        ),
         Default
     end
   catch
-    _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+    _:_ : Stacktrace ->
+      ?LOG_ERROR(
+        "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
+        [FlagKey, Target, Default, Stacktrace]
+      ),
       Default
   end.
 
--spec json_variation(FlagKey :: binary() | list(), Target :: target(), Default :: map()) -> map().
-json_variation(FlagKey, Target, Default) when is_list(FlagKey) ->
-  json_variation(list_to_binary(FlagKey), Target, Default);
-json_variation(FlagKey, Target, Default) when is_binary(FlagKey) ->
-  SanitisedTarget =
-    case is_binary(maps:get(identifier, Target, <<>>)) of
-      true ->
-        Target;
-      false ->
-        SanitisedIdentifier = target_identifier_to_binary(maps:get(identifier, Target, <<>>)),
-        Target#{identifier := SanitisedIdentifier}
-    end,
+
+% @doc Evaluate variation which returns a JSON object.
+-spec json_variation(binary() | string(), target(), map()) -> map().
+json_variation(FlagKey, Target, Default) -> json_variation(default, FlagKey, Target, Default).
+
+-spec json_variation(atom() | config(), binary() | list(), target(), map()) -> map().
+json_variation(Config, FlagKey, Target, Default) when is_list(FlagKey) ->
+  json_variation(Config, list_to_binary(FlagKey), Target, Default);
+
+json_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
+  Config = cfclient_config:get_config(ConfigKey),
+  json_variation(Config, FlagKey, Target, Default);
+
+json_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
+  Target = normalize_target(Target0),
   try
-    case cfclient_evaluator:json_variation(FlagKey, SanitisedTarget) of
-      {ok, VariationIdentifier, Variation} ->
-        enqueue_metrics(cfclient_config:get_value(analytics_enabled), FlagKey, SanitisedTarget, VariationIdentifier, jsx:encode(Variation)),
+    case cfclient_evaluator:json_variation(FlagKey, Target, Config) of
+      {ok, VariationId, Variation} ->
+        cfclient_metrics:record(FlagKey, Target, VariationId, jsx:encode(Variation), Config),
         Variation;
-      not_ok ->
-        logger:error("Couldn't do evaluation for Flag: ~p~n \n Target ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, SanitisedTarget, Default]),
+
+      {error, Reason} ->
+        ?LOG_ERROR(
+          "Evaluation failed for flag: ~p, target ~p, returning default ~p: ~p",
+          [FlagKey, Target, Default, Reason]
+        ),
         Default
     end
   catch
-    _:_:Stacktrace ->
-      logger:error("Error when doing bool variation for Flag: ~p~n \n Target: ~p~n \n Error: ~p~n \n Returning user supplied Default: ~p~n" , [FlagKey, Target, Stacktrace, Default]),
+    _:_ : Stacktrace ->
+      ?LOG_ERROR(
+        "Evaluation failed for flag: ~p, target ~p, returning default ~p, error: ~p",
+        [FlagKey, Target, Default, Stacktrace]
+      ),
       Default
   end.
 
--spec enqueue_metrics(IsAnalyticsEnabled :: boolean(), FlagIdentifier :: binary(), Target :: target(), VariationIdentifier :: binary(), VariationValue :: binary()) -> atom().
-enqueue_metrics(true, FlagIdentifier, Target, VariationIdentifier, VariationValue) ->
-  logger:debug("Analytics is enabled. Passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
-  cfclient_metrics_server:enqueue_metrics(FlagIdentifier, Target, VariationIdentifier, VariationValue);
-enqueue_metrics(false, FlagIdentifier, Target, _, VariationValue) ->
-  logger:debug("Analytics not enabled, not passing data to analytics module. FlagIdentifier: ~p Target: ~p Variation: ~pn", [FlagIdentifier, Target, VariationValue]),
-  ok.
 
--spec retrieve_flags() -> ok.
-retrieve_flags() ->
-  AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
-  Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
-  ClusterID = list_to_binary(cfclient_instance:get_project_value("clusterIdentifier")),
-  RequestConfig = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("config_url")},  params => #{cluster => ClusterID }},
-  ClientConfig = {RequestConfig, Environment},
-  cfclient_retrieve:retrieve_flags(ctx:new(), ClientConfig).
+% Convert target identifier to binary, as users can provide it as a string,
+% binary, or atom, but client API works in binary.
+normalize_target(#{identifier := Id} = Target) when is_binary(Id) -> Target;
+normalize_target(#{identifier := Id} = Target) -> Target#{identifier := to_binary(Id)};
+normalize_target(Target) -> maps:put(identifier, <<>>, Target).
 
--spec retrieve_segments() -> ok.
-retrieve_segments() ->
-  AuthToken = list_to_binary(cfclient_instance:get_authtoken()),
-  Environment = list_to_binary(cfclient_instance:get_project_value("environment")),
-  ClusterID = list_to_binary(cfclient_instance:get_project_value("clusterIdentifier")),
-  RequestConfig = #{ cfg => #{auth => #{ 'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => cfclient_config:get_value("config_url")},  params => #{cluster => ClusterID }},
-  ClientConfig = {RequestConfig, Environment},
-  cfclient_retrieve:retrieve_segments(ctx:new(), ClientConfig).
-
-target_identifier_to_binary(TargetIdentifier) when is_binary(TargetIdentifier) ->
-  TargetIdentifier;
-target_identifier_to_binary(TargetIdentifier) when is_atom(TargetIdentifier) ->
-  atom_to_binary(TargetIdentifier);
-target_identifier_to_binary(TargetIdentifier) when is_list(TargetIdentifier) ->
-  list_to_binary(TargetIdentifier).
-
-target_name_to_binary(TargetName) when is_binary(TargetName) ->
-  TargetName;
-target_name_to_binary(TargetName) when is_atom(TargetName) ->
-  atom_to_binary(TargetName);
-target_name_to_binary(TargetName) when is_list(TargetName) ->
-  list_to_binary(TargetName).
-
--spec stop() -> ok.
-stop() ->
-  cfclient_instance:stop().
+% Convert value to binary
+to_binary(Value) when is_binary(Value) -> Value;
+to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
+to_binary(Value) when is_list(Value) -> list_to_binary(Value).

@@ -1,7 +1,6 @@
-%%%-------------------------------------------------------------------
-%% @doc cfclient public API
+%% @doc
+%% cfclient application.
 %% @end
-%%%-------------------------------------------------------------------
 
 -module(cfclient_app).
 
@@ -10,7 +9,9 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    cfclient_sup:start_link().
+  ApiKey = application:get_env(cfclient, api_key, undefined),
+  Config = application:get_env(cfclient, config, []),
+  cfclient_sup:start_link([{api_key, ApiKey}, {config, Config}]).
 
-stop(_State) ->
-    cfclient:close().
+
+stop(_State) -> ok.
