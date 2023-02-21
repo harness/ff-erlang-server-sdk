@@ -49,7 +49,7 @@ Add this library as a dependency to your `rebar.config`.
 
 ```erlang
 {deps, [
-  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {branch, "0.1.0"}}}
+  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {tag, "0.4.0-beta.3"}}}
 ]}.
 ```
 
