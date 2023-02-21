@@ -182,7 +182,7 @@ format_target(Target) ->
   SanitisedName = target_field_to_binary(maps:get(name, Target, SanitisedIdentifier)),
   SanitisedAttributes = target_attributes_to_metrics(Target),
 
-  #{identifier => list_to_binary(SanitisedIdentifier), name => SanitisedName, attributes => SanitisedAttributes}.
+  #{identifier => SanitisedIdentifier, name => SanitisedName, attributes => SanitisedAttributes}.
 
 target_field_to_binary(TargetName) when is_binary(TargetName) ->
   TargetName;
