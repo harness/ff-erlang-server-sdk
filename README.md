@@ -65,7 +65,7 @@ Add the dependency to your project's `app.src`.
 Add the library to `mix.exs` `deps()`:
 
 ```elixir
-{:cfclient, github: "harness/ff-erlang-server-sdk"},
+  {:cfclient, github: "harness/ff-erlang-server-sdk", tag: "0.4.0-beta.3"}
 ```
 
 ## Configuration
