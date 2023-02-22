@@ -49,7 +49,7 @@ Add this library as a dependency to your `rebar.config`.
 
 ```erlang
 {deps, [
-  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {tag, "0.4.0-beta.3"}}}
+  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {tag, "0.5.0-beta.1"}}}
 ]}.
 ```
 
@@ -65,7 +65,7 @@ Add the dependency to your project's `app.src`.
 Add the library to `mix.exs` `deps()`:
 
 ```elixir
-{:cfclient, github: "harness/ff-erlang-server-sdk"},
+  {:cfclient, github: "harness/ff-erlang-server-sdk", tag: "0.5.0-beta.1"}
 ```
 
 ## Configuration
@@ -156,19 +156,18 @@ Call the API to get the value of the `harnessappdemodarkmode` flag you created
 via https://www.harness.io/.
 
 ```erlang
-  Target = #{
-    identifier => "Harness_Target_1",
+get_flag_loop() ->
+  Target = #{identifier => "Harness_Target_1",
     name => "HT_1",
-
-    % Attribute keys must be atoms. 
-    % Values must be either binaries, atoms, or a list of binaries/atoms.
-    % See "Targets with custom attributes" below.
+    %% Attribute keys must be atoms. 
+    %% Values must be either bitstrings, atoms, or a list of bitstrings/atoms - see Targets with custom attributes section below.
     attributes => #{email => <<"demo@harness.io">>}
   },
-  FlagIdentifier = <<"harnessappdemodarkmode">>,
+  FlagIdentifier = "harnessappdemodarkmode",
   Result = cfclient:bool_variation(FlagIdentifier, Target, false),
-  logger:info("Varaion for Flag ~p with Target ~p is: ~p~n",
-    [FlagIdentifier, maps:get(identifier, Target), Result]),
+  logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
+  timer:sleep(10000),
+  get_flag_loop().
 ```
 
 ### Elixir
@@ -177,20 +176,24 @@ Call the API to get the value of the `harnessappdemodarkmode` flag you created
 via https://www.harness.io/.
 
 ```elixir
-target = %{
-  identifier: "Harness_Target_1",
-  name: "HT_1"
+def getFlagLoop() do
+  target = %{
+    identifier: "Harness_Target_1",
+    name: "HT_1"
+  
+    # Attribute keys must be atoms. 
+    # Values must be either binaries, atoms, or a list of binaries/atoms.
+    # See "targets with custom attributes" below.
+    attributes: %{email: "demo@harness.io"}
+  }
+  
+  flag_identifier = "harnessappdemodarkmode"
+  
+  result = :cfclient.bool_variation(flag_identifier, target, false)
+  Logger.info("Varaion for Flag #{flag_identifier} with Target #{inspect(target)} is: #{result)")
+  Process.sleep(10000)
+  getFlagLoop()
 
-  # Attribute keys must be atoms. 
-  # Values must be either binaries, atoms, or a list of binaries/atoms.
-  # See "targets with custom attributes" below.
-  attributes: %{email: "demo@harness.io"}
-}
-
-flag_identifier = "harnessappdemodarkmode"
-
-result = :cfclient.bool_variation(flag_identifier, target, false)
-Logger.info("Varaion for Flag #{flag_identifier} with Target #{inspect(target)} is: #{result)")
 ```
 
 ## Targets with custom attributes
@@ -255,7 +258,7 @@ target_alpha_group = %{
 ## Additional Reading
 
 For further examples and config options, see the [Erlang SDK Further
-Reading](https://github.com/harness/ff-erlang-server-sdk/raw/main/docs/further_reading.md).
+Reading](https://github.com/harness/ff-erlang-server-sdk/blob/main/docs/further_reading.md).
 
 For more information about Feature Flags, see our [Feature Flags
 documentation](https://ngdocs.harness.io/article/0a2u2ppp8s-getting-started-with-feature-flags).

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.0-beta.1] - 2022-12-05
+
+Integrates the following contributions from TheRealReal:
+
+## ** Breaking ** 
+  - Client initialization now happens when your application boots `cfclient`. See new SDK installation and initialization instructions for [Erlang](https://github.com/harness/ff-erlang-server-sdk#install-the-sdk-erlang) and [Elixir](https://github.com/harness/ff-erlang-server-sdk#install-the-sdk-elixir)
+  - Includes support for running the SDK in multiple projects per appliction. See instructions for [Multiple Projects](https://github.com/harness/ff-erlang-server-sdk#multiple-projects) 
+### Enhancements
+  - All SDK caching now uses `ets` instead of gen server based `lru` library which provide a significant performance upgrade
+  - Refactoring of code to aid readability and maintainablity.
+
+### Known Issues
+Event stream not yet complete
+
+
 ## [0.4.0-beta.2] - 2022-12-05
 
 ### Fixes

@@ -177,11 +177,19 @@ collect_metrics_target_data(Config) ->
 % @doc Format cached target data for sending to the server.
 -spec format_target(cfclient:target()) -> map().
 format_target(Target) ->
-  #{identifier := Id} = Target,
-  Attributes = target_attributes_to_metrics(Target),
-  Name = maps:get(name, Target, Id),
-  #{identifier => Id, name => Name, attributes => Attributes}.
+  %% As users can supply the identifier, name and attributes in different formats, we must standardise them all to binary as the cfapi works in binary
+  SanitisedIdentifier = target_field_to_binary(maps:get(identifier, Target)),
+  SanitisedName = target_field_to_binary(maps:get(name, Target, SanitisedIdentifier)),
+  SanitisedAttributes = target_attributes_to_metrics(Target),
 
+  #{identifier => SanitisedIdentifier, name => SanitisedName, attributes => SanitisedAttributes}.
+
+target_field_to_binary(TargetName) when is_binary(TargetName) ->
+  TargetName;
+target_field_to_binary(TargetName) when is_atom(TargetName) ->
+  atom_to_binary(TargetName);
+target_field_to_binary(TargetName) when is_list(TargetName) ->
+  list_to_binary(TargetName).
 
 -spec target_attributes_to_metrics(cfclient:target()) -> [map()].
 target_attributes_to_metrics(#{attributes := Values}) when is_map(Values) ->
