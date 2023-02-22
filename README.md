@@ -49,7 +49,7 @@ Add this library as a dependency to your `rebar.config`.
 
 ```erlang
 {deps, [
-  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {tag, "0.4.0-beta.3"}}}
+  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {tag, "0.5.0-beta.1"}}}
 ]}.
 ```
 
@@ -65,7 +65,7 @@ Add the dependency to your project's `app.src`.
 Add the library to `mix.exs` `deps()`:
 
 ```elixir
-  {:cfclient, github: "harness/ff-erlang-server-sdk", tag: "0.4.0-beta.3"}
+  {:cfclient, github: "harness/ff-erlang-server-sdk", tag: "0.5.0-beta.1"}
 ```
 
 ## Configuration
