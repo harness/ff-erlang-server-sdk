@@ -172,10 +172,13 @@ authenticate(ApiKey, Config) ->
     {error, Response, _} -> {error, Response}
   end.
 
+%%run_api_key_fun(APIKeyFun) when tuple_size(APIKeyFun) == 2->
+%%  {Fun, EnvVarArg} = APIKeyFun,
+%%  run_api_key_fun(APIKeyFun);
+
+run_api_key_fun({Fun, EnvVarArg}) when is_function(Fun)->
+  Fun(EnvVarArg);
 run_api_key_fun({Fun, EnvVarArg, DefaultVarArg}) when is_function(Fun)->
-%%  KeyFun = element(1, ApiKeyFun),
-%%  KeyFunArg1 = element(2, ApiKeyFun),
-%%  KeyFunArg2 = element(3, ApiKeyFun),
   Fun(EnvVarArg, DefaultVarArg);
 run_api_key_fun({_, _, _}) ->
   ?LOG_ERROR("valid function not provided to retrieve API Key"),
