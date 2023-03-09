@@ -154,7 +154,10 @@ authenticate(nil, _Config) ->
 
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
-authenticate(ApiKey, Config) when is_tuple(ApiKey) -> authenticate(element(1,ApiKey)(), Config);
+authenticate(ApiKeyFun, Config) when is_tuple(ApiKeyFun) ->
+  KeyFun = element(1, ApiKeyFun),
+  APIKey = KeyFun(),
+  authenticate(APIKey, Config);
 
 
 authenticate(ApiKey, Config) ->
