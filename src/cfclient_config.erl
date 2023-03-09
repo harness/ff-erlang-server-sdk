@@ -177,9 +177,7 @@ authenticate(ApiKey, Config) ->
 %%  run_api_key_fun(APIKeyFun);
 
 run_api_key_fun({Fun, EnvVarArg}) when is_function(Fun)->
-  Fun(EnvVarArg, EnvVarArg);
-run_api_key_fun({Fun, EnvVarArg, DefaultVarArg}) when is_function(Fun)->
-  Fun(EnvVarArg, DefaultVarArg);
+  Fun(EnvVarArg);
 run_api_key_fun({_, _, _}) ->
   ?LOG_ERROR("valid function not provided to retrieve API Key"),
   {error, not_configured}.
