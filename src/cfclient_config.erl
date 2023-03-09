@@ -154,6 +154,9 @@ authenticate(nil, _Config) ->
 
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
+authenticate(ApiKey, Config) when is_function(ApiKey) -> authenticate(ApiKey(), Config);
+
+
 authenticate(ApiKey, Config) ->
   #{config_url := ConfigUrl} = Config,
   Opts = #{cfg => #{host => ConfigUrl}, params => #{apiKey => ApiKey}},
