@@ -145,11 +145,11 @@ normalize_url(V) -> string:trim(V, trailing, "/").
 -spec authenticate(binary() | string() | undefined | nil, map()) ->
   {ok, Config :: map()} | {error, Response :: term()}.
 authenticate(undefined, _Config) ->
-  ?LOG_INFO("api_key undefined"),
+  ?LOG_ERROR("api_key undefined"),
   {error, not_configured};
 
 authenticate(nil, _Config) ->
-  ?LOG_INFO("api_key undefined"),
+  ?LOG_ERROR("api_key undefined"),
   {error, not_configured};
 
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
@@ -172,16 +172,11 @@ authenticate(ApiKey, Config) ->
     {error, Response, _} -> {error, Response}
   end.
 
-%%run_api_key_fun(APIKeyFun) when tuple_size(APIKeyFun) == 2->
-%%  {Fun, EnvVarArg} = APIKeyFun,
-%%  run_api_key_fun(APIKeyFun);
-
 run_api_key_fun({Fun, EnvVarArg}) when is_function(Fun)->
   Fun(EnvVarArg);
 run_api_key_fun({_, _, _}) ->
   ?LOG_ERROR("valid function not provided to retrieve API Key"),
   {error, not_configured}.
-
 
 % TODO: validate the JWT
 -spec parse_jwt(binary()) -> {ok, map()} | {error, Reason :: term()}.

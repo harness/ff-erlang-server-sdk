@@ -88,18 +88,12 @@ start_analytics(_) -> ok.
 retrieve_flags(#{poll_enabled := true} = Config) ->
   case cfclient_retrieve:retrieve_flags(Config) of
     {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
-    {error, Reason} -> ?LOG_WARNING("Could not retrive flags from API: ~p", [Reason])
+    {error, Reason} -> ?LOG_ERROR("Could not retrive flags from API: ~p", [Reason])
   end,
   case cfclient_retrieve:retrieve_segments(Config) of
     {ok, Segments} -> [cfclient_cache:cache_segment(S, Config) || S <- Segments];
-    {error, Reason1} -> ?LOG_WARNING("Could not retrive segments from API: ~p", [Reason1])
+    {error, Reason1} -> ?LOG_ERROR("Could not retrive segments from API: ~p", [Reason1])
   end,
   ok;
 
 retrieve_flags(_) -> ok.
-
-
-% Ensure value is binary
-% to_binary(Value) when is_binary(Value) -> Value;
-% to_binary(Value) when is_atom(Value) -> atom_to_binary(Value);
-% to_binary(Value) when is_list(Value) -> list_to_binary(Value).

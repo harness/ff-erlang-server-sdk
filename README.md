@@ -72,7 +72,17 @@ Add the library to `mix.exs` `deps()`:
 
 ### Erlang
 
-Configure the application environment in `sys.config`:
+Provide your SDK key in `sys.config` using an environment variable:
+
+```erlang
+[
+  {cfclient, [
+    {api_key, {fun os:getenv/1, "YOUR_API_KEY_ENV_VARIABLE"},
+  ]}
+].
+```
+
+Or you may provide the SDK key directly if required:
 
 ```erlang
 [
