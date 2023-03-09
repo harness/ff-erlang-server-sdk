@@ -152,12 +152,14 @@ authenticate(nil, _Config) ->
   ?LOG_ERROR("api_key undefined"),
   {error, not_configured};
 
-authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
-
-authenticate(ApiKeyFun, Config) when is_tuple(ApiKeyFun) ->
-  APIKey = run_api_key_fun(ApiKeyFun),
+authenticate({environment_variable, APIKeyEnvVar}, Config) ->
+  APIKey = os:getenv(APIKeyEnvVar),
   authenticate(APIKey, Config);
 
+authenticate({key, APIKey}, Config) ->
+  authenticate(APIKey, Config);
+
+authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
 authenticate(ApiKey, Config) ->
   #{config_url := ConfigUrl} = Config,
