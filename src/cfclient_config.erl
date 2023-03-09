@@ -155,7 +155,7 @@ authenticate(nil, _Config) ->
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
 authenticate(ApiKeyFun, Config) when is_tuple(ApiKeyFun) ->
-  APIKey = build_api_key_fun(ApiKeyFun),
+  APIKey = run_api_key_fun(ApiKeyFun),
   authenticate(APIKey, Config);
 
 
@@ -172,12 +172,12 @@ authenticate(ApiKey, Config) ->
     {error, Response, _} -> {error, Response}
   end.
 
-build_api_key_fun({Fun, EnvVarArg, DefaultVarArg}) when is_function(Fun)->
+run_api_key_fun({Fun, EnvVarArg, DefaultVarArg}) when is_function(Fun)->
 %%  KeyFun = element(1, ApiKeyFun),
 %%  KeyFunArg1 = element(2, ApiKeyFun),
 %%  KeyFunArg2 = element(3, ApiKeyFun),
   Fun(EnvVarArg, DefaultVarArg);
-build_api_key_fun({_, _, _}) ->
+run_api_key_fun({_, _, _}) ->
   ?LOG_ERROR("valid function not provided to retrieve API Key"),
   {error, not_configured}.
 
