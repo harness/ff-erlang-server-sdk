@@ -153,8 +153,13 @@ authenticate(nil, _Config) ->
   {error, not_configured};
 
 authenticate({environment_variable, APIKeyEnvVar}, Config) ->
-  APIKey = os:getenv(APIKeyEnvVar),
-  authenticate(APIKey, Config);
+  case os:getenv(APIKeyEnvVar) of
+    false ->
+      ?LOG_ERROR("Environment variable for API Key not found"),
+      {error, not_configured};
+    APIKey ->
+      authenticate(APIKey, Config)
+  end;
 
 authenticate({key, APIKey}, Config) ->
   authenticate(APIKey, Config);
