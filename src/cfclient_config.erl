@@ -179,12 +179,6 @@ authenticate(ApiKey, Config) ->
     {error, Response, _} -> {error, Response}
   end.
 
-run_api_key_fun({Fun, EnvVarArg}) when is_function(Fun)->
-  Fun(EnvVarArg);
-run_api_key_fun({_, _, _}) ->
-  ?LOG_ERROR("valid function not provided to retrieve API Key"),
-  {error, not_configured}.
-
 % TODO: validate the JWT
 -spec parse_jwt(binary()) -> {ok, map()} | {error, Reason :: term()}.
 parse_jwt(JwtToken) ->
