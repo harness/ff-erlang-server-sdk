@@ -72,17 +72,17 @@ Add the library to `mix.exs` `deps()`:
 
 ### Erlang
 
-Provide your SDK key in `sys.config` using an environment variable:
+Provide your API key in `sys.config` using an environment variable:
 
 ```erlang
 [
   {cfclient, [
-    {api_key, {fun os:getenv/1, "YOUR_API_KEY_ENV_VARIABLE"},
+    {api_key, {environment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
   ]}
 ].
 ```
 
-Or you may provide the SDK key directly if required:
+Or you may provide the API key directly if required:
 
 ```erlang
 [
@@ -94,7 +94,14 @@ Or you may provide the SDK key directly if required:
 
 ### Elixir
 
-Configure the application environment in `config/prod.exs`:
+Provide your API key in `config/prod.exs` using an environment variable: :
+
+```elixir
+config :cfclient,
+  api_key: System.get_env("YOUR_API_KEY_ENVIRONMENT_VARIABLE")
+```
+
+Or you may provide the API key directly if required:
 
 ```elixir
 config :cfclient,
