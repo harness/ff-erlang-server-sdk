@@ -154,7 +154,7 @@ authenticate(nil, _Config) ->
 
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
-authenticate(ApiKey, Config) when is_tuple(ApiKey) -> authenticate(ApiKey(), Config);
+authenticate(ApiKey, Config) when is_tuple(ApiKey) -> authenticate(element(1,ApiKey)(), Config);
 
 
 authenticate(ApiKey, Config) ->
