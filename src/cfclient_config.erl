@@ -156,7 +156,9 @@ authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary
 
 authenticate(ApiKeyFun, Config) when is_tuple(ApiKeyFun) ->
   KeyFun = element(1, ApiKeyFun),
-  APIKey = KeyFun(),
+  KeyFunArg1 = element(2, ApiKeyFun),
+  KeyFunArg2 = element(3, ApiKeyFun),
+  APIKey = KeyFun(KeyFunArg1, KeyFunArg2),
   authenticate(APIKey, Config);
 
 
