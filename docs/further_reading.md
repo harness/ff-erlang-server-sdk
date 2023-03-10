@@ -2,12 +2,10 @@
 
 Covers advanced topics (different config options and scenarios)
 
-## Configuration Options
+## Erlang Configuration Options
 The following configuration options are available to control the behaviour of the SDK.
-You can pass the configuration in as options when the SDK client is created.
 ```erlang
-%% Create a Feature Flag Client
-%% Create a Feature Flag ClientYour applications sys.config file
+%% Your applications sys.config file
 [{cfclient, [
     {api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
     {config, [
@@ -24,6 +22,8 @@ You can pass the configuration in as options when the SDK client is created.
 | poll_interval           | {poll_interval, 60000}                               | the interval in seconds that we poll for changes.                                                                                                | 60                                   |
 | analytics_push_interval | {analytics_push_interval, 60000}                     | the interval in seconds that we send analytics to the Harness Feature Flags service.                                                             | 60                                   |
 
+
+## TODO - Elixir flavour of options
 
 ## Recommended reading
 
