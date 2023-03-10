@@ -10,10 +10,10 @@ You can pass the configuration in as options when the SDK client is created.
     # Your applications sys.config file
     [{cfclient, [
         {api_key, "YOUR_API_KEY"},
-        {config_url, "https://config.ff.harness.io/api/1.0"},
-        {events_url, "https://events.ff.harness.io/api/1.0"},
-        {poll_interval, 60000},
-        {analytics_push_interval, 60000}
+        {config, [
+            {config_url, "https://config.ff.harness.io/api/1.0"},
+            {events_url, "https://config.ff.harness.io/api/1.0"}
+        ]},
     ]}]
 ```
 
