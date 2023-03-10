@@ -5,15 +5,15 @@ Covers advanced topics (different config options and scenarios)
 ## Configuration Options
 The following configuration options are available to control the behaviour of the SDK.
 You can pass the configuration in as options when the SDK client is created.
-```python
-    # Create a Feature Flag Client
-    # Your applications sys.config file
-    [{cfclient, [
-        {api_key, "YOUR_API_KEY"},
-        {config, [
-            {config_url, "https://config.ff.harness.io/api/1.0"},
-            {events_url, "https://config.ff.harness.io/api/1.0"}
-        ]},
+```erlang
+%% Create a Feature Flag Client
+%% Create a Feature Flag ClientYour applications sys.config file
+[{cfclient, [
+    {api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
+    {config, [
+        {config_url, "https://config.ff.harness.io/api/1.0"},
+        {events_url, "https://config.ff.harness.io/api/1.0"}
+    ]},
     ]}]
 ```
 
