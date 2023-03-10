@@ -161,9 +161,6 @@ authenticate({environment_variable, APIKeyEnvVar}, Config) ->
       authenticate(APIKey, Config)
   end;
 
-authenticate({key, APIKey}, Config) ->
-  authenticate(APIKey, Config);
-
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
 authenticate(ApiKey, Config) ->
