@@ -145,12 +145,21 @@ normalize_url(V) -> string:trim(V, trailing, "/").
 -spec authenticate(binary() | string() | undefined | nil, map()) ->
   {ok, Config :: map()} | {error, Response :: term()}.
 authenticate(undefined, _Config) ->
-  ?LOG_INFO("api_key undefined"),
+  ?LOG_ERROR("api_key undefined"),
   {error, not_configured};
 
 authenticate(nil, _Config) ->
-  ?LOG_INFO("api_key undefined"),
+  ?LOG_ERROR("api_key undefined"),
   {error, not_configured};
+
+authenticate({environment_variable, APIKeyEnvVar}, Config) ->
+  case os:getenv(APIKeyEnvVar) of
+    false ->
+      ?LOG_ERROR("Environment variable for API Key not found"),
+      {error, not_configured};
+    APIKey ->
+      authenticate(APIKey, Config)
+  end;
 
 authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary(ApiKey), Config);
 
@@ -166,7 +175,6 @@ authenticate(ApiKey, Config) ->
 
     {error, Response, _} -> {error, Response}
   end.
-
 
 % TODO: validate the JWT
 -spec parse_jwt(binary()) -> {ok, map()} | {error, Reason :: term()}.
