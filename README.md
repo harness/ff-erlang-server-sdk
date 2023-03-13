@@ -162,7 +162,37 @@ init(Args) ->
 
   {ok, {SupFlags, [ChildSpec1, ChildSpec2]}}.
 ```
-This example demonstrates multiple projects within the same application, but the same can be achieved if you have an application heirarchy where multiple applications need to use one or many instances of the Erlang SDK.
+### Using an instance of the SDK
+
+The name of the instance is provided to to the public function you are calling. For example `bool_variation/4`.
+
+The following is an example or referencing the instances we have created above to evaluate the individual project's flags:
+
+```erlang
+-module(multi_instance_example).
+
+-export([multi_instance_evaluations/0]).
+
+multi_instance_evaluations() ->
+  Target = #{
+    identifier => "Harness_Target_1",
+    name => "HT_1",
+    attributes => #{email => <<"demo@harness.io">>}
+  },
+
+  %% Instance 1
+  Project1Flag = <<"harnessappdemodarkmodeproject1">>,
+  Project1Result = cfclient:bool_variation(instance_name_1, Project1Flag, Target, false),
+  logger:info("Instance Name 1 : Variation for Flag ~p with Target ~p is: ~p~n",
+    [Project1Flag, maps:get(identifier, Target), Project1Result]),
+
+  %% Instance 2
+  Project2Flag = <<"harnessappdemodarkmodeproject2">>,
+  Project2Result = cfclient:bool_variation(instance_name_2, Project2Flag, Target, false),
+  logger:info("Instance name 2 Variation for Flag ~p with Target ~p is: ~p~n",
+  [Project2Flag, maps:get(identifier, Target), Project2Result]).
+```
+This example demonstrates multiple instances of the SDK within the same application, but the same can be achieved if you have an application heirarchy where multiple applications need to use one or many instances of the Erlang SDK.
 
 ### Elixir
 
@@ -203,7 +233,7 @@ get_flag_loop() ->
   },
   FlagIdentifier = "harnessappdemodarkmode",
   Result = cfclient:bool_variation(FlagIdentifier, Target, false),
-  logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
+  logger:info("Variation for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
   timer:sleep(10000),
   get_flag_loop().
 ```
@@ -228,7 +258,7 @@ def getFlagLoop() do
   flag_identifier = "harnessappdemodarkmode"
   
   result = :cfclient.bool_variation(flag_identifier, target, false)
-  Logger.info("Varaion for Flag #{flag_identifier} with Target #{inspect(target)} is: #{result)")
+  Logger.info("Variation for Flag #{flag_identifier} with Target #{inspect(target)} is: #{result)")
   Process.sleep(10000)
   getFlagLoop()
 
