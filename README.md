@@ -108,30 +108,39 @@ config :cfclient,
   api_key: "YOUR_API_KEY"
 ```
 
-## Multiple Projects
+## Run multiple instances of the SDK
 
-Normally there is a single project per application. If different parts of your
-application need their own key, you can start up additional client instances,
-passing in a `name` and `api_key` for each. When you call client API
-functions, pass the name as the first parameter.
+Normally there is a single [project](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/) per application. If different parts of your
+application need to use specific projects, you can start up additional client instances using a `project_config` for each unique project. 
 
-### Erlang
+### Erlang Project Config
 
-In `sys.config`, define the project config:
+The `project_config` is defined in `sys.config`:
 
 ```erlang
 [
-  %% This is an arbitrary identifier, but it must be unique per project config you define.
-  {unique_application_config, [
+  %% Project config name: This is an arbitrary identifier, but it must be unique per project config you define.
+  {harness_project_1_config, [
     {cfclient, [
       {config, [
-        %% This will be the name you use when calling SDK API functions like `bool_variation/4`
-        {name, unique_config_name}
+        %% Instance name: This must be unique across all of the project configs. E.g. it cannot be the same as an instance name
+        %% in another project config.
+        %% It will be the name you use when calling SDK API functions like `bool_variation/4`, 
+        {name, instance_name_1}
       ]},
-      {api_key, {environment_variable, "FF_API_KEY"}}]
+      %% The API key for the Harness project you want to use with this SDK instance.
+      {api_key, {environment_variable, "PROJECT_1_API_KEY"}}]
     }
   ]
-}].
+},
+  {harness_project_2_config, [
+    {cfclient, [
+      {config, [
+        {name, instance_name2}
+      ]},
+      {api_key, {environment_variable, "PROJECT_1_API_KEY"}}]
+    }
+  ]].
 ```
 
 In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
