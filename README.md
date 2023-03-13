@@ -162,11 +162,11 @@ init(Args) ->
 
   {ok, {SupFlags, [ChildSpec1, ChildSpec2]}}.
 ```
-### Using an instance of the SDK
+### Using a specific instance of the SDK
 
-The name of the instance is provided to to the public function you are calling. For example `bool_variation/4`.
+To use a specific SDK instance, you provide the instance name to the public function you are calling. For example `bool_variation/4`.
 
-The following is an example or referencing the instances we have created above to evaluate the individual project's flags:
+The following is an example or referencing the instances we have created above:
 
 ```erlang
 -module(multi_instance_example).
