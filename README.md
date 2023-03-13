@@ -144,16 +144,25 @@ The `project_config` is defined in `sys.config`:
 ```
 
 In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
-for each project:
+for each project. 
 
 ```erlang
 init(Args) ->
-  HarnessArgs = application:get_env(myapp, cfclient, []),
+  HarnessProject1Args = application:get_env(harness_project_1_config, cfclient, []),
+  HarnessProject2Args = application:get_env(harness_project_2_config, cfclient, []),
+  
+  ChildSpec1 = #{id => project1_cfclient_instance, start => {cfclient_instance, start_link, [HarnessProject1Args]}},
+  ChildSpec2 = #{id => project2_cfclient_instance, start => {cfclient_instance, start_link, [HarnessProject2Args]}},
 
-  ChildSpecs = [#{id => myapp_cfclient_instance, start => {cfclient_instance, start_link, [HarnessArgs]}}],
-  SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
-  {ok, {SupFlags, ChildSpecs}}.
+  MaxRestarts = 1000,
+  MaxSecondsBetweenRestarts = 3600,
+  SupFlags = #{strategy => one_for_one,
+    intensity => MaxRestarts,
+    period => MaxSecondsBetweenRestarts},
+
+  {ok, {SupFlags, [ChildSpec1, ChildSpec2]}}.
 ```
+This example demonstrates multiple projects within the same application, but the same can be achieved if you have an application heirarchy where multiple applications need to use one or many instances of the Erlang SDK.
 
 ### Elixir
 
