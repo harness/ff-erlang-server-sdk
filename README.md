@@ -136,9 +136,9 @@ The `project_config` is defined in `sys.config`:
   {harness_project_2_config, [
     {cfclient, [
       {config, [
-        {name, instance_name2}
+        {name, instance_name_2}
       ]},
-      {api_key, {environment_variable, "PROJECT_1_API_KEY"}}]
+      {api_key, {environment_variable, "PROJECT_2_API_KEY"}}]
     }
   ]].
 ```
