@@ -121,14 +121,17 @@ In `sys.config`, define the project config:
 
 ```erlang
 [
-    {myapp, [
-                {cfclient, [
-                    {api_key, "YOUR_API_KEY"}
-                }
-            ] 
-        ]
+  %% This is an arbitrary identifier, but it must be unique per project config you define.
+  {unique_application_config, [
+    {cfclient, [
+      {config, [
+        %% This will be the name you use when calling SDK API functions like `bool_variation/4`
+        {name, unique_config_name}
+      ]},
+      {api_key, {environment_variable, "FF_API_KEY"}}]
     }
-].
+  ]
+}].
 ```
 
 In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
@@ -138,7 +141,7 @@ for each project:
 init(Args) ->
   HarnessArgs = application:get_env(myapp, cfclient, []),
 
-  ChildSpecs = [#{id => cfclient_instance, start => {cfclient_instance, start_link, [HarnessArgs]}}],
+  ChildSpecs = [#{id => myapp_cfclient_instance, start => {cfclient_instance, start_link, [HarnessArgs]}}],
   SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
   {ok, {SupFlags, ChildSpecs}}.
 ```
