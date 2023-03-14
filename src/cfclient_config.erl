@@ -203,7 +203,7 @@ create_tables(Config) ->
     undefined ->
       ConfigTable = ets:new(ConfigTable, [named_table, set, public, {read_concurrency, true}]);
     _TID ->
-      ok
+      noop
   end,
   CacheTable = ets:new(CacheTable, [named_table, set, public, {read_concurrency, true}]),
   MetricsTargetTable = ets:new(MetricsTargetTable, [named_table, set, public]),
