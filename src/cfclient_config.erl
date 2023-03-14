@@ -199,7 +199,12 @@ create_tables(Config) ->
     metrics_cache_table := MetricsCacheTable,
     metrics_counter_table := MetricsCounterTable
   } = Config,
-  ConfigTable = ets:new(ConfigTable, [named_table, set, public, {read_concurrency, true}]),
+  case ets:whereis(ConfigTable) of
+    undefined ->
+      ConfigTable = ets:new(ConfigTable, [named_table, set, public, {read_concurrency, true}]);
+    _TID ->
+      noop
+  end,
   CacheTable = ets:new(CacheTable, [named_table, set, public, {read_concurrency, true}]),
   MetricsTargetTable = ets:new(MetricsTargetTable, [named_table, set, public]),
   MetricsCacheTable = ets:new(MetricsCacheTable, [named_table, set, public]),

@@ -108,40 +108,91 @@ config :cfclient,
   api_key: "YOUR_API_KEY"
 ```
 
-## Multiple Projects
+## Run multiple instances of the SDK
 
-Normally there is a single project per application. If different parts of your
-application need their own key, you can start up additional client instances,
-passing in a `name` and `api_key` for each. When you call client API
-functions, pass the name as the first parameter.
+Normally there is a single [project](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/) per application. If different parts of your
+application need to use specific projects, you can start up additional client instances using a `project_config` for each unique project. 
 
-### Erlang
+### Erlang Project Config
 
-In `sys.config`, define the project config:
+The `project_config` is defined in `sys.config`:
 
 ```erlang
 [
-    {myapp, [
-                {cfclient, [
-                    {api_key, "YOUR_API_KEY"}
-                }
-            ] 
-        ]
+  %% Project config name: This is an arbitrary identifier, but it must be unique per project config you define.
+  {harness_project_1_config, [
+    {cfclient, [
+      {config, [
+        %% Instance name: This must be unique across all of the project configs. E.g. it cannot be the same as an instance name
+        %% in another project config.
+        %% It will be the name you use when calling SDK API functions like `bool_variation/4`, 
+        {name, instance_name_1}
+      ]},
+      %% The API key for the Harness project you want to use with this SDK instance.
+      {api_key, {environment_variable, "PROJECT_1_API_KEY"}}]
     }
-].
+  ]
+},
+  {harness_project_2_config, [
+    {cfclient, [
+      {config, [
+        {name, instance_name_2}
+      ]},
+      {api_key, {environment_variable, "PROJECT_2_API_KEY"}}]
+    }
+  ]].
 ```
 
 In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
-for each project:
+for each project. 
 
 ```erlang
 init(Args) ->
-  HarnessArgs = application:get_env(myapp, cfclient, []),
+  HarnessProject1Args = application:get_env(harness_project_1_config, cfclient, []),
+  HarnessProject2Args = application:get_env(harness_project_2_config, cfclient, []),
+  
+  ChildSpec1 = #{id => project1_cfclient_instance, start => {cfclient_instance, start_link, [HarnessProject1Args]}},
+  ChildSpec2 = #{id => project2_cfclient_instance, start => {cfclient_instance, start_link, [HarnessProject2Args]}},
 
-  ChildSpecs = [#{id => cfclient_instance, start => {cfclient_instance, start_link, [HarnessArgs]}}],
-  SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
-  {ok, {SupFlags, ChildSpecs}}.
+  MaxRestarts = 1000,
+  MaxSecondsBetweenRestarts = 3600,
+  SupFlags = #{strategy => one_for_one,
+    intensity => MaxRestarts,
+    period => MaxSecondsBetweenRestarts},
+
+  {ok, {SupFlags, [ChildSpec1, ChildSpec2]}}.
 ```
+### Using a specific instance of the SDK
+
+To use a specific SDK instance, you provide the instance name to the public function you are calling. For example `bool_variation/4`.
+
+The following is an example of referencing the instances we have created above:
+
+```erlang
+-module(multi_instance_example).
+
+-export([multi_instance_evaluations/0]).
+
+multi_instance_evaluations() ->
+  Target = #{
+    identifier => "Harness_Target_1",
+    name => "HT_1",
+    attributes => #{email => <<"demo@harness.io">>}
+  },
+
+  %% Instance 1
+  Project1Flag = <<"harnessappdemodarkmodeproject1">>,
+  Project1Result = cfclient:bool_variation(instance_name_1, Project1Flag, Target, false),
+  logger:info("Instance Name 1 : Variation for Flag ~p with Target ~p is: ~p~n",
+    [Project1Flag, maps:get(identifier, Target), Project1Result]),
+
+  %% Instance 2
+  Project2Flag = <<"harnessappdemodarkmodeproject2">>,
+  Project2Result = cfclient:bool_variation(instance_name_2, Project2Flag, Target, false),
+  logger:info("Instance name 2 Variation for Flag ~p with Target ~p is: ~p~n",
+  [Project2Flag, maps:get(identifier, Target), Project2Result]).
+```
+This example demonstrates multiple instances of the SDK within the same application, but the same can be achieved if you have an application heirarchy where multiple applications need to use one or many instances of the Erlang SDK.
 
 ### Elixir
 
@@ -182,7 +233,7 @@ get_flag_loop() ->
   },
   FlagIdentifier = "harnessappdemodarkmode",
   Result = cfclient:bool_variation(FlagIdentifier, Target, false),
-  logger:info("Varaion for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
+  logger:info("Variation for Flag ~p witih Target ~p is: ~p~n", [FlagIdentifier, maps:get(identifier, Target), Result]),
   timer:sleep(10000),
   get_flag_loop().
 ```
@@ -207,7 +258,7 @@ def getFlagLoop() do
   flag_identifier = "harnessappdemodarkmode"
   
   result = :cfclient.bool_variation(flag_identifier, target, false)
-  Logger.info("Varaion for Flag #{flag_identifier} with Target #{inspect(target)} is: #{result)")
+  Logger.info("Variation for Flag #{flag_identifier} with Target #{inspect(target)} is: #{result)")
   Process.sleep(10000)
   getFlagLoop()
 
