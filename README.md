@@ -166,7 +166,7 @@ init(Args) ->
 
 To use a specific SDK instance, you provide the instance name to the public function you are calling. For example `bool_variation/4`.
 
-The following is an example or referencing the instances we have created above:
+The following is an example of referencing the instances we have created above:
 
 ```erlang
 -module(multi_instance_example).
