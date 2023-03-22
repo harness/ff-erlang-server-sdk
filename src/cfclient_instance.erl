@@ -46,7 +46,9 @@ init(Args) ->
               {ok, Config1}
           end;
         {error, Reason} ->
-          ?LOG_ERROR("Authentication failed: ~p", [Reason]),
+          InstanceName = maps:get(name, Config1),
+          ?LOG_ERROR("Authentication failed for cflient instance '~p': ~p", [InstanceName, Reason]),
+          ?LOG_ERROR("Unable to start the following cfclient instance: ~p", [InstanceName]),
           {stop, authenticate};
 
         {ok, Config} ->
@@ -54,6 +56,7 @@ init(Args) ->
           retrieve_flags(Config),
           start_poll(Config),
           start_analytics(Config),
+          ?LOG_INFO("Started unique instance of cfclient: ~p", [maps:get(name, Config1)]),
           {ok, Config}
       end;
     false ->
