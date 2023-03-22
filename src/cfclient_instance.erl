@@ -42,7 +42,7 @@ init(Args) ->
           case maps:get(unit_test_mode, Config1, undefined) of
             undefined ->
               {stop, authenticate};
-            UnitTestMode ->
+            _UnitTestMode ->
               {ok, Config1}
           end;
         {error, Reason} ->
