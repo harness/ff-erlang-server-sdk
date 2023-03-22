@@ -28,7 +28,7 @@
 start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
-  case proplists:get_value(no_default_instance, Args, undefined) of
+  case proplists:get_value(no_default_instance, Args) of
     undefined ->
       ApiKey = proplists:get_value(api_key, Args),
       Config0 = proplists:get_value(config, Args, []),
