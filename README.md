@@ -117,7 +117,7 @@ If different parts of your application need to use specific [projects](https://d
 
 The additional project config is defined in `sys.config` 
 
-The following `sys.config` snippet starts up two additional instances as well as the default instance:
+The following `sys.config` snippet starts up two additional instances as well along with the default instance:
 
 ```erlang
 [
@@ -158,9 +158,11 @@ The following `sys.config` snippet starts up two additional instances as well as
 If you don't require the default instance to be started up, you can do:
 
 ```erlang
+  % ... additional project config
+
   {cfclient, [
     {start_default_instance, false},
-    %% The remaining tuples will be ignored, you can choose to include or omit them.
+    %% The remaining tuples will be ignored, so you can choose to include or omit them.
     {api_key, {environment_variable, "FF_API_KEY"}},
     {config, [
       {config_url, "https://config.ff.harness.io/api/1.0"},
