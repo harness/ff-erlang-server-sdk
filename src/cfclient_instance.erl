@@ -35,9 +35,14 @@ init(Args) ->
   ok = cfclient_config:set_config(Config1),
   case cfclient_config:authenticate(ApiKey, Config1) of
     {error, not_configured} ->
-      % Used during testing
-      {ok, Config1};
-
+      % Used during testing to start up cfclient instances
+      % without a valid API key.
+      case maps:get(unit_test_mode, Config1, undefined) of
+        undefined ->
+          {stop, authenticate};
+        UnitTestMode ->
+          {ok, Config1}
+      end;
     {error, Reason} ->
       ?LOG_ERROR("Authentication failed: ~p", [Reason]),
       {stop, authenticate};
