@@ -56,7 +56,7 @@ init(Args) ->
           start_analytics(Config),
           {ok, Config}
       end;
-    no_default_instance ->
+    {no_default_instance} ->
       default_instance_not_started
   end.
 
