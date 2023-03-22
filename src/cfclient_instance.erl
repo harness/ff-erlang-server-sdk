@@ -36,7 +36,7 @@ init(Args) ->
   case cfclient_config:authenticate(ApiKey, Config1) of
     {error, not_configured} ->
       % Used during testing
-      {ok, Config1};
+      {stop, authenticate};
 
     {error, Reason} ->
       ?LOG_ERROR("Authentication failed: ~p", [Reason]),
