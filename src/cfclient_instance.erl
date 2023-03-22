@@ -57,6 +57,7 @@ init(Args) ->
           {ok, Config}
       end;
     false ->
+      ?LOG_INFO("Default cfclient instance not started"),
       {ok, default_instance_not_started}
   end.
 
