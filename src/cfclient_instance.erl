@@ -28,32 +28,38 @@
 start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
-  ApiKey = proplists:get_value(api_key, Args),
-  Config0 = proplists:get_value(config, Args, []),
-  Config1 = cfclient_config:normalize(Config0),
-  ok = cfclient_config:create_tables(Config1),
-  ok = cfclient_config:set_config(Config1),
-  case cfclient_config:authenticate(ApiKey, Config1) of
-    {error, not_configured} ->
-      % Used during testing to start up cfclient instances
-      % without a valid API key.
-      case maps:get(unit_test_mode, Config1, undefined) of
-        undefined ->
+  case proplists:get_value(no_default_instance, Args, undefined) of
+    undefined ->
+      ApiKey = proplists:get_value(api_key, Args),
+      Config0 = proplists:get_value(config, Args, []),
+      Config1 = cfclient_config:normalize(Config0),
+      ok = cfclient_config:create_tables(Config1),
+      ok = cfclient_config:set_config(Config1),
+      case cfclient_config:authenticate(ApiKey, Config1) of
+        {error, not_configured} ->
+          % Used during testing to start up cfclient instances
+          % without a valid API key.
+          case maps:get(unit_test_mode, Config1, undefined) of
+            undefined ->
+              {stop, authenticate};
+            UnitTestMode ->
+              {ok, Config1}
+          end;
+        {error, Reason} ->
+          ?LOG_ERROR("Authentication failed: ~p", [Reason]),
           {stop, authenticate};
-        UnitTestMode ->
-          {ok, Config1}
-      end;
-    {error, Reason} ->
-      ?LOG_ERROR("Authentication failed: ~p", [Reason]),
-      {stop, authenticate};
 
-    {ok, Config} ->
-      ok = cfclient_config:set_config(Config),
-      retrieve_flags(Config),
-      start_poll(Config),
-      start_analytics(Config),
-      {ok, Config}
+        {ok, Config} ->
+          ok = cfclient_config:set_config(Config),
+          retrieve_flags(Config),
+          start_poll(Config),
+          start_analytics(Config),
+          {ok, Config}
+      end;
+    no_default_instance ->
+      default_instance_not_started
   end.
+
 
 
 handle_info(metrics, Config) ->
