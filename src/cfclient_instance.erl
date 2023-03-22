@@ -57,7 +57,7 @@ init(Args) ->
           {ok, Config}
       end;
     false ->
-      default_instance_not_started
+      {ok, default_instance_not_started}
   end.
 
 
