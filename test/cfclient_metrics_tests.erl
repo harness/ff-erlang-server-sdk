@@ -12,19 +12,15 @@
 
 -include("../src/cfclient_metrics_attributes.hrl").
 
-config() -> cfclient_config:get_config(?MODULE).
-
 record_metric_data_test_() ->
   {
     "Record Metric Data",
     setup,
     fun
       () ->
-        Config = [{name, ?MODULE}, {poll_enabled, false}],
-        {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
-        Pid
+        Config = cfclient_config:defaults(),
+        ok = cfclient_config:create_tables(Config)
     end,
-    fun (Pid) -> gen_server:stop(Pid) end,
     [
       {
         "Two Unique Evaluations on same flag",
@@ -57,7 +53,7 @@ record_metric_data_test_() ->
             %     anonymous => <<"false">>,
             %     attributes => #{location => <<"us">>}
             %   },
-            Config = cfclient_config:get_config(?MODULE),
+            Config = cfclient_config:defaults(),
             cfclient_metrics:record(
               <<"flag1">>,
               UniqueEvaluationTarget1,
@@ -124,14 +120,14 @@ record_metric_data_test_() ->
             {ok, Metrics} = cfclient_metrics:collect_metrics_data(Timestamp, Config),
             % TODO: Flaky because metrics may be returned in different order. Sort results.
             ?assertMatch(ExpectedMetrics, lists:sort(Metrics))
-          % ?assertEqual(
-          %   ExpectedMetrics,
-          %   cfclient_metrics:create_metrics_data(
-          %     [UniqueEvaluation1, UniqueEvaluation2],
-          %     Timestamp,
-          %     []
-          %   )
-          % )
+        % ?assertEqual(
+        %   ExpectedMetrics,
+        %   cfclient_metrics:create_metrics_data(
+        %     [UniqueEvaluation1, UniqueEvaluation2],
+        %     Timestamp,
+        %     []
+        %   )
+        % )
         end
       }
       % {"No Unique Evaluations",
