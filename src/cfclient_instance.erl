@@ -28,8 +28,8 @@
 start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
-  case proplists:get_value(no_default_instance, Args) of
-    undefined ->
+  case proplists:get_value(start_default_instance, Args) of
+    true ->
       ApiKey = proplists:get_value(api_key, Args),
       Config0 = proplists:get_value(config, Args, []),
       Config1 = cfclient_config:normalize(Config0),
@@ -56,7 +56,7 @@ init(Args) ->
           start_analytics(Config),
           {ok, Config}
       end;
-    _ ->
+    false ->
       default_instance_not_started
   end.
 
