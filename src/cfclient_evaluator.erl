@@ -87,7 +87,7 @@
 -spec bool_variation(binary(), target(), config()) ->
   {ok, Id :: binary(), Value :: boolean()} | {error, Reason :: atom()}.
 bool_variation(FlagId, Target, Config) ->
-  case evaluate(FlagId, Target, Config) of
+  case evaluate(FlagId, Target, Config, <<"boolean">>) of
     {ok, VariationId, <<"true">>} -> {ok, VariationId, true};
     {ok, VariationId, <<"false">>} -> {ok, VariationId, false};
     {error, Reason} -> {error, Reason}
@@ -97,7 +97,7 @@ bool_variation(FlagId, Target, Config) ->
 -spec string_variation(binary(), target(), config()) ->
   {ok, Id :: binary(), Value :: binary()} | {error, Reason :: atom()}.
 string_variation(FlagId, Target, Config) ->
-  case evaluate(FlagId, Target, Config) of
+  case evaluate(FlagId, Target, Config, <<"string">>) of
     {ok, VariationId, Variation} -> {ok, VariationId, Variation};
     {error, Reason} -> {error, Reason}
   end.
@@ -106,7 +106,7 @@ string_variation(FlagId, Target, Config) ->
 -spec number_variation(binary(), target(), config()) ->
   {ok, Id :: binary(), Value :: number()} | {error, Reason :: atom()}.
 number_variation(FlagId, Target, Config) ->
-  case evaluate(FlagId, Target, Config) of
+  case evaluate(FlagId, Target, Config, <<"int">>) of
     {ok, VariationId, Variation} -> {ok, VariationId, to_number(Variation)};
     {error, Reason} -> {error, Reason}
   end.
@@ -115,7 +115,7 @@ number_variation(FlagId, Target, Config) ->
 -spec json_variation(binary(), target(), config()) ->
   {ok, Id :: binary(), Value :: map()} | {error, Reason :: atom()}.
 json_variation(FlagId, Target, Config) ->
-  case evaluate(FlagId, Target, Config) of
+  case evaluate(FlagId, Target, Config, <<"json">>) of
     {ok, VariationId, Variation} -> try {ok, VariationId, jsx:decode(Variation, [])} catch
         error : badarg ->
           ?LOG_ERROR("Error decoding JSON variation. Not returning variation for: ~p", [Variation]),
@@ -125,9 +125,9 @@ json_variation(FlagId, Target, Config) ->
 
 %% Internal functions
 
--spec evaluate(binary(), target(), config()) ->
+-spec evaluate(binary(), target(), config(), atom()) ->
   {ok, Id :: binary(), Value :: term()} | {error, unknown_flag}.
-evaluate(FlagId, Target, Config) ->
+evaluate(FlagId, Target, Config, Kind) ->
   case cfclient_cache:get_value({flag, FlagId}, Config) of
     {error, undefined} ->
       ?LOG_ERROR("Flag ~s not found in cache", [FlagId]),
