@@ -541,15 +541,15 @@ variations_number() ->
               cfclient_ets,
               get,
               fun
-                (_, <<"flags/My_number_flag">>) -> cfclient_evaluator_test_data:number_flag_off()
+                (_, <<"flags/My_boolean_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off()
               end
             )
         end,
         ?_assertEqual(
           {error,flag_type_mismatch},
-          cfclient_evaluator:number_variation(<<"My_number_flag">>, existing_target_a(), config())
+          cfclient_evaluator:number_variation(<<"My_boolean_flag">>, existing_target_a(), config())
         )
-      }
+      },
       {
         "Flag is on with a single target",
         setup,
@@ -726,6 +726,24 @@ variations_json() ->
         ?_assertEqual(
           {ok, <<"Dont_serve_it">>, #{<<"serveIt">> => <<"no">>}},
           cfclient_evaluator:json_variation(<<"My_JSON_flag">>, existing_target_a(), config())
+        )
+      },
+      {
+        "Flag is not json",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"flags/My_json_flag">>) -> cfclient_evaluator_test_data:boolean_flag_off()
+              end
+            )
+        end,
+        ?_assertEqual(
+          {error,flag_type_mismatch},
+          cfclient_evaluator:json_variation(<<"My_json_flag">>, existing_target_a(), config())
         )
       },
       {
