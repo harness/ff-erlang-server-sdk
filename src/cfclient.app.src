@@ -3,7 +3,8 @@
   cfclient,
   [
     {description, "An OTP application"},
-    {vsn, "0.1.0"},
+    {pkg_name, "harness_ff_erlang_server_sdk"},
+    {vsn, "0.6.0-beta.1"},
     {registered, []},
     {mod, {cfclient_app, []}},
     {applications, [kernel, stdlib, cfapi]},
