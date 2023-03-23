@@ -29,18 +29,6 @@
                 included => [map()] | null
               }.
 
-% -type cfapi_serving_rule() ::
-%     #{ 'ruleId' => binary(),
-%        'priority' := integer(),
-%        'clauses' := list(),
-%        'serve' := cfapi_serve:cfapi_serve()
-%      }.
-% "attribute": "identifier",
-%    "negate": false,
-%    "op": "equal",
-%    "values": [
-%        "one"
-%    ]
 -type target() :: cfclient:target().
 -type variation_map() :: #{
                          variation := binary(),

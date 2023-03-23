@@ -5,8 +5,8 @@
 %% and flag usage metrics. It runs periodic tasks to pull data from
 %% the server and send metrics to it.
 %%
-%% An instance is started by the cfclient application.
-%% More complex applications can start additional instances for a specific
+%% An default instance is started by the cfclient application.
+%% Additional instances can be started if multiple Harness projects need to be used.
 %% project.
 %%
 %% @end
