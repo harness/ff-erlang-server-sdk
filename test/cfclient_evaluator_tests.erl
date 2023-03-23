@@ -148,6 +148,24 @@ variations_bool() ->
         )
       },
       {
+        "Flag is not boolean",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"flags/My_string_flag">>) -> cfclient_evaluator_test_data:string_flag_off()
+              end
+            )
+        end,
+        ?_assertEqual(
+          {error,flag_type_mismatch},
+          cfclient_evaluator:bool_variation(<<"My_string_flag">>, existing_target_a(), config())
+        )
+      },
+      {
         "Flag is on with a single target",
         setup,
         fun
@@ -329,6 +347,24 @@ variations_string() ->
         )
       },
       {
+        "Flag is not string",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"flags/My_number_flag">>) -> cfclient_evaluator_test_data:number_flag_off()
+              end
+            )
+        end,
+        ?_assertEqual(
+          {error,flag_type_mismatch},
+          cfclient_evaluator:string_variation(<<"My_number_flag">>, existing_target_a(), config())
+        )
+      },
+      {
         "Flag is on with a single target",
         [
           {
@@ -496,6 +532,24 @@ variations_number() ->
           )
         )
       },
+      {
+        "Flag is not number",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"flags/My_number_flag">>) -> cfclient_evaluator_test_data:number_flag_off()
+              end
+            )
+        end,
+        ?_assertEqual(
+          {error,flag_type_mismatch},
+          cfclient_evaluator:number_variation(<<"My_number_flag">>, existing_target_a(), config())
+        )
+      }
       {
         "Flag is on with a single target",
         setup,
