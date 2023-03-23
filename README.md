@@ -110,12 +110,14 @@ config :cfclient,
 
 ## Run multiple instances of the SDK
 
-Normally there is a single [project](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/) per application. If different parts of your
-application need to use specific projects, you can start up additional client instances using a `project_config` for each unique project. 
+The SDK by default starts up a single instance called `default` which is configured with your project API key.
+If different parts of your application need to use specific [projects](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/), you can start up additional client instances using by defining additional configuration for each unique project. 
 
-### Erlang Project Config
+### Erlang Project Config 
 
-The `project_config` is defined in `sys.config`:
+The additional project config is defined in `sys.config` 
+
+The following `sys.config` snippet starts up two additional instances as well along with the default instance:
 
 ```erlang
 [
@@ -131,8 +133,8 @@ The `project_config` is defined in `sys.config`:
       %% The API key for the Harness project you want to use with this SDK instance.
       {api_key, {environment_variable, "PROJECT_1_API_KEY"}}]
     }
-  ]
-},
+  ]},
+  
   {harness_project_2_config, [
     {cfclient, [
       {config, [
@@ -140,11 +142,41 @@ The `project_config` is defined in `sys.config`:
       ]},
       {api_key, {environment_variable, "PROJECT_2_API_KEY"}}]
     }
-  ]].
+  ]},
+
+  {cfclient, [
+    {api_key, {environment_variable, "FF_API_KEY"}},
+    {config, [
+      {config_url, "https://config.ff.harness.io/api/1.0"},
+      {events_url, "https://config.ff.harness.io/api/1.0"}
+    ]},
+    {analytics_push_interval, 60000}
+  ]
+}].
+```
+Note: if the default instance fails to start, for example due to an authentication error with the API key, then the SDK
+will fail to boot and the additional instances won't start.
+
+If you don't require the default instance to be started up, you can do:
+
+```erlang
+  % ... additional project config
+
+  {cfclient, [
+    {start_default_instance, false},
+    %% The remaining tuples will be ignored, so you can choose to include or omit them.
+    {api_key, {environment_variable, "FF_API_KEY"}},
+    {config, [
+      {config_url, "https://config.ff.harness.io/api/1.0"},
+      {events_url, "https://config.ff.harness.io/api/1.0"}
+    ]},
+    {analytics_push_interval, 60000}
+  ]
+},
 ```
 
 In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
-for each project. 
+for each additional project. As the default instance is booted when your application starts, you cannot (and don't need to) start it here. 
 
 ```erlang
 init(Args) ->
@@ -191,30 +223,111 @@ multi_instance_evaluations() ->
   Project2Result = cfclient:bool_variation(instance_name_2, Project2Flag, Target, false),
   logger:info("Instance name 2 Variation for Flag ~p with Target ~p is: ~p~n",
   [Project2Flag, maps:get(identifier, Target), Project2Result]).
+
+  %% Default instance
+  DefaultProjectFlag = <<"harnessappdemodarkmodeprojectdefault">>,
+  DefaultProjectResult = cfclient:bool_variation(Project2Flag, Target, false),
+  logger:info("Default instance Variation for Flag ~p with Target ~p is: ~p~n",
+  [DefaultProjectFlag, maps:get(identifier, Target), DefaultProjectResult]).
 ```
-This example demonstrates multiple instances of the SDK within the same application, but the same can be achieved if you have an application heirarchy where multiple applications need to use one or many instances of the Erlang SDK.
 
 ### Elixir
 
-Define the `api_key`:
+1. Create project configurations for each new instance you would like to start in your `config/config.exs` file:
 
-config :myapp, :cfclient,
-  api_key: "YOUR_API_KEY"
+    ```elixir
+    # Config for "project 1"
+    config :elixirsample,  project1:
+           [
+            api_key: System.get_env("FF_API_KEY_1"),
+            config: [name: :project1]
+           ]
+    
+    # Config for "project 2"
+    config :elixirsample,  project2:
+      [
+      api_key: System.get_env("FF_API_KEY_2"),
+      config: [name: :project2]
+    ]
+    ```
 
-In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance`:
+2. In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance` 
+for each of the additional project configurations you provided above. As the default instance is booted when your application starts, you cannot (and don't need to) start it here:
 
-```elixir
-def start(_type, _args) do
-  harness_args = Application.get_env(:myapp, :cfclient, [])
+    ```elixir
+      def init(_opts) do
+        project_1_config = Application.get_env(:elixirsample, :project1, [])
+        project_2_config = Application.get_env(:elixirsample, :project2, [])
+        children = [
+          %{
+            id: :project1_cfclient_instance,
+            start: {:cfclient_instance, :start_link, [project_1_config]},
+            type: :supervisor
+          },
+          %{
+            id: :project2_cfclient_instance,
+            start: {:cfclient_instance, :start_link, [project_2_config]},
+            type: :supervisor
+          },
+        ]
+        Supervisor.init(children, strategy: :one_for_one)
+      end
+    ```
 
-  children = [
-    %{id => :myapp_cfclient_instance, start => {:cfclient_instance, :start_link, [harness_args]}}
-  ]
+3. To use a specific SDK instance, you provide the instance name to the public function you are calling. For example use `bool_variation/4` instead of `bool_variation/3` - see the following code sample:
 
-  opts = [strategy: :one_for_one, name: MyApp.Supervisor]
-  Supervisor.start_link(children, opts)
-end
-```
+    ```elixir
+    defmodule ElixirSample.EvaluationSample do
+      require Logger
+    
+      def getFlagLoop() do
+        target = %{
+          identifier: "harness",
+          name: "Harness",
+          anonymous: false,
+          attributes: %{}
+        }
+    
+        # Default instance
+        flag = "projectflag"
+        result = :cfclient.bool_variation(flag, target, false)
+    
+        Logger.info(
+          "SVariation for Flag #{flag} with Target #{inspect(target)} is: #{result}"
+        )
+    
+        # Instance 1
+        project_1_flag = "project1flag"
+        project_1_result = :cfclient.number_variation(:project1, project_1_flag, target, 3)
+    
+        Logger.info(
+          "SDK instance 1: Variation for Flag #{project_1_flag} with Target #{inspect(target)} is: #{project_1_result}"
+        )
+    
+        # Instance 2
+        project_2_flag = "project2flag"
+        project_2_result = :cfclient.bool_variation(:project2, project_2_flag, target, false)
+    
+        Logger.info(
+          "SDK instance 2: Variation for Flag #{project_2_flag} with Target #{inspect(target)} is: #{project_2_result}"
+        )
+    
+        Process.sleep(10000)
+        getFlagLoop()
+   
+        # Default instance
+        default_project_flag = "defaultflag"
+        default_project_result = :cfclient.bool_variation(default_project_flag, target, false)
+    
+        Logger.info(
+          "Default instance: Variation for Flag #{default_project_flag} with Target #{inspect(target)} is: #{default_project_result}"
+        )
+    
+        Process.sleep(10000)
+        getFlagLoop()
+      end
+    end
+    ```
 
 ## Code Sample
 

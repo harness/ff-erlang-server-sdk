@@ -201,19 +201,6 @@ target_attributes_to_metrics(_) -> [].
 target_attribute_to_metric({K, V}) ->
   #{key => K, value => cfclient_evaluator:custom_attribute_to_binary(V)}.
 
-% -spec get_metric(term(), config()) -> {ok, cfclient:target()} | {error, undefined}.
-% get_metric(Key, Config) ->
-%   MetricsCacheTable = cfclient_config:get_value(metrics_cache_table, Config),
-%   case ets:lookup(MetricsCacheTable, Key) of
-%     [] -> {error, undefined};
-%     [Value] -> {ok, Value}
-%   end.
-% -spec get_target(binary()) -> {ok, cfclient:target()} | {error, undefined}.
-% get_target(Key) ->
-%   case ets:lookup(?METRICS_TARGET_TABLE, Key) of
-%     [] -> {error, undefined};
-%     [Value] -> {ok, Value}
-%   end.
 -spec get_counter(term(), config()) -> {ok, integer()} | {error, undefined}.
 get_counter(Key, Config) ->
   #{metrics_counter_table := Table} = Config,

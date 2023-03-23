@@ -20,7 +20,7 @@ record_metric_data_test_() ->
     setup,
     fun
       () ->
-        Config = [{name, ?MODULE}, {poll_enabled, false}],
+        Config = [{name, ?MODULE}, {poll_enabled, false}, {unit_test_mode, true}],
         {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
         Pid
     end,

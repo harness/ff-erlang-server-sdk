@@ -5,8 +5,8 @@
 %% and flag usage metrics. It runs periodic tasks to pull data from
 %% the server and send metrics to it.
 %%
-%% An instance is started by the cfclient application.
-%% More complex applications can start additional instances for a specific
+%% An default instance is started by the cfclient application.
+%% Additional instances can be started if multiple Harness projects need to be used.
 %% project.
 %%
 %% @end
@@ -28,27 +28,42 @@
 start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
-  ApiKey = proplists:get_value(api_key, Args),
-  Config0 = proplists:get_value(config, Args, []),
-  Config1 = cfclient_config:normalize(Config0),
-  ok = cfclient_config:create_tables(Config1),
-  ok = cfclient_config:set_config(Config1),
-  case cfclient_config:authenticate(ApiKey, Config1) of
-    {error, not_configured} ->
-      % Used during testing
-      {ok, Config1};
+  case proplists:get_value(start_default_instance, Args, true) of
+    true  ->
+      ApiKey = proplists:get_value(api_key, Args),
+      Config0 = proplists:get_value(config, Args, []),
+      Config1 = cfclient_config:normalize(Config0),
+      ok = cfclient_config:create_tables(Config1),
+      ok = cfclient_config:set_config(Config1),
+      case cfclient_config:authenticate(ApiKey, Config1) of
+        {error, not_configured} ->
+          % Used during testing to start up cfclient instances
+          % without a valid API key.
+          case maps:get(unit_test_mode, Config1, undefined) of
+            undefined ->
+              {stop, authenticate};
+            _UnitTestMode ->
+              {ok, Config1}
+          end;
+        {error, Reason} ->
+          InstanceName = maps:get(name, Config1),
+          ?LOG_ERROR("Authentication failed for cflient instance '~p': ~p", [InstanceName, Reason]),
+          ?LOG_ERROR("Unable to start the following cfclient instance: ~p", [InstanceName]),
+          {stop, authenticate};
 
-    {error, Reason} ->
-      ?LOG_ERROR("Authentication failed: ~p", [Reason]),
-      {stop, authenticate};
-
-    {ok, Config} ->
-      ok = cfclient_config:set_config(Config),
-      retrieve_flags(Config),
-      start_poll(Config),
-      start_analytics(Config),
-      {ok, Config}
+        {ok, Config} ->
+          ok = cfclient_config:set_config(Config),
+          retrieve_flags(Config),
+          start_poll(Config),
+          start_analytics(Config),
+          ?LOG_INFO("Started unique instance of cfclient: ~p", [maps:get(name, Config1)]),
+          {ok, Config}
+      end;
+    false ->
+      ?LOG_INFO("Default cfclient instance not started"),
+      {ok, default_instance_not_started}
   end.
+
 
 
 handle_info(metrics, Config) ->
