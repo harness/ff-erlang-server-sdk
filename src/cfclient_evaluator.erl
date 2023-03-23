@@ -133,7 +133,12 @@ evaluate(FlagId, Target, Config, Kind) ->
       ?LOG_ERROR("Flag ~s not found in cache", [FlagId]),
       {error, unknown_flag};
 
-    {ok, Flag} -> evaluate_flag(off, Flag, Target, Config)
+    {ok, #{kind := FlagKind} = Flag} when FlagKind == Kind ->
+      evaluate_flag(off, Flag, Target, Config);
+
+    {ok, #{kind := FlagKind} = Flag} ->
+      ?LOG_ERROR("Requested ~s variation on ~s Flag ", [Kind, FlagKind]),
+      {error, flag_type_mismatch}
   end.
 
 
