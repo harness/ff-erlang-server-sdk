@@ -154,6 +154,8 @@ The following `sys.config` snippet starts up two additional instances as well al
   ]
 }].
 ```
+Note: if the default instance fails to start, for example due to an authentication error with the API key, then the SDK
+will fail to boot and the additional instances won't start.
 
 If you don't require the default instance to be started up, you can do:
 
@@ -312,7 +314,6 @@ for each of the additional project configurations you provided above. As the def
     
         Process.sleep(10000)
         getFlagLoop()
-      end
    
         # Default instance
         default_project_flag = "defaultflag"

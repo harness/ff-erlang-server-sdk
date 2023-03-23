@@ -144,12 +144,14 @@ normalize_url(V) -> string:trim(V, trailing, "/").
 % @doc with Authenticate with server and merge project attributes into config
 -spec authenticate(binary() | string() | undefined | nil, map()) ->
   {ok, Config :: map()} | {error, Response :: term()}.
-authenticate(undefined, _Config) ->
-  ?LOG_ERROR("api_key undefined"),
+authenticate(undefined, Config) ->
+  InstanceName = maps:get(name, Config),
+  ?LOG_ERROR("API key for instance '~p' is undefined", [InstanceName]),
   {error, not_configured};
 
-authenticate(nil, _Config) ->
-  ?LOG_ERROR("api_key undefined"),
+authenticate(nil, Config) ->
+  InstanceName = maps:get(name, Config),
+  ?LOG_ERROR("API key for instance '~p' is undefined", [InstanceName]),
   {error, not_configured};
 
 authenticate({environment_variable, APIKeyEnvVar}, Config) ->
