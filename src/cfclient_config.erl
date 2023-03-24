@@ -207,7 +207,7 @@ create_tables(Config) ->
   MetricsCounterTable = ets:new(MetricsCounterTable, [named_table, set, public]),
   ok.
 
--spec delete_tables(config()) -> ok.
+-spec delete_tables(list()) -> ok.
 delete_tables([H | T]) ->
   logger:debug("Deleting table ~s ", [H]),
   ets:delete(H),
