@@ -8,18 +8,17 @@
 
 -include("cfclient_config.hrl").
 
--export(
-  [
-    bool_variation/3,
-    bool_variation/4,
-    string_variation/3,
-    string_variation/4,
-    number_variation/3,
-    number_variation/4,
-    json_variation/3,
-    json_variation/4
-  ]
-).
+-export([
+  bool_variation/3,
+  bool_variation/4,
+  string_variation/3,
+  string_variation/4,
+  number_variation/3,
+  number_variation/4,
+  json_variation/3,
+  json_variation/4,
+  close/0,
+  close/1]).
 
 -type target() :: #{
                   identifier := binary(),
@@ -182,6 +181,10 @@ json_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
       Default
   end.
 
+close() -> close(default).
+close(Name) when is_atom(Name) ->
+  Config = cfclient_config:get_config(Name),
+  cfclient_instance:stop(Config).
 
 % Convert target identifier to binary, as users can provide it as a string,
 % binary, or atom, but client API works in binary.

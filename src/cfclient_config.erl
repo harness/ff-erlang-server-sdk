@@ -8,22 +8,20 @@
 
 -include("cfclient_config.hrl").
 
--export(
-  [
-    authenticate/2,
-    create_tables/1,
-    defaults/0,
-    get_config/0,
-    get_config/1,
-    get_value/1,
-    get_value/2,
-    init/1,
-    normalize/1,
-    parse_jwt/1,
-    set_config/1,
-    set_config/2
-  ]
-).
+-export([
+  authenticate/2,
+  create_tables/1,
+  defaults/0,
+  get_config/0,
+  get_config/1,
+  get_value/1,
+  get_value/2,
+  init/1,
+  normalize/1,
+  parse_jwt/1,
+  set_config/1,
+  set_config/2
+  , delete_tables/1, get_table_names/1]).
 
 -type config() :: map().
 
@@ -96,15 +94,11 @@ normalize(Config0) ->
   Config1 = maps:from_list(Config0),
   Config2 = maps:merge(defaults(), Config1),
   Config = normalize_config(Config2),
-  case maps:get(name, Config) of
-    default -> Config;
-
-    Name ->
-      % Add name prefix to data tables
-      Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
-      Prefixed = maps:map(fun (_K, V) -> prefix_name(Name, V) end, maps:with(Tables, Config)),
-      maps:merge(Config, Prefixed)
-  end.
+  % Add name prefix to data tables
+  #{name := Name} = Config,
+  Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
+  Prefixed = maps:map(fun (_K, V) -> prefix_name(Name, V) end, maps:with(Tables, Config)),
+  maps:merge(Config, Prefixed).
 
 
 -spec init(proplists:proplist()) -> ok.
@@ -212,6 +206,24 @@ create_tables(Config) ->
   MetricsCacheTable = ets:new(MetricsCacheTable, [named_table, set, public]),
   MetricsCounterTable = ets:new(MetricsCounterTable, [named_table, set, public]),
   ok.
+
+-spec delete_tables(list()) -> ok.
+delete_tables([H | T]) ->
+  logger:debug("Deleting table ~s ", [H]),
+  ets:delete(H),
+  delete_tables(T);
+delete_tables([]) ->
+  ok.
+
+get_table_names(Config) ->
+  #{
+    config_table := ConfigTable,
+    cache_table := CacheTable,
+    metrics_target_table := MetricsTargetTable,
+    metrics_cache_table := MetricsCacheTable,
+    metrics_counter_table := MetricsCounterTable
+  } = Config,
+  [ConfigTable, CacheTable, MetricsTargetTable, MetricsCacheTable, MetricsCounterTable].
 
 
 -spec get_config() -> config().

@@ -2,9 +2,9 @@
   application,
   cfclient,
   [
-    {description, "An OTP application"},
+    {description, "Harness Feature Flags Server SDK"},
     {pkg_name, "harness_ff_erlang_server_sdk"},
-    {vsn, "0.6.0-beta.1"},
+    {vsn, "1.0.0"},
     {registered, []},
     {mod, {cfclient_app, []}},
     {applications, [kernel, stdlib, cfapi]},
