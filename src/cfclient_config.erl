@@ -96,15 +96,11 @@ normalize(Config0) ->
   Config1 = maps:from_list(Config0),
   Config2 = maps:merge(defaults(), Config1),
   Config = normalize_config(Config2),
-  case maps:get(name, Config) of
-    default -> Config;
-
-    Name ->
-      % Add name prefix to data tables
-      Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
-      Prefixed = maps:map(fun (_K, V) -> prefix_name(Name, V) end, maps:with(Tables, Config)),
-      maps:merge(Config, Prefixed)
-  end.
+  % Add name prefix to data tables
+  #{name := Name} = Config,
+  Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
+  Prefixed = maps:map(fun (_K, V) -> prefix_name(Name, V) end, maps:with(Tables, Config)),
+  maps:merge(Config, Prefixed).
 
 
 -spec init(proplists:proplist()) -> ok.
