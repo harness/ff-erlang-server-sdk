@@ -113,7 +113,6 @@ retrieve_flags(#{poll_enabled := true} = Config) ->
 
 retrieve_flags(_) -> ok.
 
-
 -spec stop(map()) -> ok | {error, not_found, term()}.
 stop(Config) ->
   #{name := Name} = Config,
