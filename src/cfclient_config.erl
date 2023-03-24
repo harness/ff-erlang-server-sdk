@@ -209,6 +209,7 @@ create_tables(Config) ->
 
 -spec delete_tables(config()) -> ok.
 delete_tables([H | T]) ->
+  logger:debug("Deleting table ~s ", [H]),
   ets:delete(H),
   delete_tables(T);
 delete_tables([]) ->
