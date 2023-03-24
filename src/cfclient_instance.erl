@@ -114,7 +114,7 @@ retrieve_flags(#{poll_enabled := true} = Config) ->
 retrieve_flags(_) -> ok.
 
 
--spec stop(Config) -> ok | {error, not_found, term()}.
+-spec stop(map()) -> ok | {error, not_found, term()}.
 stop(Config) ->
   #{name := Name} = Config,
   logger:debug("Stopping cfclient instance ~s ", [Name]),
