@@ -22,7 +22,7 @@
 -define(SERVER, ?MODULE).
 
 % gen_server callbacks
--export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2]).
+-export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2, stop/0, stop/1]).
 
 -spec start_link(proplists:proplist()) -> {ok, pid()} | ignore | {error, term()}.
 start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
