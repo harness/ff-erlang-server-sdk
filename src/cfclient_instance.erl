@@ -114,9 +114,12 @@ retrieve_flags(#{poll_enabled := true} = Config) ->
 retrieve_flags(_) -> ok.
 
 
-%%-spec stop() -> ok | {error, not_found, term()}.
-%%stop() ->
-%%  logger:debug("Stopping client"),
-%%  stop_children(supervisor:which_children(?PARENTSUP)),
-%%  %% TODO - to support multiple Client instances, we'll need to parameterize the application name here.
-%%  unset_application_environment(application:get_all_env(cfclient)).
+-spec stop() -> ok | {error, not_found, term()}.
+stop(Name) ->
+  logger:debug("Stopping cfclient instance ~s ", [Name]),
+  %% Delete tables
+  Config = cfclient_config:get_config(Name),
+  TableNames = cfclient_config:get_table_names(Config),
+  cfclient_config:delete_tables(TableNames).
+  %% Unset env
+stop() -> stop(default).
