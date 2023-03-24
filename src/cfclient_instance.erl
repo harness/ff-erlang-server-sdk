@@ -119,4 +119,6 @@ stop(Config) ->
   logger:debug("Stopping cfclient instance ~s ", [Name]),
   %% Delete tables
   TableNames = cfclient_config:get_table_names(Config),
-  cfclient_config:delete_tables(TableNames).
+  cfclient_config:delete_tables(TableNames),
+  logger:debug("Stopped cfclient instance ~s ", [Name]),
+  ok.
