@@ -16,8 +16,9 @@
   number_variation/3,
   number_variation/4,
   json_variation/3,
-  json_variation/4
-  , close/0]).
+  json_variation/4,
+  close/0,
+  close/1]).
 
 -type target() :: #{
                   identifier := binary(),
