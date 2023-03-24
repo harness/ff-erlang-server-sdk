@@ -112,3 +112,11 @@ retrieve_flags(#{poll_enabled := true} = Config) ->
   ok;
 
 retrieve_flags(_) -> ok.
+
+
+%%-spec stop() -> ok | {error, not_found, term()}.
+%%stop() ->
+%%  logger:debug("Stopping client"),
+%%  stop_children(supervisor:which_children(?PARENTSUP)),
+%%  %% TODO - to support multiple Client instances, we'll need to parameterize the application name here.
+%%  unset_application_environment(application:get_all_env(cfclient)).

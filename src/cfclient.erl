@@ -185,7 +185,7 @@ json_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
 close() -> close(default).
 close(ConfigKey) when is_atom(ConfigKey) ->
   Config = cfclient_config:get_config(ConfigKey),
-  bool_variation(Config, FlagKey, Target, Default).
+  cfclient_instance:stop(Config).
 
 % Convert target identifier to binary, as users can provide it as a string,
 % binary, or atom, but client API works in binary.

@@ -213,6 +213,22 @@ create_tables(Config) ->
   MetricsCounterTable = ets:new(MetricsCounterTable, [named_table, set, public]),
   ok.
 
+-spec delete_tables(config()) -> ok.
+delete_tables(Config) ->
+  #{
+    config_table := ConfigTable,
+    cache_table := CacheTable,
+    metrics_target_table := MetricsTargetTable,
+    metrics_cache_table := MetricsCacheTable,
+    metrics_counter_table := MetricsCounterTable
+  } = Config,
+  CacheTable = ets:new(CacheTable, [named_table, set, public, {read_concurrency, true}]),
+  CacheTable = ets:new(CacheTable, [named_table, set, public, {read_concurrency, true}]),
+  MetricsTargetTable = ets:new(MetricsTargetTable, [named_table, set, public]),
+  MetricsCacheTable = ets:new(MetricsCacheTable, [named_table, set, public]),
+  MetricsCounterTable = ets:new(MetricsCounterTable, [named_table, set, public]),
+  ok.
+
 
 -spec get_config() -> config().
 get_config() -> get_config(default).
