@@ -22,7 +22,7 @@
 -define(SERVER, ?MODULE).
 
 % gen_server callbacks
--export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2, stop/0, stop/1]).
+-export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2, stop/1]).
 
 -spec start_link(proplists:proplist()) -> {ok, pid()} | ignore | {error, term()}.
 start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
@@ -114,12 +114,10 @@ retrieve_flags(#{poll_enabled := true} = Config) ->
 retrieve_flags(_) -> ok.
 
 
--spec stop() -> ok | {error, not_found, term()}.
-stop(Name) ->
+-spec stop(Config) -> ok | {error, not_found, term()}.
+stop(Config) ->
+  #{name := Name} = Config,
   logger:debug("Stopping cfclient instance ~s ", [Name]),
   %% Delete tables
-  Config = cfclient_config:get_config(Name),
   TableNames = cfclient_config:get_table_names(Config),
   cfclient_config:delete_tables(TableNames).
-  %% Unset env
-stop() -> stop(default).
