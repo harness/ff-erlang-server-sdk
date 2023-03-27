@@ -43,30 +43,38 @@ To follow along with our test code sample, make sure you have:
   called `harnessappdemodarkmode`
 - [Created a server SDK key and made a copy of it](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_3_create_an_sdk_key)
 
-### Install the SDK (Erlang)
+## Install the SDK
 
-Add this library as a dependency to your `rebar.config`.
+### For Erlang applications
 
-```erlang
-{deps, [
-  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {tag, "0.5.0-beta.1"}}}
-]}.
-```
+To install the SDK for Erlang based applications:
 
-Add the dependency to your project's `app.src`.
-```erlang
-{applications,
-  [kernel, stdlib, cfclient]
-},
-```
+1. Add the SDK as a dependency to your `rebar.config` file:
 
-### Install the SDK (Elixir)
+  ```
+  {deps, [{cfclient, "1.0.0", {pkg, harness_ff_erlang_server_sdk}}]}.
+  ```
 
-Add the library to `mix.exs` `deps()`:
+2. Add the dependency to your project's `app.src`.
 
-```elixir
-  {:cfclient, github: "harness/ff-erlang-server-sdk", tag: "0.5.0-beta.1"}
-```
+  ```erlang
+  {applications,
+    [kernel, stdlib, cfclient]
+  },
+  ```
+
+### For Elixir applications
+
+To install the SDK for Elixir based applications:
+
+* Add the SDK as a dependency to `mix.exs` `deps()`:
+
+  ```
+    defp deps do
+      [
+          {:cfclient, "~> 1.0.0", hex: :harness_ff_erlang_server_sdk}
+      ]
+  ```
 
 ## Configuration
 
