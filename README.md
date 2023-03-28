@@ -21,7 +21,7 @@ languages such as Elixir.
 This sample doesn’t include configuration
 options. For in depth steps and configuring the SDK, e.g. disabling
 streaming or using our Relay Proxy, see the
-[Erlang SDK Reference](https://developer.harness.io/docs/feature-flags/ff-sdks/server-sdks/integrate-feature-flag-with-erlang-sdk/)
+[Erlang SDK Reference](https://developer.harness.io/docs/feature-flags/ff-sdks/server-sdks/erlang-sdk-reference)
 
 For a sample FF Erlang SDK project, see our
 [test Erlang project](https://github.com/harness-apps/ff-erlang-server-sample).
