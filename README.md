@@ -20,11 +20,11 @@ languages such as Elixir.
 
 This sample doesn’t include configuration
 options. For in depth steps and configuring the SDK, e.g. disabling
-streaming or using our Relay Proxy, see the 
-[Erlang SDK Reference](https://ngdocs.harness.io/article/hwoxb6x2oe-Erlang-sdk-reference).
+streaming or using our Relay Proxy, see the
+[Erlang SDK Reference](https://developer.harness.io/docs/feature-flags/ff-sdks/server-sdks/integrate-feature-flag-with-erlang-sdk/)
 
 For a sample FF Erlang SDK project, see our
-[test Erlang project](examples/getting_started/getting_started.erl).
+[test Erlang project](https://github.com/harness-apps/ff-erlang-server-sample).
 
 For a sample FF Erlang SDK Project for Elixir, see our
 [test Elixir Project](https://github.com/harness/ff-elixir-server-sample).
