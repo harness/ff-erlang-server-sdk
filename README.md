@@ -20,11 +20,11 @@ languages such as Elixir.
 
 This sample doesn’t include configuration
 options. For in depth steps and configuring the SDK, e.g. disabling
-streaming or using our Relay Proxy, see the 
-[Erlang SDK Reference](https://ngdocs.harness.io/article/hwoxb6x2oe-Erlang-sdk-reference).
+streaming or using our Relay Proxy, see the
+[Erlang SDK Reference](https://developer.harness.io/docs/feature-flags/ff-sdks/server-sdks/erlang-sdk-reference)
 
 For a sample FF Erlang SDK project, see our
-[test Erlang project](examples/getting_started/getting_started.erl).
+[test Erlang project](https://github.com/harness-apps/ff-erlang-server-sample).
 
 For a sample FF Erlang SDK Project for Elixir, see our
 [test Elixir Project](https://github.com/harness/ff-elixir-server-sample).
@@ -43,30 +43,38 @@ To follow along with our test code sample, make sure you have:
   called `harnessappdemodarkmode`
 - [Created a server SDK key and made a copy of it](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_3_create_an_sdk_key)
 
-### Install the SDK (Erlang)
+## Install the SDK
 
-Add this library as a dependency to your `rebar.config`.
+### For Erlang applications
 
-```erlang
-{deps, [
-  {cfclient, {git, "https://github.com/harness/ff-erlang-server-sdk", {tag, "0.5.0-beta.1"}}}
-]}.
-```
+To install the SDK for Erlang based applications:
 
-Add the dependency to your project's `app.src`.
-```erlang
-{applications,
-  [kernel, stdlib, cfclient]
-},
-```
+1. Add the SDK as a dependency to your `rebar.config` file:
 
-### Install the SDK (Elixir)
+  ```
+  {deps, [{cfclient, "1.0.0", {pkg, harness_ff_erlang_server_sdk}}]}.
+  ```
 
-Add the library to `mix.exs` `deps()`:
+2. Add the dependency to your project's `app.src`.
 
-```elixir
-  {:cfclient, github: "harness/ff-erlang-server-sdk", tag: "0.5.0-beta.1"}
-```
+  ```erlang
+  {applications,
+    [kernel, stdlib, cfclient]
+  },
+  ```
+
+### For Elixir applications
+
+To install the SDK for Elixir based applications:
+
+* Add the SDK as a dependency to `mix.exs` `deps()`:
+
+  ```
+    defp deps do
+      [
+          {:cfclient, "~> 1.0.0", hex: :harness_ff_erlang_server_sdk}
+      ]
+  ```
 
 ## Configuration
 
