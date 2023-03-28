@@ -14,7 +14,7 @@
 -define(SERVER, ?MODULE).
 
 -spec start_link(proplists:proplist()) -> supervisor:startlink_ret().
-start_link(Args) -> supervisor:start_link(?MODULE, Args).
+start_link(Args) -> supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
 
 init(Args) ->
   ChildSpecs = [#{id => cfclient_instance, start => {cfclient_instance, start_link, [Args]}}],

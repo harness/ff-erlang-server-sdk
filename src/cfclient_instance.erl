@@ -119,6 +119,14 @@ stop(Config) ->
   logger:debug("Stopping cfclient instance ~s ", [Name]),
   %% Delete tables
   TableNames = cfclient_config:get_table_names(Config),
-  cfclient_config:delete_tables(TableNames),
+  ok = cfclient_config:delete_tables(TableNames),
+  case Name of
+    default ->
+      supervisor:terminate_child(cfclient_sup, cfclient_instance),
+      logger:debug("Terminating cfclient_instance default process  ");
+    _InstanceName ->
+      logger:debug("User has started cfclient instance in their own supervision tree, please ensure you terminiate
+       the child process")
+  end,
   logger:debug("Stopped cfclient instance ~s ", [Name]),
   ok.
