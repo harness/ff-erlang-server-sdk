@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.0] - 2023-03-28
+
+
+Ther Erlang SDK has gone GA, and includes the following:
+
+## ** Breaking **
+- Changes to mulit-instance behaviour - see [readme](https://github.com/harness/ff-erlang-server-sdk#multiple-projects) for updated instructions and code samples:
+  - If you define a multi-instance configuration, and one of the instances (including the default instance) fails to authenticate, then the other instances will not attempt to start and the SDK will not boot.
+  - You can choose not to start the default instance.
+
+### Enhancements
+- Bug fixes for multi-instance configurations
+- Improved logging for debugging purposes
+- General tidy up of code base 
+
+
 ## [0.5.0-beta.1] - 2022-12-05
 
 Integrates the following contributions from TheRealReal:
