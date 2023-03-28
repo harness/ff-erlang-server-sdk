@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [1.0.0] - 2023-03-28
 
 
-Ther Erlang SDK has gone GA, and includes the following:
+The Erlang SDK has gone GA, and includes the following:
 
 ## ** Breaking **
 - Changes to mulit-instance behaviour - see [readme](https://github.com/harness/ff-erlang-server-sdk#multiple-projects) for updated instructions and code samples:
