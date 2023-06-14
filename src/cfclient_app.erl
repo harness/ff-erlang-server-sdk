@@ -18,11 +18,3 @@ start(_StartType, _StartArgs) ->
 
 
 stop(_State) -> ok.
-
-configure_logger(Level) ->
-  %% Set the log level in the logger application
-  logger:set_primary_config([{level, Level}]).
-
-%%get_log_level_from_args() ->
-%%  Level = application:get_env(cfclient, log_level, warning),
-%%  {ok, Level}.
