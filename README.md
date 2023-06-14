@@ -100,6 +100,19 @@ Or you may provide the API key directly if required:
 ].
 ```
 
+Optionally you may set the required log level of the SDK. If not provided, the SDK will default to `warning`.
+
+```erlang
+[
+  {cfclient, [
+      %% ... other config
+      %% Set the log level of the SDK to debug
+      {log_level, debug},
+]}
+].
+```
+
+
 ### Elixir
 
 Provide your API key in `config/prod.exs` using an environment variable: :
@@ -114,6 +127,14 @@ Or you may provide the API key directly if required:
 ```elixir
 config :cfclient,
   api_key: "YOUR_API_KEY"
+```
+Optionally you may set the required log level of the SDK. If not provided, the SDK will default to `warning`.
+
+```elixir
+config :cfclient,
+  # ... other config
+  # Set the log level of the SDK to debug
+  log_level: :debug
 ```
 
 ## Run multiple instances of the SDK
