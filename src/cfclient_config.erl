@@ -55,6 +55,10 @@
 % Enable analytics send to CF Server
 -define(DEFAULT_ANALYTICS_ENABLED, true).
 
+% Enable info level loging of evaluation logs
+% If disabled, will use debug level
+-define(DEFAULT_VERBOSE_EVALUATION_LOGS, false).
+
 -spec defaults() -> map().
 defaults() ->
   #{
@@ -85,8 +89,10 @@ defaults() ->
     cache_table => ?CACHE_TABLE,
     metrics_target_table => ?METRICS_TARGET_TABLE,
     metrics_cache_table => ?METRICS_CACHE_TABLE,
-    metrics_counter_table => ?METRICS_COUNTER_TABLE
-  }.
+    metrics_counter_table => ?METRICS_COUNTER_TABLE,
+    % Enable to info log evaluation related logs - useful if customer production systems don't use debug logs
+    verbose_evaluation_logs => ?DEFAULT_VERBOSE_EVALUATION_LOGS
+    }.
 
 
 -spec normalize(proplists:proplist()) -> map().

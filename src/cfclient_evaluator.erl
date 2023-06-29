@@ -82,6 +82,14 @@
 
 -include("cfclient_evaluator_operators.hrl").
 
+-define(LOG_FLAG_STATE(Level, Message, Args),
+  case Level of
+    debug ->
+      ?LOG_DEBUG(Message, [Args]);
+    info ->
+      ?LOG_INFO(Message, [Args])
+  end).
+
 %% Public API
 
 -spec bool_variation(binary(), target(), config()) ->
