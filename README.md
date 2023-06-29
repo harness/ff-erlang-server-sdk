@@ -162,7 +162,7 @@ Note that this will only affect evaluation log statements.
 config :cfclient,
   # Set the log level of the SDK to debug
     log_level: :debug,
-    verbose_evaluation_logs: false,
+    verbose_evaluation_logs: true,
     [api_key: System.get_env("FF_API_KEY_0"),
     # For additional config you can pass in, see Erlang SDK docs: https://github.com/harness/ff-erlang-server-sdk/blob/main/docs/further_reading.md#further-reading
     # we are just using the main config url here as an example.
