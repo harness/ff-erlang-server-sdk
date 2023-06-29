@@ -82,11 +82,11 @@
 
 -include("cfclient_evaluator_operators.hrl").
 
--define(LOG_FLAG_STATE(Level, Message, Args),
+-define(LOG_EVALUATION_STATE(IsVerboseEvaluationEnabled, Message, Args),
   case Level of
-    debug ->
+    false ->
       ?LOG_DEBUG(Message, [Args]);
-    info ->
+    true ->
       ?LOG_INFO(Message, [Args])
   end).
 
@@ -158,80 +158,80 @@ evaluate(FlagId, Target, Config, Kind) ->
 ) ->
   {ok, Id :: binary(), Value :: term()} | {error, atom()}.
 evaluate_flag(off, #{state := <<"off">>} = Flag, _Target, _Config) ->
-  ?LOG_DEBUG("Flag state off for flag ~p, returning default 'off' variation", [Flag]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config},"Flag state off for flag ~p, returning default 'off' variation", [Flag]),
   return_default_off_variation(Flag);
 
 evaluate_flag(off, #{state := <<"on">>} = Flag, Target, Config) ->
-  ?LOG_DEBUG("Flag state on for flag ~p", [Flag]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config},"Flag state on for flag ~p", [Flag]),
   evaluate_flag(prerequisites, Flag, Target, Config);
 
 evaluate_flag(prerequisites, #{prerequisites := []} = Flag, Target, Config) ->
-  ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(target_rules, Flag, Target, Config);
 
 evaluate_flag(prerequisites, #{prerequisites := Prereqs} = Flag, Target, Config)
 when is_list(Prereqs) ->
   case search_prerequisites(Prereqs, Target, Config) of
     true ->
-      ?LOG_DEBUG("Prerequisites met for flag ~p, target ~p", [Flag, Target]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Prerequisites met for flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(target_rules, Flag, Target, Config);
 
     _ ->
-      ?LOG_DEBUG("Prerequisites not met for flag ~p, target ~p", [Flag, Target]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Prerequisites not met for flag ~p, target ~p", [Flag, Target]),
       return_default_off_variation(Flag)
   end;
 
 evaluate_flag(prerequisites, Flag, Target, Config) ->
-  ?LOG_DEBUG("Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Prerequisites not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(target_rules, Flag, Target, Config);
 
 evaluate_flag(target_rules, #{variationToTargetMap := []} = Flag, Target, Config) ->
-  ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Target rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(group_rules, Flag, Target, Config);
 
 evaluate_flag(target_rules, #{variationToTargetMap := null} = Flag, Target, Config) ->
-  ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Target rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(group_rules, Flag, Target, Config);
 
 evaluate_flag(target_rules, #{variationToTargetMap := TM} = Flag, Target, Config) when TM /= null ->
   case evaluate_target_rule(TM, Target) of
     false ->
-      ?LOG_DEBUG("Target rules map did not match flag ~p, target ~p", [Flag, Target]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Target rules map did not match flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(group_rules, Flag, Target, Config);
 
     TargetVariationId ->
-      ?LOG_DEBUG("Target rules map matched flag ~p, target ~p", [Flag, Target]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Target rules map matched flag ~p, target ~p", [Flag, Target]),
       % Return both variation identifier and value, as prerequisites
       % compare on identifier
       return_target_or_group_variation(Flag, TargetVariationId)
   end;
 
 evaluate_flag(target_rules, Flag, Target, Config) ->
-  ?LOG_DEBUG("Target rules not set for flag ~p, target ~p", [Flag, Target]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Target rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(group_rules, Flag, Target, Config);
 
 evaluate_flag(group_rules, #{rules := []} = Flag, Target, Config) ->
-  ?LOG_DEBUG("Group rules not set for flag ~p, target ~p", [Flag, Target]),
+  ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Group rules not set for flag ~p, target ~p", [Flag, Target]),
   evaluate_flag(default_on, Flag, Target, Config);
 
 evaluate_flag(group_rules, #{rules := Rules} = Flag, Target, Config) when Rules /= null ->
   case search_rules_for_inclusion(sort_by_priority(Rules), Target, Config) of
     false ->
-      ?LOG_DEBUG("Group rules did not match flag ~p, target ~p", [Flag, Target]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Group rules did not match flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(default_on, Flag, Target, Config);
 
     excluded ->
-      ?LOG_DEBUG("Group rules excluded flag ~p, target ~p", [Flag, Target]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Group rules excluded flag ~p, target ~p", [Flag, Target]),
       evaluate_flag(default_on, Flag, Target, Config);
 
     GroupVariationId when is_binary(GroupVariationId) ->
-      ?LOG_DEBUG("Group rules matched flag ~p, target ~p", [Flag, Target]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Group rules matched flag ~p, target ~p", [Flag, Target]),
       return_target_or_group_variation(Flag, GroupVariationId)
   end;
 
 evaluate_flag(group_rules, Flag, Target, Config) -> evaluate_flag(default_on, Flag, Target, Config);
 
-evaluate_flag(default_on, Flag, Target, _Config) ->
+evaluate_flag(default_on, Flag, Target, Config) ->
   #{variations := Variations, defaultServe := #{variation := Id}} = Flag,
   case search_by_id(Variations, Id) of
     false ->
@@ -239,10 +239,7 @@ evaluate_flag(default_on, Flag, Target, _Config) ->
       {error, not_found};
 
     {value, #{value := Value}} ->
-      ?LOG_DEBUG(
-        "Default on variation returned for flag ~p, target ~p, id ~s: ~p",
-        [Flag, Target, Id, Value]
-      ),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Default on variation returned for flag ~p, target ~p, id ~s: ~p", [Flag, Target, Id, Value]),
       {ok, Id, Value}
   end.
 
@@ -256,7 +253,7 @@ return_default_off_variation(Flag) ->
       {error, not_found};
 
     {value, #{value := Value}} ->
-      ?LOG_DEBUG("Default off variation returned for flag ~p, id ~s: ~p", [Flag, Id, Value]),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Default off variation returned for flag ~p, id ~s: ~p", [Flag, Id, Value]),
       {ok, Id, Value}
   end.
 
@@ -511,15 +508,9 @@ search_prerequisites([Head | Tail], Target, Config) ->
 check_prerequisite(PrerequisiteFlag, PrerequisiteFlagId, Prerequisite, Target, Config) ->
   case evaluate_flag(off, PrerequisiteFlag, Target, Config) of
     {ok, VariationId, _} ->
-      ?LOG_DEBUG(
-        "Prerequisite flag ~p has variation ~p, target ~p",
-        [PrerequisiteFlagId, VariationId, Target]
-      ),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config}, "Prerequisite flag ~p has variation ~p, target ~p", [PrerequisiteFlagId, VariationId, Target]),
       PrerequisiteVariations = maps:get(variations, Prerequisite),
-      ?LOG_DEBUG(
-        "Prerequisite flag ~p should have variations ~p",
-        [PrerequisiteFlagId, PrerequisiteVariations]
-      ),
+      ?LOG_EVALUATION_STATE(#{verbose_evaluation_logs := Config},"Prerequisite flag ~p should have variations ~p", [PrerequisiteFlagId, PrerequisiteVariations]),
       lists:member(VariationId, PrerequisiteVariations);
 
     {error, Reason} ->
