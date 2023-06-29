@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.0] - 2023-06-29
+### Enhancements
+Adds an optional configuration `verbose_evaluation_logs` which if enabled sets the evaluation log statements to `info` level. See README for details.
+
 ## [1.1.1] - 2023-06-23
 ### Fixes
 - The SDK no longer sets the global `logger` level which would affect user's applications. It now sets the level for the SDK only.
