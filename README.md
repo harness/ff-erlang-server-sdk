@@ -119,6 +119,7 @@ config :cfclient,
 ## Set logging level
 Optionally you may set the required log level of the SDK. If not provided, the SDK will default to `warning`.
 
+
 #### Elixir logging configuration example
 ```elixir
 config :cfclient,
@@ -147,6 +148,31 @@ config :cfclient,
         {events_url, "https://config.ff.harness.io/api/1.0"},
         {poll_interval, 60},
         {analytics_enabled, true},
+    ]},
+    ]}]
+```
+
+### Enable Verbose Evaluation Logs
+
+Evaluation logs are `debug` level by default. If required, they can be changed to `info` level. This is useful if production environments do not use `debug` level, but there is a requirement to check low level evaluation logs. 
+Note that this will only affect evaluation log statements.
+
+#### Elixir
+```elixir
+config :cfclient,
+    log_level: :error
+    [api_key: System.get_env("FF_API_KEY_0"),
+    config: [
+      verbose_evaluation_logs: true
+    ]]
+```
+#### Erlang
+```erlang
+[{cfclient, [
+    {log_level, error},
+    {api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
+    {config, [
+        {verbose_evaluation_logs, true},
     ]},
     ]}]
 ```

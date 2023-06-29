@@ -15,12 +15,13 @@ The following configuration options are available to control the behaviour of th
     ]}]
 ```
 
-| Name                    | Config Option                                        | Description                                                                                                                                      | default                              |
-|-------------------------|------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
-| config_url              | {config_url, "https://config.ff.harness.io/api/1.0"} | the URL used to fetch feature flag evaluations. You should change this when using the Feature Flag proxy to http://localhost:7000                | https://config.ff.harness.io/api/1.0 |
-| events_url              | {events_url, "https://events.ff.harness.io/api/1.0"} | the URL used to post metrics data to the feature flag service. You should change this when using the Feature Flag proxy to http://localhost:7000 | https://events.ff.harness.io/api/1.0 |
-| poll_interval           | {poll_interval, 60000}                               | the interval in seconds that we poll for changes.                                                                                                | 60                                   |
-| analytics_push_interval | {analytics_push_interval, 60000}                     | the interval in seconds that we send analytics to the Harness Feature Flags service.                                                             | 60                                   |
+| Name                     | Config Option                                        | Description                                                                                                                                      | default                              |
+|--------------------------|------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
+| config_url               | {config_url, "https://config.ff.harness.io/api/1.0"} | the URL used to fetch feature flag evaluations. You should change this when using the Feature Flag proxy to http://localhost:7000                | https://config.ff.harness.io/api/1.0 |
+| events_url               | {events_url, "https://events.ff.harness.io/api/1.0"} | the URL used to post metrics data to the feature flag service. You should change this when using the Feature Flag proxy to http://localhost:7000 | https://events.ff.harness.io/api/1.0 |
+| poll_interval            | {poll_interval, 60000}                               | the interval in seconds that we poll for changes.                                                                                                | 60                                   |
+| analytics_push_interval  | {analytics_push_interval, 60000}                     | the interval in seconds that we send analytics to the Harness Feature Flags service.                                                             | 60                                   |
+| verbose_evaluation_logs_ | {verbose_evaluation_logs, true}                      | evaluation logs default to debug level, if this is set then evaluations logs will be set to info level.                                          | false                                |
 
 
 ## TODO - Elixir flavour of options
