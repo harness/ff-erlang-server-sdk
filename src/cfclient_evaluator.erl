@@ -85,9 +85,9 @@
 -define(LOG_EVALUATION_STATE(IsVerboseEvaluationEnabled, Message, Args),
   case IsVerboseEvaluationEnabled of
     false ->
-      ?LOG_DEBUG(Message, [Args]);
+      ?LOG_DEBUG(Message, Args);
     true ->
-      ?LOG_INFO(Message, [Args])
+      ?LOG_INFO(Message, Args)
   end).
 
 %% Public API
