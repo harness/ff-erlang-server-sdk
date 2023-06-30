@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [2.0.0] - 2023-06-30
-## ** Breaking **
-- Elixir is now required to compile and use the SDK in Erlang applications. Version 1.7.4 and above is required.
+## ** Breaking for Erlang applications (not affecting Elixir applications) **
+
+- Due to a new dependency on a murmur3 hashing library implemented in Elixir, the following is now required to use the SDK in Erlang applications:
+  - Elixir is now required to be installed on your build system when compiling your application. Version 1.13.4 and above is required.
+  - Rebar3 `rebar_mix` plugin installed in your Rebar3 plugins
+  - For full details, see the [Erlang SDK reference](https://developer.harness.io/docs/feature-flags/ff-sdks/server-sdks/erlang-sdk-reference/#for-erlang-applications)
 
 ### Enhancements
-- Adds retry logic for all network requests
-
+- Implemented retry logic for authentication, polling, and metrics services for resilience and fault tolerance.
+- Changes supervisor 
 ### Fixes
 - Swaps out murmur3 nif library which was giving unpredictable runtime behaviour in favour of pure Elixir implementation
 
