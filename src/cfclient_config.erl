@@ -95,6 +95,7 @@ defaults() ->
   }.
 
 
+
 -spec normalize(proplists:proplist()) -> map().
 normalize(Config0) ->
   Config1 = maps:from_list(Config0),
