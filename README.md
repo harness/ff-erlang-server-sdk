@@ -59,8 +59,8 @@ To install the SDK for Erlang based applications:
 
   ```erlang
   {applications,
-    [kernel, stdlib, cfclient]
-  },
+[kernel, stdlib, cfclient]
+},
   ```
 
 ### For Elixir applications
@@ -84,9 +84,9 @@ Provide your API key in `sys.config` using an environment variable:
 
 ```erlang
 [
-  {cfclient, [
-    {api_key, {environment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
-  ]}
+{cfclient, [
+{api_key, {environment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
+]}
 ].
 ```
 
@@ -94,9 +94,9 @@ Or you may provide the API key directly if required:
 
 ```erlang
 [
-  {cfclient, [
-      {api_key, "YOUR_API_KEY"},
-  ]}
+{cfclient, [
+{api_key, "YOUR_API_KEY"},
+]}
 ].
 ```
 
@@ -140,41 +140,26 @@ config :cfclient,
 
 ```erlang
 [{cfclient, [
-    %% Set the log level of the SDK to debug
-    {log_level, debug},
-    {api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
-    {config, [
-        {config_url, "https://config.ff.harness.io/api/1.0"},
-        {events_url, "https://config.ff.harness.io/api/1.0"},
-        {poll_interval, 60},
-        {analytics_enabled, true},
-    ]},
-    ]}]
+%% Set the log level of the SDK to debug
+{log_level, debug},
+{api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
+{config, [
+{config_url, "https://config.ff.harness.io/api/1.0"},
+{events_url, "https://config.ff.harness.io/api/1.0"},
+{poll_interval, 60},
+{analytics_enabled, true},
+]},
+]}]
 ```
 
 ### Enable Verbose Evaluation Logs
 
-Evaluation logs are `debug` level by default. If required, they can be changed to `info` level. This is useful if production environments do not use `debug` level, but there is a requirement to check low level evaluation logs. 
+Evaluation logs are `debug` level by default. If required, they can be changed to `info` level. This is useful if production environments do not use `debug` level, but there is a requirement to check low level evaluation logs.
 Note that this will only affect evaluation log statements.
 
 #### Elixir
 ```elixir
 config :cfclient,
-<<<<<<< HEAD
-    log_level: :error
-    [api_key: System.get_env("FF_API_KEY_0"),
-    config: [
-      verbose_evaluation_logs: true
-    ]]
-```
-#### Erlang
-```erlang
-[{cfclient, [
-    {log_level, error},
-    {api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
-    {config, [
-        {verbose_evaluation_logs, true},
-=======
   # Set the log level of the SDK to debug
     log_level: :debug,
     verbose_evaluation_logs: true,
@@ -189,7 +174,7 @@ config :cfclient,
     ]]
 ```
 
-#### Erlang 
+#### Erlang
 
 ```erlang
 [{cfclient, [
@@ -202,7 +187,6 @@ config :cfclient,
         {events_url, "https://config.ff.harness.io/api/1.0"},
         {poll_interval, 60},
         {analytics_enabled, true},
->>>>>>> main
     ]},
     ]}]
 ```
@@ -210,11 +194,11 @@ config :cfclient,
 ## Run multiple instances of the SDK
 
 The SDK by default starts up a single instance called `default` which is configured with your project API key.
-If different parts of your application need to use specific [projects](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/), you can start up additional client instances using by defining additional configuration for each unique project. 
+If different parts of your application need to use specific [projects](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/), you can start up additional client instances using by defining additional configuration for each unique project.
 
-### Erlang Project Config 
+### Erlang Project Config
 
-The additional project config is defined in `sys.config` 
+The additional project config is defined in `sys.config`
 
 The following `sys.config` snippet starts up two additional instances as well along with the default instance:
 
@@ -275,7 +259,7 @@ If you don't require the default instance to be started up, you can do:
 ```
 
 In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
-for each additional project. As the default instance is booted when your application starts, you cannot (and don't need to) start it here. 
+for each additional project. As the default instance is booted when your application starts, you cannot (and don't need to) start it here.
 
 ```erlang
 init(Args) ->
@@ -350,8 +334,8 @@ multi_instance_evaluations() ->
     ]
     ```
 
-2. In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance` 
-for each of the additional project configurations you provided above. As the default instance is booted when your application starts, you cannot (and don't need to) start it here:
+2. In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance`
+   for each of the additional project configurations you provided above. As the default instance is booted when your application starts, you cannot (and don't need to) start it here:
 
     ```elixir
       def init(_opts) do
