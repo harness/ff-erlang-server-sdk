@@ -37,7 +37,7 @@ process_metrics(Config) ->
       ok;
 
     {ok, Response} ->
-      ?LOG_DEBUG("Posted metrics to server: ~p", [Response]),
+      ?LOG_INFO("Posted metrics to server: ~p", [Response]),
       % TODO: race condition, will lose any metrics made during call to
       % post_metrics
       clear_caches(Config),
@@ -61,10 +61,31 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
       cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => EventsUrl},
       params => #{metricsData => MetricsData, targetData => MetricsTargetData}
     },
+  RetryLimit = 5,
+  RetryDelay = 1000,
+  post_metrics_with_retry(Cluster, Environment, Opts, RetryLimit, RetryDelay).
+
+post_metrics_with_retry(Cluster, Environment, Opts, RetryLimit, RetryDelay) ->
   case cfapi_metrics_api:post_metrics(ctx:new(), #{cluster => Cluster}, Environment, Opts) of
-    {ok, Response, _} -> {ok, Response};
-    {error, Response, _} -> {error, Response}
-  end.
+    {ok, Response, _} ->
+      {ok, Response};
+    {error, Reason} when RetryLimit > 0 ->
+      timer:sleep(RetryDelay),
+      NewRetryLimit = RetryLimit - 1,
+      NewRetryDelay = RetryDelay * 2,
+      ?LOG_WARNING("Error posting metrics: ~p retrying with ~p: attempts left", [Reason, NewRetryLimit]),
+      post_metrics_with_retry(Cluster, Environment, Opts, NewRetryLimit, NewRetryDelay);
+    {error, Reason} when RetryLimit == 0 ->
+      {error, Reason};
+    {error, Reason, _} when RetryLimit > 0 ->
+      timer:sleep(RetryDelay),
+      NewRetryLimit = RetryLimit - 1,
+      NewRetryDelay = RetryDelay * 2,
+      ?LOG_WARNING("Error posting metrics: ~p retrying with ~p: attempts  left", [Reason, NewRetryLimit]),
+      post_metrics_with_retry(Cluster, Environment, Opts, NewRetryLimit, NewRetryDelay);
+    {error, Reason, _} when RetryLimit == 0 ->
+      {error, Reason}
+end.
 
 
 % @doc Store evaluation metrics.
@@ -167,7 +188,7 @@ collect_metrics_target_data(Config) ->
   #{metrics_target_table := Table} = Config,
   case list_table(Table) of
     {ok, Pairs} ->
-      Metrics = lists:map(fun ({_Id, Target}) -> format_target(Target) end, Pairs),
+      Metrics = lists:map(fun({_Id, Target}) -> format_target(Target) end, Pairs),
       {ok, Metrics};
 
     {error, Reason} -> {error, Reason}

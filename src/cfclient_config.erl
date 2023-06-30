@@ -21,7 +21,7 @@
   parse_jwt/1,
   set_config/1,
   set_config/2
-  , delete_tables/1, get_table_names/1]).
+  , delete_tables/1, get_table_names/1, is_retry_code/1]).
 
 -type config() :: map().
 
@@ -92,7 +92,7 @@ defaults() ->
     metrics_counter_table => ?METRICS_COUNTER_TABLE,
     % Enable to info log evaluation related logs - useful if customer production systems don't use debug logs
     verbose_evaluation_logs => ?DEFAULT_VERBOSE_EVALUATION_LOGS
-    }.
+  }.
 
 
 -spec normalize(proplists:proplist()) -> map().
@@ -103,7 +103,7 @@ normalize(Config0) ->
   % Add name prefix to data tables
   #{name := Name} = Config,
   Tables = [cache_table, metrics_cache_table, metrics_counter_table, metrics_target_table],
-  Prefixed = maps:map(fun (_K, V) -> prefix_name(Name, V) end, maps:with(Tables, Config)),
+  Prefixed = maps:map(fun(_K, V) -> prefix_name(Name, V) end, maps:with(Tables, Config)),
   maps:merge(Config, Prefixed).
 
 
@@ -168,6 +168,11 @@ authenticate(ApiKey, Config) when is_list(ApiKey) -> authenticate(list_to_binary
 authenticate(ApiKey, Config) ->
   #{config_url := ConfigUrl} = Config,
   Opts = #{cfg => #{host => ConfigUrl}, params => #{apiKey => ApiKey}},
+  RetryLimit = 5,
+  RetryDelay = 1000,
+  authenticate_with_retry(Opts, Config, ApiKey, RetryLimit, RetryDelay).
+
+authenticate_with_retry(Opts, Config, ApiKey, RetryLimit, RetryDelay) ->
   case cfapi_client_api:authenticate(ctx:new(), Opts) of
     {ok, #{authToken := AuthToken}, _} ->
       {ok, Project} = cfclient_config:parse_jwt(AuthToken),
@@ -175,7 +180,26 @@ authenticate(ApiKey, Config) ->
         maps:merge(Config, #{api_key => ApiKey, auth_token => AuthToken, project => Project}),
       {ok, MergedConfig};
 
-    {error, Response, _} -> {error, Response}
+    % Non-200 status codes
+    {error, Reason, Response} ->
+      case cfclient_config:is_retry_code(Response) of
+        true when RetryLimit > 0 ->
+          timer:sleep(RetryDelay),
+          NewRetryLimit = RetryLimit - 1,
+          NewRetryDelay = RetryDelay * 2,
+          ?LOG_WARNING("Error when authenticating cfclient: ~p retrying with ~p: attempts left", [Reason, NewRetryLimit]),
+          authenticate_with_retry(Opts, Config, ApiKey, NewRetryLimit, NewRetryDelay);
+        _ -> {error, Reason}
+      end;
+    % Other request related errors from the hackney client
+    {error, Reason} when RetryLimit > 0 ->
+      timer:sleep(RetryDelay),
+      NewRetryLimit = RetryLimit - 1,
+      NewRetryDelay = RetryDelay * 2,
+      ?LOG_WARNING("Error when authenticating cfclient: ~p retrying with ~p: attempts left", [Reason, NewRetryLimit]),
+      authenticate_with_retry(Opts, Config, ApiKey, NewRetryLimit, NewRetryDelay);
+    {error, Reason} when RetryLimit == 0 ->
+      {error, Reason}
   end.
 
 % TODO: validate the JWT
@@ -268,3 +292,7 @@ get_value(Key, Opts) ->
       Config = get_config(),
       maps:get(Key, Config)
   end.
+
+% Helper function for retryable http codes
+is_retry_code(#{status := Status}) ->
+  lists:member(Status, [408, 425, 429, 500, 502, 503, 504]).

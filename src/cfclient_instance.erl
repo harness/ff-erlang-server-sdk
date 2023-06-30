@@ -103,11 +103,11 @@ start_analytics(_) -> ok.
 retrieve_flags(#{poll_enabled := true} = Config) ->
   case cfclient_retrieve:retrieve_flags(Config) of
     {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
-    {error, Reason} -> ?LOG_ERROR("Could not retrive flags from API: ~p", [Reason])
+    {error, Reason} -> ?LOG_ERROR("Could not retrive flags from API for this poll interval, reason: ~p", [Reason])
   end,
   case cfclient_retrieve:retrieve_segments(Config) of
     {ok, Segments} -> [cfclient_cache:cache_segment(S, Config) || S <- Segments];
-    {error, Reason1} -> ?LOG_ERROR("Could not retrive segments from API: ~p", [Reason1])
+    {error, Reason1} -> ?LOG_ERROR("Could not retrive segments from API for this poll interval, reason: ~p", [Reason1])
   end,
   ok;
 
