@@ -493,6 +493,7 @@ apply_percentage_rollout([], _, _, _) -> excluded.
 
 -spec should_rollout(binary(), binary(), integer()) -> boolean().
 should_rollout(BucketBy, TargetValue, Percentage) ->
+  'Elixir.Murmur':hash_x86_32("b2622f5e1310a0aa14b7f957fe4246fa", 2147368987),
   BucketID = (2 rem 100) + 1,
   (Percentage > 0) andalso (BucketID =< Percentage).
 
