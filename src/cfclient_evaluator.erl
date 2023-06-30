@@ -164,11 +164,7 @@ evaluate_flag(off, #{state := <<"off">>} = Flag, _Target, Config) ->
 
 evaluate_flag(off, #{state := <<"on">>} = Flag, Target, Config) ->
   #{verbose_evaluation_logs := IsVerboseLogging} = Config,
-<<<<<<< HEAD
-  ?LOG_EVALUATION_STATE(IsVerboseLogging, "Flag state on for flag ~p", [Flag]),
-=======
   ?LOG_EVALUATION_STATE(IsVerboseLogging,"Flag state on for flag ~p", [Flag]),
->>>>>>> main
   evaluate_flag(prerequisites, Flag, Target, Config);
 
 evaluate_flag(prerequisites, #{prerequisites := []} = Flag, Target, Config) ->
