@@ -495,8 +495,8 @@ apply_percentage_rollout([], _, _, _) -> excluded.
 should_rollout(BucketBy, TargetValue, Percentage) ->
 %%  Hash = erlang_murmurhash:murmurhash3_32(<<TargetValue/binary,":",BucketBy/binary>>),
   Concatenated = <<TargetValue/binary, BucketBy/binary>>,
-  'Elixir.Murmur':hash_x86_32(Concatenated),
-  BucketID = (2 rem 100) + 1,
+  Hash = 'Elixir.Murmur':hash_x86_32(Concatenated),
+  BucketID = (Hash rem 100) + 1,
   (Percentage > 0) andalso (BucketID =< Percentage).
 
 
