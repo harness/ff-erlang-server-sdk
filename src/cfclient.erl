@@ -82,7 +82,6 @@ string_variation(ConfigKey, FlagKey, Target, Default) when is_atom(ConfigKey) ->
 
 string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
   Target = normalize_target(Target0),
-  try
     case cfclient_evaluator:string_variation(FlagKey, Target, Config) of
       {ok, VariationId, Variation} ->
         cfclient_metrics:record(FlagKey, Target, VariationId, Variation, Config),
@@ -94,15 +93,7 @@ string_variation(Config, FlagKey, Target0, Default) when is_binary(FlagKey) ->
           [FlagKey, Target, Default, Reason]
         ),
         Default
-    end
-  catch
-    _:_ : Stacktrace ->
-      ?LOG_ERROR(
-        "Evaluation failed for flag ~s, target ~p, returning default ~p: ~p",
-        [FlagKey, Target, Default, Stacktrace]
-      ),
-      Default
-  end.
+    end.
 
 
 % @doc Evaluate variation which returns a number.
