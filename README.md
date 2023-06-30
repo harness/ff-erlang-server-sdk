@@ -31,9 +31,18 @@ For a sample FF Erlang SDK Project for Elixir, see our
 
 ![FeatureFlags](https://github.com/harness/ff-erlang-server-sdk/raw/main/docs/images/ff-gui.png)
 
-## Requirements
+* **For Erlang** applications, install:
 
-Erlang OTP 22 or newer.
+    * Erlang/OTP 24 or later
+    * Rebar3 3.20.0 or later
+    * Important, since version 2.0.0 the SDK depends on an Elixir hashing library, so the following is also required for Erlang applications:
+        * Elixir 1.13.4 or later available on your build system
+        * Rebar3 `rebar_mix` plugin installed in your Rebar3 plugins
+
+* **For Elixir** applications, install:
+    * Elixir version 1.13.4 or later
+    * OTP 24 or later
+
 
 ## Quickstart
 
@@ -52,7 +61,7 @@ To install the SDK for Erlang based applications:
 1. Add the SDK as a dependency to your `rebar.config` file:
 
   ```
-  {deps, [{cfclient, "1.2.0", {pkg, harness_ff_erlang_server_sdk}}]}.
+  {deps, [{cfclient, "2.0.0", {pkg, harness_ff_erlang_server_sdk}}]}.
   ```
 
 2. Add the dependency to your project's `app.src`.
@@ -63,6 +72,15 @@ To install the SDK for Erlang based applications:
 },
   ```
 
+2. Add the `rebar_mix` plugin to your `rebar.config` file:
+
+  ```erlang
+  {project_plugins, [rebar_mix]}.
+  ```
+
+Imporatant: for this plugin to work ensure you have Elixir 1.13.4 or later installed onto your build system
+
+
 ### For Elixir applications
 
 To install the SDK for Elixir based applications:
@@ -72,7 +90,7 @@ To install the SDK for Elixir based applications:
   ```
     defp deps do
       [
-          {:cfclient, "~> 1.1.0", hex: :harness_ff_erlang_server_sdk}
+          {:cfclient, "~> 2.0.0", hex: :harness_ff_erlang_server_sdk}
       ]
   ```
 
