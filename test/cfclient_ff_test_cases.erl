@@ -63,7 +63,13 @@ evaluate_file(Path) ->
     setup,
     fun
       () ->
-        Config = [{name, ?MODULE}, {analytics_enabled, false}, {poll_enabled, false}, {unit_test_mode, true}],
+        Config =
+          [
+            {name, ?MODULE},
+            {analytics_enabled, false},
+            {poll_enabled, false},
+            {unit_test_mode, true}
+          ],
         {ok, Pid} = cfclient_instance:start_link([{config, Config}]),
         [cfclient_cache:cache_flag(F) || F <- Flags],
         [cfclient_cache:cache_segment(S) || S <- Segments],

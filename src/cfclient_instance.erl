@@ -29,7 +29,7 @@ start_link(Args) -> gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
   case proplists:get_value(start_default_instance, Args, true) of
-    true  ->
+    true ->
       ApiKey = proplists:get_value(api_key, Args),
       Config0 = proplists:get_value(config, Args, []),
       Config1 = cfclient_config:normalize(Config0),
@@ -40,11 +40,10 @@ init(Args) ->
           % Used during testing to start up cfclient instances
           % without a valid API key.
           case maps:get(unit_test_mode, Config1, undefined) of
-            undefined ->
-              {stop, authenticate};
-            _UnitTestMode ->
-              {ok, Config1}
+            undefined -> {stop, authenticate};
+            _UnitTestMode -> {ok, Config1}
           end;
+
         {error, Reason} ->
           InstanceName = maps:get(name, Config1),
           ?LOG_ERROR("Authentication failed for cflient instance '~p': ~p", [InstanceName, Reason]),
@@ -59,11 +58,11 @@ init(Args) ->
           ?LOG_INFO("Started unique instance of cfclient: ~p", [maps:get(name, Config1)]),
           {ok, Config}
       end;
+
     false ->
       ?LOG_INFO("Default cfclient instance not started"),
       {ok, default_instance_not_started}
   end.
-
 
 
 handle_info(metrics, Config) ->
@@ -103,15 +102,23 @@ start_analytics(_) -> ok.
 retrieve_flags(#{poll_enabled := true} = Config) ->
   case cfclient_retrieve:retrieve_flags(Config) of
     {ok, Flags} -> [cfclient_cache:cache_flag(F, Config) || F <- Flags];
-    {error, Reason} -> ?LOG_ERROR("Could not retrive flags from API for this poll interval, reason: ~p", [Reason])
+
+    {error, Reason} ->
+      ?LOG_ERROR("Could not retrive flags from API for this poll interval, reason: ~p", [Reason])
   end,
   case cfclient_retrieve:retrieve_segments(Config) of
     {ok, Segments} -> [cfclient_cache:cache_segment(S, Config) || S <- Segments];
-    {error, Reason1} -> ?LOG_ERROR("Could not retrive segments from API for this poll interval, reason: ~p", [Reason1])
+
+    {error, Reason1} ->
+      ?LOG_ERROR(
+        "Could not retrive segments from API for this poll interval, reason: ~p",
+        [Reason1]
+      )
   end,
   ok;
 
 retrieve_flags(_) -> ok.
+
 
 -spec stop(map()) -> ok | {error, not_found, term()}.
 stop(Config) ->
@@ -124,9 +131,11 @@ stop(Config) ->
     default ->
       supervisor:terminate_child(cfclient_sup, cfclient_instance),
       logger:debug("Terminating cfclient_instance default process  ");
+
     _InstanceName ->
-      logger:debug("User has started cfclient instance in their own supervision tree, please ensure you terminiate
-       the child process")
+      logger:debug(
+        "User has started cfclient instance in their own supervision tree, please ensure you terminiate\n       the child process"
+      )
   end,
   logger:debug("Stopped cfclient instance ~s ", [Name]),
   ok.

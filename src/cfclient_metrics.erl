@@ -65,27 +65,35 @@ post_metrics(MetricsData, MetricsTargetData, Config) ->
   RetryDelay = 1000,
   post_metrics_with_retry(Cluster, Environment, Opts, RetryLimit, RetryDelay).
 
+
 post_metrics_with_retry(Cluster, Environment, Opts, RetryLimit, RetryDelay) ->
   case cfapi_metrics_api:post_metrics(ctx:new(), #{cluster => Cluster}, Environment, Opts) of
-    {ok, Response, _} ->
-      {ok, Response};
+    {ok, Response, _} -> {ok, Response};
+
     {error, Reason} when RetryLimit > 0 ->
       timer:sleep(RetryDelay),
       NewRetryLimit = RetryLimit - 1,
       NewRetryDelay = RetryDelay * 2,
-      ?LOG_WARNING("Error posting metrics: ~p retrying with ~p: attempts left", [Reason, NewRetryLimit]),
+      ?LOG_WARNING(
+        "Error posting metrics: ~p retrying with ~p: attempts left",
+        [Reason, NewRetryLimit]
+      ),
       post_metrics_with_retry(Cluster, Environment, Opts, NewRetryLimit, NewRetryDelay);
-    {error, Reason} when RetryLimit == 0 ->
-      {error, Reason};
+
+    {error, Reason} when RetryLimit == 0 -> {error, Reason};
+
     {error, Reason, _} when RetryLimit > 0 ->
       timer:sleep(RetryDelay),
       NewRetryLimit = RetryLimit - 1,
       NewRetryDelay = RetryDelay * 2,
-      ?LOG_WARNING("Error posting metrics: ~p retrying with ~p: attempts  left", [Reason, NewRetryLimit]),
+      ?LOG_WARNING(
+        "Error posting metrics: ~p retrying with ~p: attempts  left",
+        [Reason, NewRetryLimit]
+      ),
       post_metrics_with_retry(Cluster, Environment, Opts, NewRetryLimit, NewRetryDelay);
-    {error, Reason, _} when RetryLimit == 0 ->
-      {error, Reason}
-end.
+
+    {error, Reason, _} when RetryLimit == 0 -> {error, Reason}
+  end.
 
 
 % @doc Store evaluation metrics.
@@ -188,7 +196,7 @@ collect_metrics_target_data(Config) ->
   #{metrics_target_table := Table} = Config,
   case list_table(Table) of
     {ok, Pairs} ->
-      Metrics = lists:map(fun({_Id, Target}) -> format_target(Target) end, Pairs),
+      Metrics = lists:map(fun ({_Id, Target}) -> format_target(Target) end, Pairs),
       {ok, Metrics};
 
     {error, Reason} -> {error, Reason}
@@ -202,15 +210,12 @@ format_target(Target) ->
   SanitisedIdentifier = target_field_to_binary(maps:get(identifier, Target)),
   SanitisedName = target_field_to_binary(maps:get(name, Target, SanitisedIdentifier)),
   SanitisedAttributes = target_attributes_to_metrics(Target),
-
   #{identifier => SanitisedIdentifier, name => SanitisedName, attributes => SanitisedAttributes}.
 
-target_field_to_binary(TargetName) when is_binary(TargetName) ->
-  TargetName;
-target_field_to_binary(TargetName) when is_atom(TargetName) ->
-  atom_to_binary(TargetName);
-target_field_to_binary(TargetName) when is_list(TargetName) ->
-  list_to_binary(TargetName).
+
+target_field_to_binary(TargetName) when is_binary(TargetName) -> TargetName;
+target_field_to_binary(TargetName) when is_atom(TargetName) -> atom_to_binary(TargetName);
+target_field_to_binary(TargetName) when is_list(TargetName) -> list_to_binary(TargetName).
 
 -spec target_attributes_to_metrics(cfclient:target()) -> [map()].
 target_attributes_to_metrics(#{attributes := Values}) when is_map(Values) ->

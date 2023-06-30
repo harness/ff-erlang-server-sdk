@@ -161,7 +161,7 @@ variations_bool() ->
             )
         end,
         ?_assertEqual(
-          {error,flag_type_mismatch},
+          {error, flag_type_mismatch},
           cfclient_evaluator:bool_variation(<<"My_string_flag">>, existing_target_a(), config())
         )
       },
@@ -360,7 +360,7 @@ variations_string() ->
             )
         end,
         ?_assertEqual(
-          {error,flag_type_mismatch},
+          {error, flag_type_mismatch},
           cfclient_evaluator:string_variation(<<"My_number_flag">>, existing_target_a(), config())
         )
       },
@@ -546,7 +546,7 @@ variations_number() ->
             )
         end,
         ?_assertEqual(
-          {error,flag_type_mismatch},
+          {error, flag_type_mismatch},
           cfclient_evaluator:number_variation(<<"My_boolean_flag">>, existing_target_a(), config())
         )
       },
@@ -742,7 +742,7 @@ variations_json() ->
             )
         end,
         ?_assertEqual(
-          {error,flag_type_mismatch},
+          {error, flag_type_mismatch},
           cfclient_evaluator:json_variation(<<"My_json_flag">>, existing_target_a(), config())
         )
       },

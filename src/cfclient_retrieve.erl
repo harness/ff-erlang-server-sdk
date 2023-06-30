@@ -19,12 +19,26 @@ retrieve_flags(Config) ->
   #{environment := Env, clusterIdentifier := Cluster} = Project,
   Opts =
     #{
-      cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => ConfigUrl, hackney_opts => [{timeout, 1}]},
+      cfg
+      =>
+      #{
+        auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>},
+        host => ConfigUrl,
+        hackney_opts => [{timeout, 1}]
+      },
       params => #{cluster => Cluster}
     },
-  RetryLimit = 5, % Maximum number of retries
-  RetryDelay = 1000, % Initial delay between retries in milliseconds
-  retrieve_with_retry(fun cfapi_client_api:get_feature_config/3, [ctx:new(), Env, Opts], RetryLimit, RetryDelay, flags).
+  % Maximum number of retries
+  RetryLimit = 5,
+  % Initial delay between retries in milliseconds
+  RetryDelay = 1000,
+  retrieve_with_retry(
+    fun cfapi_client_api:get_feature_config/3,
+    [ctx:new(), Env, Opts],
+    RetryLimit,
+    RetryDelay,
+    flags
+  ).
 
 
 % @doc Retrieve all segments from Feature Flags API.
@@ -36,10 +50,22 @@ retrieve_segments(Config) ->
   RetryDelay = 1000,
   Opts =
     #{
-      cfg => #{auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>}, host => ConfigUrl, hackney_opts => [{timeout, 20000}]},
+      cfg
+      =>
+      #{
+        auth => #{'BearerAuth' => <<"Bearer ", AuthToken/binary>>},
+        host => ConfigUrl,
+        hackney_opts => [{timeout, 20000}]
+      },
       params => #{cluster => Cluster}
     },
-  retrieve_with_retry(fun cfapi_client_api:get_all_segments/3, [ctx:new(), Env, Opts], RetryLimit, RetryDelay, segments).
+  retrieve_with_retry(
+    fun cfapi_client_api:get_all_segments/3,
+    [ctx:new(), Env, Opts],
+    RetryLimit,
+    RetryDelay,
+    segments
+  ).
 
 
 % Recursive function for retrying the request
@@ -53,16 +79,26 @@ retrieve_with_retry(Func, Args, RetryLimit, RetryDelay, Endpoint) ->
           timer:sleep(RetryDelay),
           NewRetryLimit = RetryLimit - 1,
           NewRetryDelay = RetryDelay * 2,
-          ?LOG_WARNING("Error retrieving ~p: ~p, retrying with ~p: attempts left", [Endpoint, Reason, NewRetryLimit]),
+          ?LOG_WARNING(
+            "Error retrieving ~p: ~p, retrying with ~p: attempts left",
+            [Endpoint, Reason, NewRetryLimit]
+          ),
           retrieve_with_retry(Func, Args, NewRetryLimit, NewRetryDelay, Endpoint);
+
         _ -> {error, Reason}
       end;
+
     % Retry on request errors
     {error, Reason} when RetryLimit > 0 ->
       timer:sleep(RetryDelay),
       NewRetryLimit = RetryLimit - 1,
-      NewRetryDelay = RetryDelay * 2, % Exponential backoff
-      ?LOG_WARNING("Error retrieving ~p: ~p, retrying with: ~p attempts left", [Endpoint, Reason, NewRetryLimit]),
+      % Exponential backoff
+      NewRetryDelay = RetryDelay * 2,
+      ?LOG_WARNING(
+        "Error retrieving ~p: ~p, retrying with: ~p attempts left",
+        [Endpoint, Reason, NewRetryLimit]
+      ),
       retrieve_with_retry(Func, Args, NewRetryLimit, NewRetryDelay, Endpoint);
+
     {error, Reason} when RetryLimit == 0 -> {error, Reason}
   end.
