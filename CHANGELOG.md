@@ -4,13 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-<<<<<<< HEAD
-=======
+## [2.0.0] - 2023-06-30
+## ** Breaking **
+- Elixir is now required to compile and use the SDK in Erlang applications. Version 1.7.4 and above is required.
+
+### Enhancements
+- Adds retry logic for all network requests
+
+### Fixes
+- Swaps out murmur3 nif library which was giving unpredictable runtime behaviour in favour of pure Elixir implementation
+
+
 ## [1.2.1] - 2023-06-29
 ### Fixes
 The optional configuration option introduced in 1.2.0 would only work if the application level was set to `info` - this change now sets the `cfclient_evaluation` module to `info` level if `verbose_evaluation_logs` is enabled.
 
->>>>>>> main
 ## [1.2.0] - 2023-06-29
 ### Enhancements
 Adds an optional configuration `verbose_evaluation_logs` which if enabled sets the evaluation log statements to `info` level. See README for details.
