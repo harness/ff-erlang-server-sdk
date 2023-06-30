@@ -18,12 +18,13 @@ start(_StartType, _StartArgs) ->
       true ->
         logger:set_module_level(cfclient_evaluator, info),
         [{verbose_evaluation_logs, true}] ++ Config;
-      false ->
-        Config
-    end,
 
+      false -> Config
+    end,
   StartDefaultInstance = application:get_env(cfclient, start_default_instance, true),
-  cfclient_sup:start_link([{api_key, ApiKey}, {config, Config2}, {start_default_instance, StartDefaultInstance}]).
+  cfclient_sup:start_link(
+    [{api_key, ApiKey}, {config, Config2}, {start_default_instance, StartDefaultInstance}]
+  ).
 
 
 stop(_State) -> ok.

@@ -31,9 +31,18 @@ For a sample FF Erlang SDK Project for Elixir, see our
 
 ![FeatureFlags](https://github.com/harness/ff-erlang-server-sdk/raw/main/docs/images/ff-gui.png)
 
-## Requirements
+* **For Erlang** applications, install:
 
-Erlang OTP 22 or newer.
+    * Erlang/OTP 24 or later
+    * Rebar3 3.20.0 or later
+    * Important, since version 2.0.0 the SDK depends on an Elixir hashing library, so the following is also required for Erlang applications:
+        * Elixir 1.13.4 or later available on your build system
+        * Rebar3 `rebar_mix` plugin installed in your Rebar3 plugins
+
+* **For Elixir** applications, install:
+    * Elixir version 1.13.4 or later
+    * OTP 24 or later
+
 
 ## Quickstart
 
@@ -52,16 +61,25 @@ To install the SDK for Erlang based applications:
 1. Add the SDK as a dependency to your `rebar.config` file:
 
   ```
-  {deps, [{cfclient, "1.2.0", {pkg, harness_ff_erlang_server_sdk}}]}.
+  {deps, [{cfclient, "2.0.0", {pkg, harness_ff_erlang_server_sdk}}]}.
   ```
 
 2. Add the dependency to your project's `app.src`.
 
   ```erlang
   {applications,
-    [kernel, stdlib, cfclient]
-  },
+[kernel, stdlib, cfclient]
+},
   ```
+
+2. Add the `rebar_mix` plugin to your `rebar.config` file:
+
+  ```erlang
+  {project_plugins, [rebar_mix]}.
+  ```
+
+Imporatant: for this plugin to work ensure you have Elixir 1.13.4 or later installed onto your build system
+
 
 ### For Elixir applications
 
@@ -72,7 +90,7 @@ To install the SDK for Elixir based applications:
   ```
     defp deps do
       [
-          {:cfclient, "~> 1.1.0", hex: :harness_ff_erlang_server_sdk}
+          {:cfclient, "~> 2.0.0", hex: :harness_ff_erlang_server_sdk}
       ]
   ```
 
@@ -84,9 +102,9 @@ Provide your API key in `sys.config` using an environment variable:
 
 ```erlang
 [
-  {cfclient, [
-    {api_key, {environment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
-  ]}
+{cfclient, [
+{api_key, {environment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
+]}
 ].
 ```
 
@@ -94,9 +112,9 @@ Or you may provide the API key directly if required:
 
 ```erlang
 [
-  {cfclient, [
-      {api_key, "YOUR_API_KEY"},
-  ]}
+{cfclient, [
+{api_key, "YOUR_API_KEY"},
+]}
 ].
 ```
 
@@ -140,21 +158,21 @@ config :cfclient,
 
 ```erlang
 [{cfclient, [
-    %% Set the log level of the SDK to debug
-    {log_level, debug},
-    {api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
-    {config, [
-        {config_url, "https://config.ff.harness.io/api/1.0"},
-        {events_url, "https://config.ff.harness.io/api/1.0"},
-        {poll_interval, 60},
-        {analytics_enabled, true},
-    ]},
-    ]}]
+%% Set the log level of the SDK to debug
+{log_level, debug},
+{api_key, {envrionment_variable, "YOUR_API_KEY_ENV_VARIABLE"},
+{config, [
+{config_url, "https://config.ff.harness.io/api/1.0"},
+{events_url, "https://config.ff.harness.io/api/1.0"},
+{poll_interval, 60},
+{analytics_enabled, true},
+]},
+]}]
 ```
 
 ### Enable Verbose Evaluation Logs
 
-Evaluation logs are `debug` level by default. If required, they can be changed to `info` level. This is useful if production environments do not use `debug` level, but there is a requirement to check low level evaluation logs. 
+Evaluation logs are `debug` level by default. If required, they can be changed to `info` level. This is useful if production environments do not use `debug` level, but there is a requirement to check low level evaluation logs.
 Note that this will only affect evaluation log statements.
 
 #### Elixir
@@ -174,7 +192,7 @@ config :cfclient,
     ]]
 ```
 
-#### Erlang 
+#### Erlang
 
 ```erlang
 [{cfclient, [
@@ -194,11 +212,11 @@ config :cfclient,
 ## Run multiple instances of the SDK
 
 The SDK by default starts up a single instance called `default` which is configured with your project API key.
-If different parts of your application need to use specific [projects](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/), you can start up additional client instances using by defining additional configuration for each unique project. 
+If different parts of your application need to use specific [projects](https://developer.harness.io/docs/feature-flags/ff-using-flags/ff-creating-flag/create-a-project/), you can start up additional client instances using by defining additional configuration for each unique project.
 
-### Erlang Project Config 
+### Erlang Project Config
 
-The additional project config is defined in `sys.config` 
+The additional project config is defined in `sys.config`
 
 The following `sys.config` snippet starts up two additional instances as well along with the default instance:
 
@@ -259,7 +277,7 @@ If you don't require the default instance to be started up, you can do:
 ```
 
 In your application supervisor, e.g. `src/myapp_sup.erl`, start up a `cfclient_instance`
-for each additional project. As the default instance is booted when your application starts, you cannot (and don't need to) start it here. 
+for each additional project. As the default instance is booted when your application starts, you cannot (and don't need to) start it here.
 
 ```erlang
 init(Args) ->
@@ -334,8 +352,8 @@ multi_instance_evaluations() ->
     ]
     ```
 
-2. In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance` 
-for each of the additional project configurations you provided above. As the default instance is booted when your application starts, you cannot (and don't need to) start it here:
+2. In your application supervisor, e.g. `lib/myapp/supervisor.ex`, start up `cfclient_instance`
+   for each of the additional project configurations you provided above. As the default instance is booted when your application starts, you cannot (and don't need to) start it here:
 
     ```elixir
       def init(_opts) do

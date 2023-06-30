@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.0] - 2023-06-30
+## ** Breaking for Erlang applications (not affecting Elixir applications) **
+
+- Due to a new dependency on a murmur3 hashing library implemented in Elixir, the following is now required to use the SDK in Erlang applications:
+  - Elixir is now required to be installed on your build system when compiling your application. Version 1.13.4 and above is required.
+  - Rebar3 `rebar_mix` plugin installed in your Rebar3 plugins
+  - For full details, see the [Erlang SDK reference](https://developer.harness.io/docs/feature-flags/ff-sdks/server-sdks/erlang-sdk-reference/#for-erlang-applications)
+
+### Enhancements
+- Implemented retry logic for authentication, polling, and metrics services for resilience and fault tolerance.
+- Changes supervisor 
+### Fixes
+- Swaps out murmur3 nif library which was giving unpredictable runtime behaviour in favour of pure Elixir implementation
+
+
 ## [1.2.1] - 2023-06-29
 ### Fixes
 The optional configuration option introduced in 1.2.0 would only work if the application level was set to `info` - this change now sets the `cfclient_evaluation` module to `info` level if `verbose_evaluation_logs` is enabled.
