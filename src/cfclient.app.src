@@ -7,7 +7,7 @@
     {vsn, "2.0.0"},
     {registered, []},
     {mod, {cfclient_app, []}},
-    {applications, [kernel, stdlib, cfapi]},
+    {applications, [kernel, stdlib, cfapi, base64url, murmur, jsx, mochiweb]},
     {env, []},
     {modules, []},
     {licenses, ["Apache-2.0"]},
