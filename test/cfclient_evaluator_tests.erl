@@ -1759,7 +1759,7 @@ percentage_rollout() ->
             )
         end,
         %% For low target counts, in this case 20, a split like this is expected.
-        {timeout, 30, ?_assertEqual({100000, 100000}, do_variation_200k_times({0, 0}, 0))}
+        {timeout, 30, ?_assertEqual({99992, 100008}, do_variation_200k_times({0, 0}, 0))}
       },
       {
         "100/0",
@@ -1778,7 +1778,7 @@ percentage_rollout() ->
               end
             )
         end,
-        ?_assertEqual({20, 0}, do_variation_200k_times({0, 0}, 0))
+        {timeout, 30, ?_assertEqual({200000, 0}, do_variation_200k_times({0, 0}, 0))}
       },
       {
         "0/100",
@@ -1797,7 +1797,26 @@ percentage_rollout() ->
               end
             )
         end,
-        ?_assertEqual({0, 20}, do_variation_200k_times({0, 0}, 0))
+        {timeout, 30, ?_assertEqual({0, 200000}, do_variation_200k_times({0, 0}, 0))}
+      },
+      {
+        "70/30",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_boolean_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_boolean_70_30()
+              end
+            )
+        end,
+        {timeout, 30, ?_assertEqual({140098, 59902}, do_variation_200k_times({0, 0}, 0))}
       }
     ]
   }.
