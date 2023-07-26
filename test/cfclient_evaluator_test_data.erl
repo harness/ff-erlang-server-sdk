@@ -23,14 +23,11 @@
   boolean_flag_group_only/0,
   boolean_flag_no_targets_or_groups/0,
   boolean_flag_off/0,
-  percentage_rollout_boolean_50_50/0,
-  percentage_rollout_boolean_100_true/0,
-  percentage_rollout_boolean_100_false/0,
   flag_with_three_prerequisites/0,
   prerequisite_matches_flag_1/0,
   prerequisite_matches_flag_2/0,
   prerequisite_matches_flag_3/0
-  , generate_targets/2, percentage_rollout_boolean_70_30/0]).
+  , generate_targets/2, percentage_rollout_boolean/2]).
 
 boolean_flag_off() ->
   #{
@@ -901,58 +898,8 @@ target_group_for_percentage_rollout() ->
     version => 19
   }.
 
-percentage_rollout_boolean_50_50() ->
-  #{
-    defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>,
-    feature => <<"My_boolean_flag">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
-    prerequisites => [],
-    project => <<"erlangsdktest">>,
-    rules
-    =>
-    [
-      #{
-        clauses
-        =>
-        [
-          #{
-            attribute => <<>>,
-            id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
-            negate => false,
-            op => <<"segmentMatch">>,
-            values => [<<"target_group_1">>]
-          }
-        ],
-        priority => 0,
-        ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
-        serve
-        =>
-        #{
-          distribution
-          =>
-          #{
-            bucketBy => <<"identifier">>,
-            variations
-            =>
-            [#{variation => <<"true">>, weight => 50}, #{variation => <<"false">>, weight => 50}]
-          }
-        }
-      }
-    ],
-    state => <<"on">>,
-    variationToTargetMap => null,
-    variations
-    =>
-    [
-      #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>, value => <<"false">>}
-    ],
-    version => 4
-  }.
 
-percentage_rollout_boolean_100_true() ->
+percentage_rollout_boolean(Weight1, Weight2) ->
   #{
     defaultServe => #{variation => <<"true">>},
     environment => <<"dev">>,
@@ -987,109 +934,7 @@ percentage_rollout_boolean_100_true() ->
             bucketBy => <<"identifier">>,
             variations
             =>
-            [#{variation => <<"true">>, weight => 100}, #{variation => <<"false">>, weight => 0}]
-          }
-        }
-      }
-    ],
-    state => <<"on">>,
-    variationToTargetMap => null,
-    variations
-    =>
-    [
-      #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>, value => <<"false">>}
-    ],
-    version => 4
-  }.
-
-percentage_rollout_boolean_100_false() ->
-  #{
-    defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>,
-    feature => <<"My_boolean_flag">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
-    prerequisites => [],
-    project => <<"erlangsdktest">>,
-    rules
-    =>
-    [
-      #{
-        clauses
-        =>
-        [
-          #{
-            attribute => <<>>,
-            id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
-            negate => false,
-            op => <<"segmentMatch">>,
-            values => [<<"target_group_1">>]
-          }
-        ],
-        priority => 0,
-        ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
-        serve
-        =>
-        #{
-          distribution
-          =>
-          #{
-            bucketBy => <<"identifier">>,
-            variations
-            =>
-            [#{variation => <<"true">>, weight => 0}, #{variation => <<"false">>, weight => 100}]
-          }
-        }
-      }
-    ],
-    state => <<"on">>,
-    variationToTargetMap => null,
-    variations
-    =>
-    [
-      #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>, value => <<"false">>}
-    ],
-    version => 4
-  }.
-
-percentage_rollout_boolean_70_30() ->
-  #{
-    defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>,
-    feature => <<"My_boolean_flag">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
-    prerequisites => [],
-    project => <<"erlangsdktest">>,
-    rules
-    =>
-    [
-      #{
-        clauses
-        =>
-        [
-          #{
-            attribute => <<>>,
-            id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
-            negate => false,
-            op => <<"segmentMatch">>,
-            values => [<<"target_group_1">>]
-          }
-        ],
-        priority => 0,
-        ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
-        serve
-        =>
-        #{
-          distribution
-          =>
-          #{
-            bucketBy => <<"identifier">>,
-            variations
-            =>
-            [#{variation => <<"true">>, weight => 70}, #{variation => <<"false">>, weight => 30}]
+            [#{variation => <<"true">>, weight => Weight1}, #{variation => <<"false">>, weight => Weight2}]
           }
         }
       }

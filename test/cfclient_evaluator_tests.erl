@@ -1754,7 +1754,7 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean_50_50()
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(50, 50)
               end
             )
         end,
@@ -1774,7 +1774,7 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean_100_true()
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(100, 0)
               end
             )
         end,
@@ -1793,7 +1793,7 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean_100_false()
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(0, 100)
               end
             )
         end,
@@ -1812,7 +1812,7 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean_70_30()
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(70, 30)
               end
             )
         end,
