@@ -1759,7 +1759,7 @@ percentage_rollout() ->
             )
         end,
         %% For low target counts, in this case 20, a split like this is expected.
-        ?_assertEqual({12, 8}, do_variation_20_times({0, 0}, 0))
+        {timeout, 30, ?_assertEqual({100000, 100000}, do_variation_200k_times({0, 0}, 0))}
       },
       {
         "100/0",
@@ -1778,7 +1778,7 @@ percentage_rollout() ->
               end
             )
         end,
-        ?_assertEqual({20, 0}, do_variation_20_times({0, 0}, 0))
+        ?_assertEqual({20, 0}, do_variation_200k_times({0, 0}, 0))
       },
       {
         "0/100",
@@ -1797,15 +1797,15 @@ percentage_rollout() ->
               end
             )
         end,
-        ?_assertEqual({0, 20}, do_variation_20_times({0, 0}, 0))
+        ?_assertEqual({0, 20}, do_variation_200k_times({0, 0}, 0))
       }
     ]
   }.
 
 
-do_variation_20_times({TrueCounter, FalseCounter}, 20) -> {TrueCounter, FalseCounter};
+do_variation_200k_times({TrueCounter, FalseCounter}, 200000) -> {TrueCounter, FalseCounter};
 
-do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
+do_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
   Counter = AccuIn + 1,
   TargetIdentifierNumber = integer_to_binary(Counter),
   DynamicTarget =
@@ -1816,10 +1816,10 @@ do_variation_20_times({TrueCounter, FalseCounter}, AccuIn) ->
     },
   case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
     {ok, _VariationIdentifier, true} ->
-      do_variation_20_times({TrueCounter + 1, FalseCounter + 0}, Counter);
+      do_variation_200k_times({TrueCounter + 1, FalseCounter + 0}, Counter);
 
     {ok, _VariationIdentifier, false} ->
-      do_variation_20_times({TrueCounter + 0, FalseCounter + 1}, Counter)
+      do_variation_200k_times({TrueCounter + 0, FalseCounter + 1}, Counter)
   end.
 
 

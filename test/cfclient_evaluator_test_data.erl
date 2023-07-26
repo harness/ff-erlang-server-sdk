@@ -4,35 +4,33 @@
 
 %% API
 
--export(
-  [
-    json_flag_only_groups/0,
-    target_group_for_percentage_rollout/0,
-    target_group/0,
-    json_flag_targets_and_groups/0,
-    json_flag_no_targets_or_groups/0,
-    json_flag_only_targets/0,
-    json_flag_off/0,
-    number_flag_only_groups/0,
-    number_flag_no_targets_or_groups/0,
-    number_flag_only_targets/0,
-    number_flag_off/0,
-    string_flag_target_and_groups/0,
-    string_flag_no_targets_or_groups/0,
-    string_flag_off/0,
-    boolean_flag_single_target/0,
-    boolean_flag_group_only/0,
-    boolean_flag_no_targets_or_groups/0,
-    boolean_flag_off/0,
-    percentage_rollout_boolean_50_50/0,
-    percentage_rollout_boolean_100_true/0,
-    percentage_rollout_boolean_100_false/0,
-    flag_with_three_prerequisites/0,
-    prerequisite_matches_flag_1/0,
-    prerequisite_matches_flag_2/0,
-    prerequisite_matches_flag_3/0
-  ]
-).
+-export([
+  json_flag_only_groups/0,
+  target_group_for_percentage_rollout/0,
+  target_group/0,
+  json_flag_targets_and_groups/0,
+  json_flag_no_targets_or_groups/0,
+  json_flag_only_targets/0,
+  json_flag_off/0,
+  number_flag_only_groups/0,
+  number_flag_no_targets_or_groups/0,
+  number_flag_only_targets/0,
+  number_flag_off/0,
+  string_flag_target_and_groups/0,
+  string_flag_no_targets_or_groups/0,
+  string_flag_off/0,
+  boolean_flag_single_target/0,
+  boolean_flag_group_only/0,
+  boolean_flag_no_targets_or_groups/0,
+  boolean_flag_off/0,
+  percentage_rollout_boolean_50_50/0,
+  percentage_rollout_boolean_100_true/0,
+  percentage_rollout_boolean_100_false/0,
+  flag_with_three_prerequisites/0,
+  prerequisite_matches_flag_1/0,
+  prerequisite_matches_flag_2/0,
+  prerequisite_matches_flag_3/0
+  , generate_targets/2]).
 
 boolean_flag_off() ->
   #{
@@ -858,8 +856,20 @@ target_group() ->
     version => 19
   }.
 
+generate_targets(Start, End) ->
+  [
+    #{
+      account => <<>>,
+      environment => <<>>,
+      identifier => list_to_binary("target" ++ integer_to_list(N)),
+      name => <<"target_test">>,
+      org => <<>>,
+      project => <<>>
+    } || N <- lists:seq(Start, End)
+  ].
+
 target_group_for_percentage_rollout() ->
-  #{
+   #{
     environment => <<"dev">>,
     excluded
     =>
@@ -876,170 +886,18 @@ target_group_for_percentage_rollout() ->
     identifier => <<"target_group_1">>,
     included
     =>
-    [
+%%    generate_targets(0, 5),
+    [],
+    name => <<"target_group_1">>,
+    rules => [
       #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target1">>,
-        name => <<"target_1">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target2">>,
-        name => <<"target_2">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target3">>,
-        name => <<"target_3">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target4">>,
-        name => <<"target_4">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target5">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target6">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target7">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target8">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target9">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target10">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target11">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target12">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target13">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target14">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target15">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target16">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target17">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target18">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target19">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target20">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
+        attribute => <<"identifier">>,
+        id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
+        negate => false,
+        op => <<"starts_with">>,
+        values => [<<"target">>]
       }
     ],
-    name => <<"target_group_1">>,
-    rules => [],
     version => 19
   }.
 
