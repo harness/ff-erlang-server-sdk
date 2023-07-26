@@ -1742,7 +1742,7 @@ percentage_rollout() ->
     "Percentage Rollout",
     [
       {
-        "50/50",
+        "50/50 boolean and 34/33/33",
         setup,
         fun
           () ->
@@ -1754,15 +1754,17 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean(50, 50)
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(50, 50),
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(34, 33, 33)
               end
             )
         end,
         %% For low target counts, in this case 20, a split like this is expected.
-        {timeout, 30, ?_assertEqual({99992, 100008}, do_variation_200k_times({0, 0}, 0))}
+        {timeout, 30, ?_assertEqual({99992, 100008}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
+        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
       },
       {
-        "100/0",
+        "100/0 boolean and 100/0/0 multivariate",
         setup,
         fun
           () ->
@@ -1774,11 +1776,14 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean(100, 0)
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(100, 0),
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(100, 0, 0)
               end
             )
         end,
-        {timeout, 30, ?_assertEqual({200000, 0}, do_variation_200k_times({0, 0}, 0))}
+        {timeout, 30, ?_assertEqual({200000, 0}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
+        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
+
       },
       {
         "0/100",
@@ -1797,7 +1802,8 @@ percentage_rollout() ->
               end
             )
         end,
-        {timeout, 30, ?_assertEqual({0, 200000}, do_variation_200k_times({0, 0}, 0))}
+        {timeout, 30, ?_assertEqual({0, 200000}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
+        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
       },
       {
         "70/30",
@@ -1816,15 +1822,16 @@ percentage_rollout() ->
               end
             )
         end,
-        {timeout, 30, ?_assertEqual({140098, 59902}, do_variation_200k_times({0, 0}, 0))}
+        {timeout, 30, ?_assertEqual({140098, 59902}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
+        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
       }
     ]
   }.
 
 
-do_variation_200k_times({TrueCounter, FalseCounter}, 200000) -> {TrueCounter, FalseCounter};
+do_variation_200k_times({TrueCounter, FalseCounter}, 200000, _VariationFunction) -> {TrueCounter, FalseCounter};
 
-do_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
+do_variation_200k_times({TrueCounter, FalseCounter}, AccuIn, VariationFunction) ->
   Counter = AccuIn + 1,
   TargetIdentifierNumber = integer_to_binary(Counter),
   DynamicTarget =
@@ -1833,12 +1840,13 @@ do_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
       name => <<"targetname", TargetIdentifierNumber/binary>>,
       anonymous => <<"">>
     },
-  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
+%%  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
+  case VariationFunction(DynamicTarget) of
     {ok, _VariationIdentifier, true} ->
-      do_variation_200k_times({TrueCounter + 1, FalseCounter + 0}, Counter);
+      do_variation_200k_times({TrueCounter + 1, FalseCounter + 0}, Counter, VariationFunction);
 
     {ok, _VariationIdentifier, false} ->
-      do_variation_200k_times({TrueCounter + 0, FalseCounter + 1}, Counter)
+      do_variation_200k_times({TrueCounter + 0, FalseCounter + 1}, Counter, VariationFunction)
   end.
 
 

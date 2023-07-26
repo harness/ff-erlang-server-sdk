@@ -27,7 +27,7 @@
   prerequisite_matches_flag_1/0,
   prerequisite_matches_flag_2/0,
   prerequisite_matches_flag_3/0
-  , generate_targets/2, percentage_rollout_boolean/2]).
+  , generate_targets/2, percentage_rollout_boolean/2, percentage_rollout_multi_variate/3]).
 
 boolean_flag_off() ->
   #{
@@ -935,6 +935,58 @@ percentage_rollout_boolean(Weight1, Weight2) ->
             variations
             =>
             [#{variation => <<"true">>, weight => Weight1}, #{variation => <<"false">>, weight => Weight2}]
+          }
+        }
+      }
+    ],
+    state => <<"on">>,
+    variationToTargetMap => null,
+    variations
+    =>
+    [
+      #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
+      #{identifier => <<"false">>, name => <<"False">>, value => <<"false">>}
+    ],
+    version => 4
+  }.
+
+percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
+  #{
+    defaultServe => #{variation => <<"true">>},
+    environment => <<"dev">>,
+    feature => <<"My_string_flag">>,
+    kind => <<"string">>,
+    offVariation => <<"off">>,
+    prerequisites => [],
+    project => <<"erlangsdktest">>,
+    rules
+    =>
+    [
+      #{
+        clauses
+        =>
+        [
+          #{
+            attribute => <<>>,
+            id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
+            negate => false,
+            op => <<"segmentMatch">>,
+            values => [<<"target_group_1">>]
+          }
+        ],
+        priority => 0,
+        ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
+        serve
+        =>
+        #{
+          distribution
+          =>
+          #{
+            bucketBy => <<"identifier">>,
+            variations
+            =>
+            [#{variation => <<"variation1">>, weight => Weight1}, #{variation => <<"variation1">>, weight => Weight2},
+              #{variation => <<"variation3">>, weight => Weight3}]
           }
         }
       }
