@@ -1991,7 +1991,6 @@ do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
       name => <<"targetname", TargetIdentifierNumber/binary>>,
       anonymous => <<"">>
     },
-  %%  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
   case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
     {ok, _VariationIdentifier, true} ->
       do_bool_variation_200k_times({TrueCounter + 1, FalseCounter + 0}, Counter);
@@ -2013,7 +2012,6 @@ do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3
       name => <<"targetname", TargetIdentifierNumber/binary>>,
       anonymous => <<"">>
     },
-  %%  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
   case cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) of
     {ok, _VariationIdentifier, <<"variation1">>} ->
       do_string_variation_200k_times(
@@ -2040,8 +2038,6 @@ prerequisite_matches_flag1() -> cfclient_evaluator_test_data:prerequisite_matche
 prerequisite_matches_flag2() -> cfclient_evaluator_test_data:prerequisite_matches_flag_2().
 
 prerequisite_matches_flag3() -> cfclient_evaluator_test_data:prerequisite_matches_flag_3().
-
-%% Same flag data but with a target rule that doesn't include our sample Target1
 
 prerequisite_matches_flag4() ->
   #{
