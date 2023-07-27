@@ -4,30 +4,35 @@
 
 %% API
 
--export([
-  json_flag_only_groups/0,
-  target_group_for_percentage_rollout/0,
-  target_group/0,
-  json_flag_targets_and_groups/0,
-  json_flag_no_targets_or_groups/0,
-  json_flag_only_targets/0,
-  json_flag_off/0,
-  number_flag_only_groups/0,
-  number_flag_no_targets_or_groups/0,
-  number_flag_only_targets/0,
-  number_flag_off/0,
-  string_flag_target_and_groups/0,
-  string_flag_no_targets_or_groups/0,
-  string_flag_off/0,
-  boolean_flag_single_target/0,
-  boolean_flag_group_only/0,
-  boolean_flag_no_targets_or_groups/0,
-  boolean_flag_off/0,
-  flag_with_three_prerequisites/0,
-  prerequisite_matches_flag_1/0,
-  prerequisite_matches_flag_2/0,
-  prerequisite_matches_flag_3/0
-  , generate_targets/2, percentage_rollout_boolean/2, percentage_rollout_multi_variate/3]).
+-export(
+  [
+    json_flag_only_groups/0,
+    target_group_for_percentage_rollout/0,
+    target_group/0,
+    json_flag_targets_and_groups/0,
+    json_flag_no_targets_or_groups/0,
+    json_flag_only_targets/0,
+    json_flag_off/0,
+    number_flag_only_groups/0,
+    number_flag_no_targets_or_groups/0,
+    number_flag_only_targets/0,
+    number_flag_off/0,
+    string_flag_target_and_groups/0,
+    string_flag_no_targets_or_groups/0,
+    string_flag_off/0,
+    boolean_flag_single_target/0,
+    boolean_flag_group_only/0,
+    boolean_flag_no_targets_or_groups/0,
+    boolean_flag_off/0,
+    flag_with_three_prerequisites/0,
+    prerequisite_matches_flag_1/0,
+    prerequisite_matches_flag_2/0,
+    prerequisite_matches_flag_3/0,
+    generate_targets/2,
+    percentage_rollout_boolean/2,
+    percentage_rollout_multi_variate/3
+  ]
+).
 
 boolean_flag_off() ->
   #{
@@ -862,11 +867,12 @@ generate_targets(Start, End) ->
       name => <<"target_test">>,
       org => <<>>,
       project => <<>>
-    } || N <- lists:seq(Start, End)
+    }
+    || N <- lists:seq(Start, End)
   ].
 
 target_group_for_percentage_rollout() ->
-   #{
+  #{
     environment => <<"dev">>,
     excluded
     =>
@@ -881,12 +887,12 @@ target_group_for_percentage_rollout() ->
       }
     ],
     identifier => <<"target_group_1">>,
-    included
-    =>
-%%    generate_targets(0, 5),
-    [],
+    %%    generate_targets(0, 5),
+    included => [],
     name => <<"target_group_1">>,
-    rules => [
+    rules
+    =>
+    [
       #{
         attribute => <<"identifier">>,
         id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
@@ -934,7 +940,10 @@ percentage_rollout_boolean(Weight1, Weight2) ->
             bucketBy => <<"identifier">>,
             variations
             =>
-            [#{variation => <<"true">>, weight => Weight1}, #{variation => <<"false">>, weight => Weight2}]
+            [
+              #{variation => <<"true">>, weight => Weight1},
+              #{variation => <<"false">>, weight => Weight2}
+            ]
           }
         }
       }
@@ -985,8 +994,11 @@ percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
             bucketBy => <<"identifier">>,
             variations
             =>
-            [#{variation => <<"variation1">>, weight => Weight1}, #{variation => <<"variation2">>, weight => Weight2},
-              #{variation => <<"variation3">>, weight => Weight3}]
+            [
+              #{variation => <<"variation1">>, weight => Weight1},
+              #{variation => <<"variation2">>, weight => Weight2},
+              #{variation => <<"variation3">>, weight => Weight3}
+            ]
           }
         }
       }

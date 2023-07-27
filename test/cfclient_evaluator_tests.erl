@@ -1759,11 +1759,10 @@ percentage_rollout_boolean_flag() ->
               end
             )
         end,
-        fun(_) ->
-          [
-            {timeout, 30, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))}]
+        fun
+          (_) ->
+            [{timeout, 30, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
-
       },
       {
         "100/0",
@@ -1782,10 +1781,10 @@ percentage_rollout_boolean_flag() ->
               end
             )
         end,
-    fun(_) ->
-      [
-        {timeout, 30, ?_assertEqual({200000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
-    end
+        fun
+          (_) ->
+            [{timeout, 30, ?_assertEqual({200000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
+        end
       },
       {
         "0/100",
@@ -1801,13 +1800,12 @@ percentage_rollout_boolean_flag() ->
 
                 (_, <<"flags/My_boolean_flag">>) ->
                   cfclient_evaluator_test_data:percentage_rollout_boolean(0, 100)
-
               end
             )
         end,
-        fun(_) ->
-          [
-            {timeout, 30, ?_assertEqual({0, 200000}, do_bool_variation_200k_times({0, 0}, 0))}]
+        fun
+          (_) ->
+            [{timeout, 30, ?_assertEqual({0, 200000}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       },
       {
@@ -1827,9 +1825,9 @@ percentage_rollout_boolean_flag() ->
               end
             )
         end,
-        fun(_) ->
-          [
-            {timeout, 30, ?_assertEqual({140098, 59902}, do_bool_variation_200k_times({0, 0}, 0))}]
+        fun
+          (_) ->
+            [{timeout, 30, ?_assertEqual({140098, 59902}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       }
     ]
@@ -1856,9 +1854,15 @@ percentage_rollout_multivariate_string_flag() ->
               end
             )
         end,
-        fun(_) ->
-          [
-            {timeout, 30, ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                30,
+                ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
         end
       },
       {
@@ -1878,9 +1882,15 @@ percentage_rollout_multivariate_string_flag() ->
               end
             )
         end,
-        fun(_) ->
-          [
-            {timeout, 30, ?_assertEqual({200000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                30,
+                ?_assertEqual({200000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
         end
       },
       {
@@ -1900,9 +1910,15 @@ percentage_rollout_multivariate_string_flag() ->
               end
             )
         end,
-        fun(_) ->
-          [
-            {timeout, 30, ?_assertEqual({0, 0, 200000}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                30,
+                ?_assertEqual({0, 0, 200000}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
         end
       },
       {
@@ -1922,13 +1938,48 @@ percentage_rollout_multivariate_string_flag() ->
               end
             )
         end,
-        fun(_) ->
-          [
-            {timeout, 30, ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                30,
+                ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
+        end
+      },
+      {
+        "80/10/10",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(80, 10, 10)
+              end
+            )
+        end,
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                30,
+                ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
         end
       }
     ]
   }.
+
 do_bool_variation_200k_times({TrueCounter, FalseCounter}, 200000) -> {TrueCounter, FalseCounter};
 
 do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
@@ -1940,7 +1991,7 @@ do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
       name => <<"targetname", TargetIdentifierNumber/binary>>,
       anonymous => <<"">>
     },
-%%  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
+  %%  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
   case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
     {ok, _VariationIdentifier, true} ->
       do_bool_variation_200k_times({TrueCounter + 1, FalseCounter + 0}, Counter);
@@ -1949,7 +2000,9 @@ do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
       do_bool_variation_200k_times({TrueCounter + 0, FalseCounter + 1}, Counter)
   end.
 
-do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, 200000) -> {Variation1Counter, Variation2Counter, Variation3Counter};
+
+do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, 200000) ->
+  {Variation1Counter, Variation2Counter, Variation3Counter};
 
 do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, AccuIn) ->
   Counter = AccuIn + 1,
@@ -1960,16 +2013,25 @@ do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3
       name => <<"targetname", TargetIdentifierNumber/binary>>,
       anonymous => <<"">>
     },
-%%  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
+  %%  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
   case cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) of
     {ok, _VariationIdentifier, <<"variation1">>} ->
-      do_string_variation_200k_times({Variation1Counter + 1, Variation2Counter + 0,  Variation3Counter + 0}, Counter);
+      do_string_variation_200k_times(
+        {Variation1Counter + 1, Variation2Counter + 0, Variation3Counter + 0},
+        Counter
+      );
 
-    {ok, _VariationIdentifier,  <<"variation2">>} ->
-      do_string_variation_200k_times({Variation1Counter + 0, Variation2Counter + 1,  Variation3Counter + 0}, Counter);
+    {ok, _VariationIdentifier, <<"variation2">>} ->
+      do_string_variation_200k_times(
+        {Variation1Counter + 0, Variation2Counter + 1, Variation3Counter + 0},
+        Counter
+      );
 
-    {ok, _VariationIdentifier,  <<"variation3">>} ->
-      do_string_variation_200k_times({Variation1Counter + 0, Variation2Counter + 0,  Variation3Counter + 1}, Counter)
+    {ok, _VariationIdentifier, <<"variation3">>} ->
+      do_string_variation_200k_times(
+        {Variation1Counter + 0, Variation2Counter + 0, Variation3Counter + 1},
+        Counter
+      )
   end.
 
 
