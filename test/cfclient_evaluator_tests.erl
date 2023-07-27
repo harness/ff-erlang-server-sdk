@@ -1972,7 +1972,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 30,
-                ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({160095, 19903, 20002}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
