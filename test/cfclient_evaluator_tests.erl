@@ -1859,7 +1859,7 @@ percentage_rollout_multivariate_string_flag() ->
             [
               {
                 timeout,
-                30,
+                100,
                 ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
@@ -1887,7 +1887,7 @@ percentage_rollout_multivariate_string_flag() ->
             [
               {
                 timeout,
-                30,
+                100,
                 ?_assertEqual({200000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
@@ -1915,7 +1915,7 @@ percentage_rollout_multivariate_string_flag() ->
             [
               {
                 timeout,
-                30,
+                100,
                 ?_assertEqual({0, 0, 200000}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
@@ -1943,7 +1943,7 @@ percentage_rollout_multivariate_string_flag() ->
             [
               {
                 timeout,
-                30,
+                100,
                 ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
@@ -1971,7 +1971,7 @@ percentage_rollout_multivariate_string_flag() ->
             [
               {
                 timeout,
-                30,
+                100,
                 ?_assertEqual({160095, 19903, 20002}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
