@@ -1993,10 +1993,10 @@ do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
     },
   case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
     {ok, _VariationIdentifier, true} ->
-      do_bool_variation_200k_times({TrueCounter + 1, FalseCounter + 0}, Counter);
+      do_bool_variation_200k_times({TrueCounter + 1, FalseCounter}, Counter);
 
     {ok, _VariationIdentifier, false} ->
-      do_bool_variation_200k_times({TrueCounter + 0, FalseCounter + 1}, Counter)
+      do_bool_variation_200k_times({TrueCounter, FalseCounter + 1}, Counter)
   end.
 
 
@@ -2015,19 +2015,19 @@ do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3
   case cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) of
     {ok, _VariationIdentifier, <<"variation1">>} ->
       do_string_variation_200k_times(
-        {Variation1Counter + 1, Variation2Counter + 0, Variation3Counter + 0},
+        {Variation1Counter + 1, Variation2Counter, Variation3Counter},
         Counter
       );
 
     {ok, _VariationIdentifier, <<"variation2">>} ->
       do_string_variation_200k_times(
-        {Variation1Counter + 0, Variation2Counter + 1, Variation3Counter + 0},
+        {Variation1Counter, Variation2Counter + 1, Variation3Counter},
         Counter
       );
 
     {ok, _VariationIdentifier, <<"variation3">>} ->
       do_string_variation_200k_times(
-        {Variation1Counter + 0, Variation2Counter + 0, Variation3Counter + 1},
+        {Variation1Counter, Variation2Counter, Variation3Counter + 1},
         Counter
       )
   end.
