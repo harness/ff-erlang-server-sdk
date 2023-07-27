@@ -952,7 +952,7 @@ percentage_rollout_boolean(Weight1, Weight2) ->
 
 percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
   #{
-    defaultServe => #{variation => <<"true">>},
+    defaultServe => #{variation => <<"variation3">>},
     environment => <<"dev">>,
     feature => <<"My_string_flag">>,
     kind => <<"string">>,
@@ -985,7 +985,7 @@ percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
             bucketBy => <<"identifier">>,
             variations
             =>
-            [#{variation => <<"variation1">>, weight => Weight1}, #{variation => <<"variation1">>, weight => Weight2},
+            [#{variation => <<"variation1">>, weight => Weight1}, #{variation => <<"variation2">>, weight => Weight2},
               #{variation => <<"variation3">>, weight => Weight3}]
           }
         }
@@ -996,8 +996,9 @@ percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
     variations
     =>
     [
-      #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>, value => <<"false">>}
+      #{identifier => <<"variation1">>, name => <<"variation1">>, value => <<"variation1">>},
+      #{identifier => <<"variation2">>, name => <<"variation2">>, value => <<"variation2">>},
+      #{identifier => <<"variation3">>, name => <<"variation3">>, value => <<"variation3">>}
     ],
     version => 4
   }.
