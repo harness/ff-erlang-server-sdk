@@ -33,6 +33,7 @@ top_test_() ->
       {generator, fun variations_number/0},
       {generator, fun variations_json/0},
       {generator, fun percentage_rollout_boolean_flag/0},
+      {generator, fun percentage_rollout_multivariate_string_flag/0},
       {generator, fun search_prerequisites/0},
       {generator, fun check_prerequisite/0}
     ]
@@ -1859,7 +1860,6 @@ percentage_rollout_multivariate_string_flag() ->
           [
             {timeout, 30, ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
         end
-
       },
       {
         "100/0/0",
@@ -1921,9 +1921,11 @@ percentage_rollout_multivariate_string_flag() ->
                   cfclient_evaluator_test_data:percentage_rollout_multi_variate(0, 50, 50)
               end
             )
+        end,
+        fun(_) ->
+          [
+            {timeout, 30, ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
         end
-%%        {timeout, 30, ?_assertEqual({140098, 59902}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
-%%        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
       }
     ]
   }.
