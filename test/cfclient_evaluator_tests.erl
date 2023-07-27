@@ -32,7 +32,7 @@ top_test_() ->
       {generator, fun variations_string/0},
       {generator, fun variations_number/0},
       {generator, fun variations_json/0},
-      {generator, fun percentage_rollout/0},
+      {generator, fun percentage_rollout_boolean_flag/0},
       {generator, fun search_prerequisites/0},
       {generator, fun check_prerequisite/0}
     ]
@@ -1737,12 +1737,12 @@ custom_attribute_to_binary_test_() ->
     }
   ].
 
-percentage_rollout() ->
+percentage_rollout_boolean_flag() ->
   {
-    "Percentage Rollout",
+    "Percentage Rollout Boolean",
     [
       {
-        "50/50 boolean and 34/33/33",
+        "50/50",
         setup,
         fun
           () ->
@@ -1754,22 +1754,18 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean(50, 50);
-
-                (_, <<"flags/My_string_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(34, 33, 33)
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(50, 50)
               end
             )
         end,
         fun(_) ->
           [
-            {timeout, 30, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))},
-            {timeout, 30, ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+            {timeout, 30, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
 
-      }
+      },
       {
-        "100/0 boolean and 100/0/0 multivariate",
+        "100/0",
         setup,
         fun
           () ->
@@ -1781,14 +1777,14 @@ percentage_rollout() ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
                 (_, <<"flags/My_boolean_flag">>) ->
-                  cfclient_evaluator_test_data:percentage_rollout_boolean(100, 0),
-                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(100, 0, 0)
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(100, 0)
               end
             )
         end,
-        {timeout, 30, ?_assertEqual({200000, 0}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
-        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
-
+    fun(_) ->
+      [
+        {timeout, 30, ?_assertEqual({200000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
+    end
       },
       {
         "0/100",
@@ -1804,11 +1800,14 @@ percentage_rollout() ->
 
                 (_, <<"flags/My_boolean_flag">>) ->
                   cfclient_evaluator_test_data:percentage_rollout_boolean(0, 100)
+
               end
             )
         end,
-        {timeout, 30, ?_assertEqual({0, 200000}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
-        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
+        fun(_) ->
+          [
+            {timeout, 30, ?_assertEqual({0, 200000}, do_bool_variation_200k_times({0, 0}, 0))}]
+        end
       },
       {
         "70/30",
@@ -1827,13 +1826,107 @@ percentage_rollout() ->
               end
             )
         end,
-        {timeout, 30, ?_assertEqual({140098, 59902}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
-        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
+        fun(_) ->
+          [
+            {timeout, 30, ?_assertEqual({140098, 59902}, do_bool_variation_200k_times({0, 0}, 0))}]
+        end
       }
     ]
   }.
 
+percentage_rollout_multivariate_string_flag() ->
+  {
+    "Percentage Rollout Multivariate String Flag",
+    [
+      {
+        "34/33/33",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(34, 33, 33)
+              end
+            )
+        end,
+        fun(_) ->
+          [
+            {timeout, 30, ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+        end
+
+      },
+      {
+        "100/0/0",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(100, 0, 0)
+              end
+            )
+        end,
+        fun(_) ->
+          [
+            {timeout, 30, ?_assertEqual({200000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+        end
+      },
+      {
+        "0/0/100",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(0, 0, 100)
+              end
+            )
+        end,
+        fun(_) ->
+          [
+            {timeout, 30, ?_assertEqual({0, 0, 200000}, do_string_variation_200k_times({0, 0, 0}, 0))}          ]
+        end
+      },
+      {
+        "0/50/50",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(0, 50, 50)
+              end
+            )
+        end
+%%        {timeout, 30, ?_assertEqual({140098, 59902}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) end))},
+%%        {timeout, 30, ?_assertEqual({2, 2, 2}, do_variation_200k_times({0, 0}, 0, fun(DynamicTarget) -> cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) end))}
+      }
+    ]
+  }.
 do_bool_variation_200k_times({TrueCounter, FalseCounter}, 200000) -> {TrueCounter, FalseCounter};
 
 do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
