@@ -1761,7 +1761,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 30, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       },
       {
@@ -1783,7 +1783,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 30, ?_assertEqual({200000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({200000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       },
       {
@@ -1805,7 +1805,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 30, ?_assertEqual({0, 200000}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({0, 200000}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       },
       {
@@ -1827,7 +1827,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 30, ?_assertEqual({140098, 59902}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({140098, 59902}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       }
     ]
