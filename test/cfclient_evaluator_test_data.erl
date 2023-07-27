@@ -24,13 +24,13 @@
     boolean_flag_group_only/0,
     boolean_flag_no_targets_or_groups/0,
     boolean_flag_off/0,
-    percentage_rollout_boolean_50_50/0,
-    percentage_rollout_boolean_100_true/0,
-    percentage_rollout_boolean_100_false/0,
     flag_with_three_prerequisites/0,
     prerequisite_matches_flag_1/0,
     prerequisite_matches_flag_2/0,
-    prerequisite_matches_flag_3/0
+    prerequisite_matches_flag_3/0,
+    generate_targets/2,
+    percentage_rollout_boolean/2,
+    percentage_rollout_multi_variate/3
   ]
 ).
 
@@ -858,6 +858,19 @@ target_group() ->
     version => 19
   }.
 
+generate_targets(Start, End) ->
+  [
+    #{
+      account => <<>>,
+      environment => <<>>,
+      identifier => list_to_binary("target" ++ integer_to_list(N)),
+      name => <<"target_test">>,
+      org => <<>>,
+      project => <<>>
+    }
+    || N <- lists:seq(Start, End)
+  ].
+
 target_group_for_percentage_rollout() ->
   #{
     environment => <<"dev">>,
@@ -874,176 +887,25 @@ target_group_for_percentage_rollout() ->
       }
     ],
     identifier => <<"target_group_1">>,
-    included
+    %%    generate_targets(0, 5),
+    included => [],
+    name => <<"target_group_1">>,
+    rules
     =>
     [
       #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target1">>,
-        name => <<"target_1">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target2">>,
-        name => <<"target_2">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target3">>,
-        name => <<"target_3">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target4">>,
-        name => <<"target_4">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target5">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target6">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target7">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target8">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target9">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target10">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target11">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target12">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target13">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target14">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target15">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target16">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target17">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target18">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target19">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
-      },
-      #{
-        account => <<>>,
-        environment => <<>>,
-        identifier => <<"target20">>,
-        name => <<"target_test">>,
-        org => <<>>,
-        project => <<>>
+        attribute => <<"identifier">>,
+        id => <<"7f779368-036c-40e3-a8b7-8b69bd809f39">>,
+        negate => false,
+        op => <<"starts_with">>,
+        values => [<<"target">>]
       }
     ],
-    name => <<"target_group_1">>,
-    rules => [],
     version => 19
   }.
 
-percentage_rollout_boolean_50_50() ->
+
+percentage_rollout_boolean(Weight1, Weight2) ->
   #{
     defaultServe => #{variation => <<"true">>},
     environment => <<"dev">>,
@@ -1078,7 +940,10 @@ percentage_rollout_boolean_50_50() ->
             bucketBy => <<"identifier">>,
             variations
             =>
-            [#{variation => <<"true">>, weight => 50}, #{variation => <<"false">>, weight => 50}]
+            [
+              #{variation => <<"true">>, weight => Weight1},
+              #{variation => <<"false">>, weight => Weight2}
+            ]
           }
         }
       }
@@ -1094,13 +959,13 @@ percentage_rollout_boolean_50_50() ->
     version => 4
   }.
 
-percentage_rollout_boolean_100_true() ->
+percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
   #{
-    defaultServe => #{variation => <<"true">>},
+    defaultServe => #{variation => <<"variation3">>},
     environment => <<"dev">>,
-    feature => <<"My_boolean_flag">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
+    feature => <<"My_string_flag">>,
+    kind => <<"string">>,
+    offVariation => <<"off">>,
     prerequisites => [],
     project => <<"erlangsdktest">>,
     rules
@@ -1129,7 +994,11 @@ percentage_rollout_boolean_100_true() ->
             bucketBy => <<"identifier">>,
             variations
             =>
-            [#{variation => <<"true">>, weight => 100}, #{variation => <<"false">>, weight => 0}]
+            [
+              #{variation => <<"variation1">>, weight => Weight1},
+              #{variation => <<"variation2">>, weight => Weight2},
+              #{variation => <<"variation3">>, weight => Weight3}
+            ]
           }
         }
       }
@@ -1139,59 +1008,9 @@ percentage_rollout_boolean_100_true() ->
     variations
     =>
     [
-      #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>, value => <<"false">>}
-    ],
-    version => 4
-  }.
-
-percentage_rollout_boolean_100_false() ->
-  #{
-    defaultServe => #{variation => <<"true">>},
-    environment => <<"dev">>,
-    feature => <<"My_boolean_flag">>,
-    kind => <<"boolean">>,
-    offVariation => <<"false">>,
-    prerequisites => [],
-    project => <<"erlangsdktest">>,
-    rules
-    =>
-    [
-      #{
-        clauses
-        =>
-        [
-          #{
-            attribute => <<>>,
-            id => <<"d20dbdea-2b38-4343-b6fc-6fb09d41674d">>,
-            negate => false,
-            op => <<"segmentMatch">>,
-            values => [<<"target_group_1">>]
-          }
-        ],
-        priority => 0,
-        ruleId => <<"fbd0df98-2867-496d-8443-e3578236623d">>,
-        serve
-        =>
-        #{
-          distribution
-          =>
-          #{
-            bucketBy => <<"identifier">>,
-            variations
-            =>
-            [#{variation => <<"true">>, weight => 0}, #{variation => <<"false">>, weight => 100}]
-          }
-        }
-      }
-    ],
-    state => <<"on">>,
-    variationToTargetMap => null,
-    variations
-    =>
-    [
-      #{identifier => <<"true">>, name => <<"True">>, value => <<"true">>},
-      #{identifier => <<"false">>, name => <<"False">>, value => <<"false">>}
+      #{identifier => <<"variation1">>, name => <<"variation1">>, value => <<"variation1">>},
+      #{identifier => <<"variation2">>, name => <<"variation2">>, value => <<"variation2">>},
+      #{identifier => <<"variation3">>, name => <<"variation3">>, value => <<"variation3">>}
     ],
     version => 4
   }.
