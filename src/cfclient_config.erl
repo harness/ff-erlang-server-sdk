@@ -64,6 +64,9 @@
 % If disabled, will use debug level
 -define(DEFAULT_VERBOSE_EVALUATION_LOGS, false).
 
+% For percentage rollout, enable hashing on flag identifier as well as target identifier
+-define(DEFAULT_HASH_FLAG_AND_TARGET_IDS, false).
+
 -spec defaults() -> map().
 defaults() ->
   #{
@@ -96,7 +99,8 @@ defaults() ->
     metrics_cache_table => ?METRICS_CACHE_TABLE,
     metrics_counter_table => ?METRICS_COUNTER_TABLE,
     % Enable to info log evaluation related logs - useful if customer production systems don't use debug logs
-    verbose_evaluation_logs => ?DEFAULT_VERBOSE_EVALUATION_LOGS
+    verbose_evaluation_logs => ?DEFAULT_VERBOSE_EVALUATION_LOGS,
+    hash_flag_and_target_ids => ?DEFAULT_HASH_FLAG_AND_TARGET_IDS
   }.
 
 

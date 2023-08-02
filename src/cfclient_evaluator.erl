@@ -270,7 +270,7 @@ evaluate_flag(group_rules, #{rules := []} = Flag, Target, Config) ->
   evaluate_flag(default_on, Flag, Target, Config);
 
 evaluate_flag(group_rules, #{rules := Rules} = Flag, Target, Config) when Rules /= null ->
-  case search_rules_for_inclusion(sort_by_priority(Rules), Target, Config) of
+  case search_rules_for_inclusion(sort_by_priority(Rules), Target, Config, maps:get(identifier, Flag)) of
     false ->
       #{verbose_evaluation_logs := IsVerboseLogging} = Config,
       ?LOG_EVALUATION_STATE(
@@ -367,11 +367,11 @@ search_variation_map([Head | Tail], Id) ->
   end.
 
 
--spec search_rules_for_inclusion([rule()], target(), config()) ->
+-spec search_rules_for_inclusion([rule()], target(), config(), binary()) ->
   Variation :: binary() | excluded | false.
-search_rules_for_inclusion([], _, _) -> false;
+search_rules_for_inclusion([], _, _, _) -> false;
 
-search_rules_for_inclusion([Rule | Tail], Target, Config) ->
+search_rules_for_inclusion([Rule | Tail], Target, Config, FlagIdentifier) ->
   #{clauses := Clauses, serve := Serve} = Rule,
   case lists:foldl(fun match_rule_clause/2, {Target, false}, Clauses) of
     {_, excluded} -> excluded;
@@ -389,7 +389,15 @@ search_rules_for_inclusion([Rule | Tail], Target, Config) ->
           #{identifier := Id, name := Name} = Target,
           Attributes = maps:get(attributes, Target, #{}),
           TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Id, Name),
-          apply_percentage_rollout(Variations, BucketBy, TargetAttributeValue, 0)
+
+          FinalTargetAttributeValue = case maps:get(hash_flag_and_target_ids, Config, false) of
+            true ->
+              <<TargetAttributeValue/binary, FlagIdentifier/binary>>;
+            false ->
+              TargetAttributeValue
+          end,
+
+          apply_percentage_rollout(Variations, BucketBy, FinalTargetAttributeValue, 0)
       end;
 
     _ -> search_rules_for_inclusion(Tail, Target, Config)
