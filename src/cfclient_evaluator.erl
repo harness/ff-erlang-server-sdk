@@ -270,7 +270,7 @@ evaluate_flag(group_rules, #{rules := []} = Flag, Target, Config) ->
   evaluate_flag(default_on, Flag, Target, Config);
 
 evaluate_flag(group_rules, #{rules := Rules} = Flag, Target, Config) when Rules /= null ->
-  case search_rules_for_inclusion(sort_by_priority(Rules), Target, Config, maps:get(identifier, Flag)) of
+  case search_rules_for_inclusion(sort_by_priority(Rules), Target, Config, maps:get(feature, Flag)) of
     false ->
       #{verbose_evaluation_logs := IsVerboseLogging} = Config,
       ?LOG_EVALUATION_STATE(
@@ -400,7 +400,7 @@ search_rules_for_inclusion([Rule | Tail], Target, Config, FlagIdentifier) ->
           apply_percentage_rollout(Variations, BucketBy, FinalTargetAttributeValue, 0)
       end;
 
-    _ -> search_rules_for_inclusion(Tail, Target, Config)
+    _ -> search_rules_for_inclusion(Tail, Target, Config, FlagIdentifier)
   end.
 
 
