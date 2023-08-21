@@ -233,7 +233,7 @@ config :cfclient,
       config_url: "https://config.ff.harness.io/api/1.0",
       events_url: "https://events.ff.harness.io/api/1.0",
       poll_interval: 60000,
-      hash_flag_and_target_ids: true
+      hash_flag_for_rollout: true
     ]]
 ```
 
