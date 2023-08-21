@@ -389,16 +389,15 @@ search_rules_for_inclusion([Rule | Tail], Target, Config, FlagIdentifier) ->
           #{identifier := Id, name := Name} = Target,
           Attributes = maps:get(attributes, Target, #{}),
           ValueForRollout1 = get_attribute_value(Attributes, BucketBy, Id, Name),
+          ValueForRollout2 =
+            case maps:get(hash_flag_for_rollout, Config, false) of
+              true ->
+                FlagIdentifierHashInt = 'Elixir.Murmur':hash_x86_32(FlagIdentifier),
+                FlagIdentifierHashBinary = <<FlagIdentifierHashInt:32/integer>>,
+                <<ValueForRollout1/binary, FlagIdentifierHashBinary/binary>>;
 
-          ValueForRollout2 = case maps:get(hash_flag_for_rollout, Config, false) of
-            true ->
-              FlagIdentifierHashInt = 'Elixir.Murmur':hash_x86_32(FlagIdentifier),
-              FlagIdentifierHashBinary = <<FlagIdentifierHashInt:32/integer>>,
-              <<ValueForRollout1/binary, FlagIdentifierHashBinary/binary>>;
-            false ->
-              ValueForRollout1
-          end,
-
+              false -> ValueForRollout1
+            end,
           apply_percentage_rollout(Variations, BucketBy, ValueForRollout2, 0, Config)
       end;
 
@@ -570,10 +569,11 @@ should_rollout(BucketBy, ValueToHash, Percentage, Config) ->
   Concatenated = <<ValueToHash/binary, ":", BucketBy/binary>>,
   % Using a pure Elixir library for murmur3
   Hash1 = 'Elixir.Murmur':hash_x86_32(Concatenated),
-  Hash2 = case maps:get(prime_multiplication_for_rollout, Config, false) of
-    true -> Hash1 * 17;
-    false -> Hash1
-  end,
+  Hash2 =
+    case maps:get(prime_multiplication_for_rollout, Config, false) of
+      false -> Hash1;
+      Factor -> Hash1 * Factor
+    end,
   BucketID = (Hash2 rem 100) + 1,
   (Percentage > 0) andalso (BucketID =< Percentage).
 

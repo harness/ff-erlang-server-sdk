@@ -9,25 +9,26 @@ config() -> cfclient_config:defaults().
 setup(UseHashFlag) ->
   Modules = [cfclient_config, cfclient_ets],
   InitialConfig = cfclient_config:defaults(),
-  Config = if
-             UseHashFlag -> maps:put(hash_flag_for_rollout, true, InitialConfig);
-             true -> InitialConfig
-           end,
+  Config =
+    if
+      UseHashFlag -> maps:put(hash_flag_for_rollout, true, InitialConfig);
+      true -> InitialConfig
+    end,
   meck:new(Modules),
   meck:expect(cfclient_config, get_config, fun () -> Config end),
   meck:expect(cfclient_config, get_config, fun (_) -> Config end),
   meck:expect(cfclient_config, defaults, fun () -> Config end),
   Modules.
 
-setup_without_hash_flag() ->
-  setup(false).
 
-setup_with_hash_flag() ->
-  setup(true).
+setup_without_hash_flag() -> setup(false).
+
+setup_with_hash_flag() -> setup(true).
 
 cleanup(Modules) ->
   % ?debugFmt("Running cleanup ~p)", [Modules]),
   meck:unload(Modules).
+
 
 top_test_() ->
   [
@@ -50,13 +51,9 @@ top_test_() ->
       setup,
       fun setup_with_hash_flag/0,
       fun cleanup/1,
-      [
-      {generator, fun percentage_rollout_multivariate_string_flag_hash_enabled/0}
-  ]
+      [{generator, fun percentage_rollout_multivariate_string_flag_hash_enabled/0}]
     }
   ].
-
-
 
 % Target Sample Data
 existing_target_a() ->
