@@ -6,14 +6,19 @@
 
 config() -> cfclient_config:defaults().
 
-setup(UseHashFlag) ->
+setup({HashFlag, PrimeMultiplication}) ->
   Modules = [cfclient_config, cfclient_ets],
   InitialConfig = cfclient_config:defaults(),
   Config =
     if
-      UseHashFlag -> maps:put(hash_flag_for_rollout, true, InitialConfig);
+      HashFlag -> maps:put(hash_flag_for_rollout, true, InitialConfig);
       true -> InitialConfig
     end,
+
+  if
+    PrimeMultiplication -> maps:put(prime_multiplication_for_rollout, 17, InitialConfig);
+    true -> InitialConfig
+  end,
   meck:new(Modules),
   meck:expect(cfclient_config, get_config, fun () -> Config end),
   meck:expect(cfclient_config, get_config, fun (_) -> Config end),
@@ -21,9 +26,9 @@ setup(UseHashFlag) ->
   Modules.
 
 
-setup_without_hash_flag() -> setup(false).
+setup_without_hash_flag() -> setup({false, false}).
 
-setup_with_hash_flag() -> setup(true).
+setup_with_hash_flag() -> setup({true, false}).
 
 cleanup(Modules) ->
   % ?debugFmt("Running cleanup ~p)", [Modules]),
