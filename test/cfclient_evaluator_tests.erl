@@ -9,20 +9,22 @@ config() -> cfclient_config:defaults().
 setup({HashFlag, PrimeMultiplication}) ->
   Modules = [cfclient_config, cfclient_ets],
   InitialConfig = cfclient_config:defaults(),
-  Config =
-    if
-      HashFlag -> maps:put(hash_flag_for_rollout, true, InitialConfig);
-      true -> InitialConfig
+  Config1 =
+    case HashFlag of
+      true -> maps:put(hash_flag_for_rollout, true, InitialConfig);
+      _ -> InitialConfig
     end,
 
-  if
-    PrimeMultiplication -> maps:put(prime_multiplication_for_rollout, 17, InitialConfig);
-    true -> InitialConfig
-  end,
+  Config2 =
+    case PrimeMultiplication of
+      false -> Config1; % Or some other 'empty' value
+      _ -> maps:put(prime_multiplication_for_rollout, PrimeMultiplication, Config1)
+    end,
+
   meck:new(Modules),
-  meck:expect(cfclient_config, get_config, fun () -> Config end),
-  meck:expect(cfclient_config, get_config, fun (_) -> Config end),
-  meck:expect(cfclient_config, defaults, fun () -> Config end),
+  meck:expect(cfclient_config, get_config, fun () -> Config2 end),
+  meck:expect(cfclient_config, get_config, fun (_) -> Config2 end),
+  meck:expect(cfclient_config, defaults, fun () -> Config2 end),
   Modules.
 
 
@@ -32,7 +34,7 @@ setup_with_hash_flag() -> setup({true, false}).
 
 setup_with_prime() -> setup({false, true}).
 
-setup_with_flag_hash_and_prime() -> setup({true, true}).
+setup_with_flag_hash_and_prime() -> setup({true, 3}).
 
 
 
@@ -2339,7 +2341,7 @@ percentage_rollout_multivariate_string_flag_hash_and_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({16987, 16263, 16750}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({16957, 16569, 16474}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2423,7 +2425,7 @@ percentage_rollout_multivariate_string_flag_hash_and_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 24871, 25129}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 24858, 25142}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2451,7 +2453,7 @@ percentage_rollout_multivariate_string_flag_hash_and_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({39818, 5122, 5060}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({40057, 5018, 4925}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
