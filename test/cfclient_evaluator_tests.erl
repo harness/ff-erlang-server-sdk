@@ -30,6 +30,9 @@ setup_without_hash_flag() -> setup({false, false}).
 
 setup_with_hash_flag() -> setup({true, false}).
 
+setup_with_prime() -> setup({false, true}).
+
+
 cleanup(Modules) ->
   % ?debugFmt("Running cleanup ~p)", [Modules]),
   meck:unload(Modules).
@@ -57,6 +60,12 @@ top_test_() ->
       fun setup_with_hash_flag/0,
       fun cleanup/1,
       [{generator, fun percentage_rollout_multivariate_string_flag_hash_enabled/0}]
+    },
+    {
+      setup,
+      fun setup_with_prime/0,
+      fun cleanup/1,
+      [{generator, fun percentage_rollout_multivariate_string_flag_prime_enabled/0}]
     }
   ].
 
@@ -2140,6 +2149,153 @@ percentage_rollout_multivariate_string_flag_hash_enabled() ->
                 timeout,
                 100,
                 ?_assertEqual({39818, 5122, 5060}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
+        end
+      }
+    ]
+  }.
+
+percentage_rollout_multivariate_string_flag_prime_enabled() ->
+  {
+    "Percentage Rollout Multivariate String Flag - Prime Enabled",
+    [
+      {
+        "34/33/33",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(34, 33, 33)
+              end
+            )
+        end,
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                100,
+                ?_assertEqual({17206, 16462, 16332}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
+        end
+      },
+      {
+        "100/0/0",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(100, 0, 0)
+              end
+            )
+        end,
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                100,
+                ?_assertEqual({50000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
+        end
+      },
+      {
+        "0/0/100",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(0, 0, 100)
+              end
+            )
+        end,
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                100,
+                ?_assertEqual({0, 0, 50000}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
+        end
+      },
+      {
+        "0/50/50",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(0, 50, 50)
+              end
+            )
+        end,
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                100,
+                ?_assertEqual({0, 25192, 24808}, do_string_variation_200k_times({0, 0, 0}, 0))
+              }
+            ]
+        end
+      },
+      {
+        "80/10/10",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(80, 10, 10)
+              end
+            )
+        end,
+        fun
+          (_) ->
+            [
+              {
+                timeout,
+                100,
+                ?_assertEqual({40250, 4826, 4924}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
