@@ -208,18 +208,25 @@ config :cfclient,
     ]}]
 ```
 
-## Experimental: Use Flag Identifier with Percentage Rollout Hash
+## Percentage Rollout Experimental Features
 
-### Elixir
+### Hash Flag Identifier
 
-To enable this, set `hash_flag_and_target_ids` to true.
+This option uses murmur3 hash on the flag identifier, and then appends the hash onto the flag identifier. The full 
+bitstring then runs through murmur3 hash again.
 
-If `hash_flag_and_target_ids` is not explicitly set, or set to false, the SDK will use the original hashing method.
+#### Elixir
+
+Activation: To activate this feature, set `hash_flag_and_target_ids` to true.
+
+Default Behavior: If `hash_flag_and_target_ids` is not explicitly set, or set to false, the SDK will only hash the target identifier.
 
 ```elixir
 config :cfclient,
-    log_level: :debug,
-    [api_key: System.get_env("FF_API_KEY_0"),
+    [
+      api_key: System.get_env("FF_API_KEY_0"),
+      log_level: :debug,
+
     # For additional config you can pass in, see Erlang SDK docs: https://github.com/harness/ff-erlang-server-sdk/blob/main/docs/further_reading.md#further-reading
     # we are just using the main config url here as an example.
     config: [
@@ -227,6 +234,34 @@ config :cfclient,
       events_url: "https://events.ff.harness.io/api/1.0",
       poll_interval: 60000,
       hash_flag_and_target_ids: true
+    ]]
+```
+
+### Multiply hash by a prime number
+
+This option will multiply the hash by the number you provide. We recommend a prime number, like 17.
+
+### Elixir
+
+Activation: To activate this feature, set the value of `prime_multiplication_for_rollout` to your required number
+
+Combination: This feature can be used alongside `hash_flag_and_target_ids` 
+
+Default Behavior: If `prime_multiplication_for_rollout` is not explicitly set, or set to false, the SDK will proceed without multiplying the hash.
+
+```elixir
+config :cfclient,
+    [
+      api_key: System.get_env("FF_API_KEY_0"),
+      log_level: :debug,
+
+    # For additional config you can pass in, see Erlang SDK docs: https://github.com/harness/ff-erlang-server-sdk/blob/main/docs/further_reading.md#further-reading
+    # we are just using the main config url here as an example.
+    config: [
+      config_url: "https://config.ff.harness.io/api/1.0",
+      events_url: "https://events.ff.harness.io/api/1.0",
+      poll_interval: 60000,
+      prime_multiplication_for_rollout: 17
     ]]
 ```
 
