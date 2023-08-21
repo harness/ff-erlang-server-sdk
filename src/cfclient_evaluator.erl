@@ -388,16 +388,16 @@ search_rules_for_inclusion([Rule | Tail], Target, Config, FlagIdentifier) ->
           #{bucketBy := BucketBy, variations := Variations} = Distribution,
           #{identifier := Id, name := Name} = Target,
           Attributes = maps:get(attributes, Target, #{}),
-          TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Id, Name),
+          ValueForRollout1 = get_attribute_value(Attributes, BucketBy, Id, Name),
 
-          FinalTargetAttributeValue = case maps:get(hash_flag_and_target_ids, Config, false) of
+          ValueForRollout2 = case maps:get(hash_flag_and_target_ids, Config, false) of
             true ->
-              <<TargetAttributeValue/binary, FlagIdentifier/binary>>;
+              <<ValueForRollout1/binary, FlagIdentifier/binary>>;
             false ->
-              TargetAttributeValue
+              ValueForRollout1
           end,
 
-          apply_percentage_rollout(Variations, BucketBy, FinalTargetAttributeValue, 0)
+          apply_percentage_rollout(Variations, BucketBy, ValueForRollout2, 0)
       end;
 
     _ -> search_rules_for_inclusion(Tail, Target, Config, FlagIdentifier)
@@ -553,19 +553,19 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
 
 -spec apply_percentage_rollout(Variations :: list(), binary(), binary(), integer()) ->
   VariationId :: binary() | excluded.
-apply_percentage_rollout([Head | Tail], BucketBy, TargetValue, Acc) ->
+apply_percentage_rollout([Head | Tail], BucketBy, ValueToHash, Acc) ->
   Percentage = Acc + maps:get(weight, Head),
-  case should_rollout(BucketBy, TargetValue, Percentage) of
+  case should_rollout(BucketBy, ValueToHash, Percentage) of
     true -> maps:get(variation, Head);
-    false -> apply_percentage_rollout(Tail, BucketBy, TargetValue, Percentage)
+    false -> apply_percentage_rollout(Tail, BucketBy, ValueToHash, Percentage)
   end;
 
 apply_percentage_rollout([], _, _, _) -> excluded.
 
 
 -spec should_rollout(binary(), binary(), integer()) -> boolean().
-should_rollout(BucketBy, TargetValue, Percentage) ->
-  Concatenated = <<TargetValue/binary, ":", BucketBy/binary>>,
+should_rollout(BucketBy, ValueToHash, Percentage) ->
+  Concatenated = <<ValueToHash/binary, ":", BucketBy/binary>>,
   % Using a pure Elixir library for murmur3
   Hash = 'Elixir.Murmur':hash_x86_32(Concatenated),
   BucketID = (Hash rem 100) + 1,
