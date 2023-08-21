@@ -32,9 +32,9 @@ setup_without_hash_flag() -> setup({false, false}).
 
 setup_with_hash_flag() -> setup({true, false}).
 
-setup_with_prime() -> setup({false, true}).
+setup_with_prime() -> setup({false, 17}).
 
-setup_with_flag_hash_and_prime() -> setup({true, 3}).
+setup_with_flag_hash_and_prime() -> setup({true, 17}).
 
 
 
@@ -2194,7 +2194,7 @@ percentage_rollout_multivariate_string_flag_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({17206, 16462, 16332}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({17096, 16449, 16455}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2278,7 +2278,7 @@ percentage_rollout_multivariate_string_flag_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 25192, 24808}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 25013, 24987}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2306,7 +2306,7 @@ percentage_rollout_multivariate_string_flag_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({40250, 4826, 4924}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({39997, 4960, 5043}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2341,7 +2341,7 @@ percentage_rollout_multivariate_string_flag_hash_and_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({16957, 16569, 16474}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({16866, 16464, 16670}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2425,7 +2425,7 @@ percentage_rollout_multivariate_string_flag_hash_and_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 24858, 25142}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 24797, 25203}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2453,7 +2453,7 @@ percentage_rollout_multivariate_string_flag_hash_and_prime_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({40057, 5018, 4925}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({39865, 5084, 5051}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
