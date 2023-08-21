@@ -390,9 +390,11 @@ search_rules_for_inclusion([Rule | Tail], Target, Config, FlagIdentifier) ->
           Attributes = maps:get(attributes, Target, #{}),
           ValueForRollout1 = get_attribute_value(Attributes, BucketBy, Id, Name),
 
-          ValueForRollout2 = case maps:get(hash_flag_and_target_ids, Config, false) of
+          ValueForRollout2 = case maps:get(hash_flag_for_rollout, Config, false) of
             true ->
-              <<ValueForRollout1/binary, FlagIdentifier/binary>>;
+              FlagIdentifierHashInt = 'Elixir.Murmur':hash_x86_32(FlagIdentifier),
+              FlagIdentifierHashBinary = <<FlagIdentifierHashInt:32/integer>>,
+              <<ValueForRollout1/binary, FlagIdentifierHashBinary/binary>>;
             false ->
               ValueForRollout1
           end,

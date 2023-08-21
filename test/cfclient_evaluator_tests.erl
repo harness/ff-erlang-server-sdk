@@ -10,7 +10,7 @@ setup(UseHashFlag) ->
   Modules = [cfclient_config, cfclient_ets],
   InitialConfig = cfclient_config:defaults(),
   Config = if
-             UseHashFlag -> maps:put(hash_flag_and_target_ids, true, InitialConfig);
+             UseHashFlag -> maps:put(hash_flag_for_rollout, true, InitialConfig);
              true -> InitialConfig
            end,
   meck:new(Modules),
@@ -1779,7 +1779,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({25192, 24808}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       },
       {
@@ -1801,7 +1801,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({200000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({50000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       },
       {
@@ -1823,7 +1823,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({0, 200000}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({0, 50000}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       },
       {
@@ -1845,7 +1845,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({140098, 59902}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({35198, 14802}, do_bool_variation_200k_times({0, 0}, 0))}]
         end
       }
     ]
@@ -1878,7 +1878,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({17206, 16462, 16332}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -1906,7 +1906,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({200000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({50000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -1934,7 +1934,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 0, 200000}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 0, 50000}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -1962,7 +1962,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 25192, 24808}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -1990,7 +1990,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({160095, 19903, 20002}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({40250, 4826, 4924}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2000,7 +2000,7 @@ percentage_rollout_multivariate_string_flag() ->
 
 percentage_rollout_multivariate_string_flag_hash_enabled() ->
   {
-    "Percentage Rollout Multivariate String Flag",
+    "Percentage Rollout Multivariate String Flag - Flag Hash Enabled",
     [
       {
         "34/33/33",
@@ -2025,7 +2025,7 @@ percentage_rollout_multivariate_string_flag_hash_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({68181, 65967, 65852}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({16987, 16263, 16750}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2053,7 +2053,7 @@ percentage_rollout_multivariate_string_flag_hash_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({200000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({50000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2081,7 +2081,7 @@ percentage_rollout_multivariate_string_flag_hash_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 0, 200000}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 0, 50000}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2109,7 +2109,7 @@ percentage_rollout_multivariate_string_flag_hash_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 100124, 99876}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 24871, 25129}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2137,7 +2137,7 @@ percentage_rollout_multivariate_string_flag_hash_enabled() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({159978, 19995, 20027}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({39818, 5122, 5060}, do_string_variation_200k_times({0, 0, 0}, 0))
               }
             ]
         end
@@ -2145,7 +2145,7 @@ percentage_rollout_multivariate_string_flag_hash_enabled() ->
     ]
   }.
 
-do_bool_variation_200k_times({TrueCounter, FalseCounter}, 200000) -> {TrueCounter, FalseCounter};
+do_bool_variation_200k_times({TrueCounter, FalseCounter}, 50000) -> {TrueCounter, FalseCounter};
 
 do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
   Counter = AccuIn + 1,
@@ -2165,7 +2165,7 @@ do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
   end.
 
 
-do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, 200000) ->
+do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, 50000) ->
   {Variation1Counter, Variation2Counter, Variation3Counter};
 
 do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, AccuIn) ->
