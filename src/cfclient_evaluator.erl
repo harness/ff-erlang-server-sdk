@@ -399,7 +399,7 @@ search_rules_for_inclusion([Rule | Tail], Target, Config, FlagIdentifier) ->
               ValueForRollout1
           end,
 
-          apply_percentage_rollout(Variations, BucketBy, ValueForRollout2, 0)
+          apply_percentage_rollout(Variations, BucketBy, ValueForRollout2, 0, Config)
       end;
 
     _ -> search_rules_for_inclusion(Tail, Target, Config, FlagIdentifier)
@@ -553,24 +553,28 @@ custom_attribute_list_elem_to_binary(Element) when is_list(Element) ->
   not_ok.
 
 
--spec apply_percentage_rollout(Variations :: list(), binary(), binary(), integer()) ->
+-spec apply_percentage_rollout(Variations :: list(), binary(), binary(), integer(), config()) ->
   VariationId :: binary() | excluded.
-apply_percentage_rollout([Head | Tail], BucketBy, ValueToHash, Acc) ->
+apply_percentage_rollout([Head | Tail], BucketBy, ValueToHash, Acc, Config) ->
   Percentage = Acc + maps:get(weight, Head),
-  case should_rollout(BucketBy, ValueToHash, Percentage) of
+  case should_rollout(BucketBy, ValueToHash, Percentage, Config) of
     true -> maps:get(variation, Head);
-    false -> apply_percentage_rollout(Tail, BucketBy, ValueToHash, Percentage)
+    false -> apply_percentage_rollout(Tail, BucketBy, ValueToHash, Percentage, Config)
   end;
 
-apply_percentage_rollout([], _, _, _) -> excluded.
+apply_percentage_rollout([], _, _, _, _) -> excluded.
 
 
--spec should_rollout(binary(), binary(), integer()) -> boolean().
-should_rollout(BucketBy, ValueToHash, Percentage) ->
+-spec should_rollout(binary(), binary(), integer(), config()) -> boolean().
+should_rollout(BucketBy, ValueToHash, Percentage, Config) ->
   Concatenated = <<ValueToHash/binary, ":", BucketBy/binary>>,
   % Using a pure Elixir library for murmur3
-  Hash = 'Elixir.Murmur':hash_x86_32(Concatenated),
-  BucketID = (Hash rem 100) + 1,
+  Hash1 = 'Elixir.Murmur':hash_x86_32(Concatenated),
+  Hash2 = case maps:get(prime_multiplication_for_rollout, Config, false) of
+    true -> Hash1 * 17;
+    false -> Hash1
+  end,
+  BucketID = (Hash2 rem 100) + 1,
   (Percentage > 0) andalso (BucketID =< Percentage).
 
 
