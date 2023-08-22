@@ -217,9 +217,9 @@ bitstring then runs through murmur3 hash again.
 
 #### Elixir
 
-Activation: To activate this feature, set `hash_flag_and_target_ids` to true.
+Activation: To activate this feature, set `hash_flag_for_rollout` to true.
 
-Default Behavior: If `hash_flag_and_target_ids` is not explicitly set, or set to false, the SDK will only hash the target identifier.
+Default Behavior: If `hash_flag_for_rollout` is not explicitly set, or set to false, the SDK will only hash the target identifier.
 
 ```elixir
 config :cfclient,
