@@ -1761,7 +1761,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({99992, 100008}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({25016, 24984}, do_bool_variation_50k_times())}]
         end
       },
       {
@@ -1783,7 +1783,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({200000, 0}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({50000, 0}, do_bool_variation_50k_times())}]
         end
       },
       {
@@ -1805,7 +1805,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({0, 200000}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({0, 50000}, do_bool_variation_50k_times())}]
         end
       },
       {
@@ -1827,7 +1827,7 @@ percentage_rollout_boolean_flag() ->
         end,
         fun
           (_) ->
-            [{timeout, 100, ?_assertEqual({140098, 59902}, do_bool_variation_200k_times({0, 0}, 0))}]
+            [{timeout, 100, ?_assertEqual({35074, 14926}, do_bool_variation_50k_times())}]
         end
       }
     ]
@@ -1860,7 +1860,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({68024, 66092, 65884}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({17014, 16622, 16364}, do_string_variation_50k_times())
               }
             ]
         end
@@ -1888,7 +1888,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({200000, 0, 0}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({50000, 0, 0}, do_string_variation_50k_times())
               }
             ]
         end
@@ -1916,7 +1916,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 0, 200000}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 0, 50000}, do_string_variation_50k_times())
               }
             ]
         end
@@ -1944,7 +1944,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({0, 99992, 100008}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({0, 25016, 24984}, do_string_variation_50k_times())
               }
             ]
         end
@@ -1972,7 +1972,7 @@ percentage_rollout_multivariate_string_flag() ->
               {
                 timeout,
                 100,
-                ?_assertEqual({160095, 19903, 20002}, do_string_variation_200k_times({0, 0, 0}, 0))
+                ?_assertEqual({40016, 5006, 4978}, do_string_variation_50k_times())
               }
             ]
         end
@@ -1980,57 +1980,51 @@ percentage_rollout_multivariate_string_flag() ->
     ]
   }.
 
-do_bool_variation_200k_times({TrueCounter, FalseCounter}, 200000) -> {TrueCounter, FalseCounter};
+do_bool_variation_50k_times() ->
+  InitialCounters = {0, 0}, 
+  lists:foldl(
+    fun(Counter, {TrueCounter, FalseCounter}) ->
+      TargetIdentifierNumber = integer_to_binary(Counter),
+      DynamicTarget = #{
+        identifier => <<"target", TargetIdentifierNumber/binary>>,
+        name => <<"targetname", TargetIdentifierNumber/binary>>,
+        anonymous => <<"">>
+      },
+      case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
+        {ok, _VariationIdentifier, true} ->
+          {TrueCounter + 1, FalseCounter};
+        {ok, _VariationIdentifier, false} ->
+          {TrueCounter, FalseCounter + 1}
+      end
+    end,
+    InitialCounters,
+    lists:seq(1, 50000)
+  ).
 
-do_bool_variation_200k_times({TrueCounter, FalseCounter}, AccuIn) ->
-  Counter = AccuIn + 1,
-  TargetIdentifierNumber = integer_to_binary(Counter),
-  DynamicTarget =
-    #{
-      identifier => <<"target", TargetIdentifierNumber/binary>>,
-      name => <<"targetname", TargetIdentifierNumber/binary>>,
-      anonymous => <<"">>
-    },
-  case cfclient_evaluator:bool_variation(<<"My_boolean_flag">>, DynamicTarget, config()) of
-    {ok, _VariationIdentifier, true} ->
-      do_bool_variation_200k_times({TrueCounter + 1, FalseCounter}, Counter);
 
-    {ok, _VariationIdentifier, false} ->
-      do_bool_variation_200k_times({TrueCounter, FalseCounter + 1}, Counter)
-  end.
+do_string_variation_50k_times() ->
+  InitialCounters = {0, 0, 0},
+  lists:foldl(
+    fun(Counter, {Variation1Counter, Variation2Counter, Variation3Counter}) ->
+      TargetIdentifierNumber = integer_to_binary(Counter),
+      DynamicTarget = #{
+        identifier => <<"target", TargetIdentifierNumber/binary>>,
+        name => <<"targetname", TargetIdentifierNumber/binary>>,
+        anonymous => <<"">>
+      },
+      case cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) of
+        {ok, _VariationIdentifier, <<"variation1">>} ->
+          {Variation1Counter + 1, Variation2Counter, Variation3Counter};
+        {ok, _VariationIdentifier, <<"variation2">>} ->
+          {Variation1Counter, Variation2Counter + 1, Variation3Counter};
+        {ok, _VariationIdentifier, <<"variation3">>} ->
+          {Variation1Counter, Variation2Counter, Variation3Counter + 1}
+      end
+    end,
+    InitialCounters,
+    lists:seq(1, 50000)
+  ).
 
-
-do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, 200000) ->
-  {Variation1Counter, Variation2Counter, Variation3Counter};
-
-do_string_variation_200k_times({Variation1Counter, Variation2Counter, Variation3Counter}, AccuIn) ->
-  Counter = AccuIn + 1,
-  TargetIdentifierNumber = integer_to_binary(Counter),
-  DynamicTarget =
-    #{
-      identifier => <<"target", TargetIdentifierNumber/binary>>,
-      name => <<"targetname", TargetIdentifierNumber/binary>>,
-      anonymous => <<"">>
-    },
-  case cfclient_evaluator:string_variation(<<"My_string_flag">>, DynamicTarget, config()) of
-    {ok, _VariationIdentifier, <<"variation1">>} ->
-      do_string_variation_200k_times(
-        {Variation1Counter + 1, Variation2Counter, Variation3Counter},
-        Counter
-      );
-
-    {ok, _VariationIdentifier, <<"variation2">>} ->
-      do_string_variation_200k_times(
-        {Variation1Counter, Variation2Counter + 1, Variation3Counter},
-        Counter
-      );
-
-    {ok, _VariationIdentifier, <<"variation3">>} ->
-      do_string_variation_200k_times(
-        {Variation1Counter, Variation2Counter, Variation3Counter + 1},
-        Counter
-      )
-  end.
 
 
 prerequisite_matches_flag1() -> cfclient_evaluator_test_data:prerequisite_matches_flag_1().

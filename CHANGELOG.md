@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.0.0] - TBD - UPDATE WHEN RELEASED
+## ** Breaking for Erlang applications (not affecting Elixir applications) **
+
+- The percentage rollout hash algorithm was slightly different compared to other Feature Flags SDKs, which resulted
+- in a different bucket allocation for the same target. The overall distribution was the same, but this change ensures
+- that the same target will get the same allocation per SDK
+
 ## [2.0.1] - 2023-07-02
 ### Fixes
 - Some SDK dependencies were not getting included in releases created by `mix `
@@ -149,5 +156,4 @@ Evaluation Rules not yet complete:
   - Custom rules
 - Pre-requisites
 - Percentage Rollout
-  
   
