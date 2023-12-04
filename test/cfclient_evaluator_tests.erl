@@ -1996,9 +1996,32 @@ percentage_rollout_multivariate_string_flag() ->
             )
         end,
         fun
-          (_) -> [{timeout, 100, ?_assertEqual({34971, 15029}, do_string_variation_50k_times(<<"My_string_flag">>, custom_bucket_by_field))}]
+          (_) -> [{timeout, 100, ?_assertEqual({40026, 4959, 5015}, do_string_variation_50k_times(<<"My_string_flag">>, custom_bucket_by_field))}]
         end
-      }]
+      },
+      {
+        "80/10/10 with custom bucket by field falls back to identifier",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_string_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_multi_variate(80, 10, 10, <<"custom_bucket_by_field">>)
+              end
+            )
+        end,
+        fun
+          % Same bucketIDs as regular 70/10/10 test due to targetID fallback
+          (_) -> [{timeout, 100, ?_assertEqual({40016, 5006, 4978}, do_string_variation_50k_times(<<"My_string_flag">>, custom_field_that_is_not_found))}]
+        end
+      }
+    ]
   }.
 
 do_bool_variation_50k_times(FlagName, TargetAttribute) ->
