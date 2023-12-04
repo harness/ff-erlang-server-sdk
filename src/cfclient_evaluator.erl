@@ -389,17 +389,17 @@ search_rules_for_inclusion([Rule | Tail], Target, Config) ->
           #{identifier := Id, name := Name} = Target,
           TargetAttributes = maps:get(attributes, Target, #{}),
           TargetAttributeValue = get_attribute_value(TargetAttributes, BucketBy, Id, Name),
-          FinalTargetAttributeValue =
+          {FinalTargetAttributeValue, FinalBucketBy} =
             case TargetAttributeValue of
               <<>> ->
                 % If the BucketBy field isn't found in the target, then fall back to the ID and log a warning
                 ?LOG_WARNING("BucketBy attribute '~p' not found in target attributes, falling back to 'identifier' ~p", [BucketBy, Id]),
-                Id;
+                {Id, <<"identifier">>};
 
               _ ->
-                TargetAttributeValue
+                {TargetAttributeValue, BucketBy}
             end,
-          apply_percentage_rollout(Variations, BucketBy, FinalTargetAttributeValue, 0)
+          apply_percentage_rollout(Variations, FinalBucketBy, FinalTargetAttributeValue, 0)
       end;
 
     _ -> search_rules_for_inclusion(Tail, Target, Config)
