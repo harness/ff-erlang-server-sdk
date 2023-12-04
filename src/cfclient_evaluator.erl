@@ -389,7 +389,7 @@ search_rules_for_inclusion([Rule | Tail], Target, Config) ->
           #{identifier := Id, name := Name} = Target,
           TargetAttributes = maps:get(attributes, Target, #{}),
           TargetAttributeValue = get_attribute_value(TargetAttributes, BucketBy, Id, Name),
-          EffectiveAttributeValue =
+          FinalTargetAttributeValue =
             case TargetAttributeValue of
               <<>> ->
                 % If the BucketBy field isn't found in the target, then fall back to the ID and log a warning
@@ -397,10 +397,9 @@ search_rules_for_inclusion([Rule | Tail], Target, Config) ->
                 Id;
 
               _ ->
-                % Otherwise, use TargetAttributeValue
                 TargetAttributeValue
             end,
-          apply_percentage_rollout(Variations, BucketBy, EffectiveAttributeValue, 0)
+          apply_percentage_rollout(Variations, BucketBy, FinalTargetAttributeValue, 0)
       end;
 
     _ -> search_rules_for_inclusion(Tail, Target, Config)
