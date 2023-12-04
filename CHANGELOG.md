@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [3.0.0] - 2023-12-04
-## ** Breaking for Erlang applications (not affecting Elixir applications) **
+## ** Breaking Percentage Rollout Changes **
 
 - The percentage rollout hash algorithm was slightly different compared to other Feature Flags SDKs, which resulted
 in a different bucket allocation for the same target. The overall distribution was the same, but this change ensures
