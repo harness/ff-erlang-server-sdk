@@ -1842,7 +1842,30 @@ percentage_rollout_boolean_flag() ->
         fun
           (_) -> [{timeout, 100, ?_assertEqual({34971, 15029}, do_bool_variation_50k_times(<<"My_boolean_flag">>, custom_bucket_by_field))}]
         end
-      }]
+      },
+      {
+        "70/30 with custom bucket by field falls back to identifier",
+        setup,
+        fun
+          () ->
+            meck:expect(
+              cfclient_ets,
+              get,
+              fun
+                (_, <<"segments/target_group_1">>) ->
+                  cfclient_evaluator_test_data:target_group_for_percentage_rollout();
+
+                (_, <<"flags/My_boolean_flag">>) ->
+                  cfclient_evaluator_test_data:percentage_rollout_boolean(70, 30, <<"custom_bucket_by_field">>)
+              end
+            )
+        end,
+        fun
+          % Same assertion as regular 70/30 due to using identifier 
+          (_) -> [{timeout, 100, ?_assertEqual({35074, 14926}, do_bool_variation_50k_times(<<"My_boolean_flag">>, a_field_that_cant_be_found))}]
+        end
+      }
+    ]
   }.
 
 percentage_rollout_multivariate_string_flag() ->
