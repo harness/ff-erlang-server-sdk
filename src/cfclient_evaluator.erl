@@ -387,9 +387,19 @@ search_rules_for_inclusion([Rule | Tail], Target, Config) ->
         Distribution when Distribution /= null ->
           #{bucketBy := BucketBy, variations := Variations} = Distribution,
           #{identifier := Id, name := Name} = Target,
-          Attributes = maps:get(attributes, Target, #{}),
-          TargetAttributeValue = get_attribute_value(Attributes, BucketBy, Id, Name),
-          apply_percentage_rollout(Variations, BucketBy, TargetAttributeValue, 0)
+          TargetAttributes = maps:get(attributes, Target, #{}),
+          TargetAttributeValue = get_attribute_value(TargetAttributes, BucketBy, Id, Name),
+          {FinalTargetAttributeValue, FinalBucketBy} =
+            case TargetAttributeValue of
+              <<>> ->
+                % If the BucketBy field isn't found in the target, then fall back to the ID and log a warning
+                ?LOG_WARNING("BucketBy attribute '~p' not found in target attributes, falling back to 'identifier' ~p", [BucketBy, Id]),
+                {Id, <<"identifier">>};
+
+              _ ->
+                {TargetAttributeValue, BucketBy}
+            end,
+          apply_percentage_rollout(Variations, FinalBucketBy, FinalTargetAttributeValue, 0)
       end;
 
     _ -> search_rules_for_inclusion(Tail, Target, Config)
@@ -557,7 +567,7 @@ apply_percentage_rollout([], _, _, _) -> excluded.
 
 -spec should_rollout(binary(), binary(), integer()) -> boolean().
 should_rollout(BucketBy, TargetValue, Percentage) ->
-  Concatenated = <<TargetValue/binary, ":", BucketBy/binary>>,
+  Concatenated = <<BucketBy/binary, ":", TargetValue/binary>>,
   % Using a pure Elixir library for murmur3
   Hash = 'Elixir.Murmur':hash_x86_32(Concatenated),
   BucketID = (Hash rem 100) + 1,

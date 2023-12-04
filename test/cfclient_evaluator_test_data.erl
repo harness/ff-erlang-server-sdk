@@ -29,8 +29,8 @@
     prerequisite_matches_flag_2/0,
     prerequisite_matches_flag_3/0,
     generate_targets/2,
-    percentage_rollout_boolean/2,
-    percentage_rollout_multi_variate/3
+    percentage_rollout_boolean/3,
+    percentage_rollout_multi_variate/4
   ]
 ).
 
@@ -905,7 +905,7 @@ target_group_for_percentage_rollout() ->
   }.
 
 
-percentage_rollout_boolean(Weight1, Weight2) ->
+percentage_rollout_boolean(Weight1, Weight2, BucketBy) ->
   #{
     defaultServe => #{variation => <<"true">>},
     environment => <<"dev">>,
@@ -937,7 +937,7 @@ percentage_rollout_boolean(Weight1, Weight2) ->
           distribution
           =>
           #{
-            bucketBy => <<"identifier">>,
+            bucketBy => BucketBy,
             variations
             =>
             [
@@ -959,7 +959,7 @@ percentage_rollout_boolean(Weight1, Weight2) ->
     version => 4
   }.
 
-percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
+percentage_rollout_multi_variate(Weight1, Weight2, Weight3, BucketBy) ->
   #{
     defaultServe => #{variation => <<"variation3">>},
     environment => <<"dev">>,
@@ -991,7 +991,7 @@ percentage_rollout_multi_variate(Weight1, Weight2, Weight3) ->
           distribution
           =>
           #{
-            bucketBy => <<"identifier">>,
+            bucketBy => BucketBy,
             variations
             =>
             [
