@@ -1990,7 +1990,7 @@ percentage_rollout_multivariate_string_flag() ->
                 (_, <<"segments/target_group_1">>) ->
                   cfclient_evaluator_test_data:target_group_for_percentage_rollout();
 
-                (_, <<"flags/My_boolean_flag">>) ->
+                (_, <<"flags/My_string_flag">>) ->
                   cfclient_evaluator_test_data:percentage_rollout_multi_variate(80, 10, 10, <<"custom_bucket_by_field">>)
               end
             )
