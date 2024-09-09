@@ -47,41 +47,20 @@ get_value({Type, Identifier}, Config) ->
 
 % @doc Store flag or segment into cache with new value.
 -spec set_value({flag, binary()} | {segment, binary()}, flag() | segment()) ->
-  ok | {error, outdated}.
+  ok.
 set_value({Type, Identifier}, Value) ->
   Config = cfclient_config:get_config(),
   set_value({Type, Identifier}, Value, Config).
 
 
 -spec set_value({flag, binary()} | {segment, binary()}, flag() | segment(), config()) ->
-  ok | {error, outdated}.
+  ok.
 set_value({Type, Identifier}, Value, Config) ->
   #{cache_table := CacheTable} = Config,
-  case is_outdated({Type, Identifier}, Value, Config) of
-    true ->
-      % This should not happen
-      ?LOG_ERROR("Outdated type ~p, identifier ~p", [Type, Identifier]),
-      {error, outdated};
-
-    false ->
-      Key = format_key({Type, Identifier}),
-      true = ets:insert(CacheTable, {Key, Value}),
-      ?LOG_DEBUG("Cached type ~p, identifier ~p", [Type, Identifier]),
-      ok
-  end.
-
-
--spec is_outdated({flag, binary()} | {segment, binary()}, flag() | segment(), config()) ->
-  boolean().
-is_outdated(Key, NewValue, Config) ->
-  case get_value(Key, Config) of
-    {error, undefined} -> false;
-
-    {ok, OldValue} ->
-      #{version := OldVersion} = OldValue,
-      #{version := NewVersion} = NewValue,
-      OldVersion > NewVersion
-  end.
+  Key = format_key({Type, Identifier}),
+  true = ets:insert(CacheTable, {Key, Value}),
+  ?LOG_DEBUG("Cached type ~p, identifier ~p", [Type, Identifier]),
+  ok.
 
 
 % @doc Create binary key from flag or segment.
@@ -89,16 +68,16 @@ is_outdated(Key, NewValue, Config) ->
 format_key({flag, Identifier}) -> <<"flags/", Identifier/binary>>;
 format_key({segment, Identifier}) -> <<"segments/", Identifier/binary>>.
 
--spec cache_segment(segment()) -> ok | {error, outdated}.
+-spec cache_segment(segment()) -> ok.
 cache_segment(#{identifier := Id} = Value) -> set_value({segment, Id}, Value).
 
--spec cache_segment(segment(), config()) -> ok | {error, outdated}.
+-spec cache_segment(segment(), config()) -> ok.
 cache_segment(#{identifier := Id} = Value, Config) -> set_value({segment, Id}, Value, Config).
 
--spec cache_flag(flag()) -> ok | {error, outdated}.
+-spec cache_flag(flag()) -> ok.
 cache_flag(#{feature := Id} = Value) -> set_value({flag, Id}, Value).
 
--spec cache_flag(flag(), config()) -> ok | {error, outdated}.
+-spec cache_flag(flag(), config()) -> ok.
 cache_flag(#{feature := Id} = Value, Config) -> set_value({flag, Id}, Value, Config).
 
 -spec set_pid(pid()) -> ok.
