@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.0.3] - 2025-11-20
+### Fixes
+Bumps `harness_ff_erlang_client_api` to `1.0.4` to fix a problem with lowercase Content-Type headers not parsing correctly
+
 ## [3.0.2] - 2024-09-26
 ### Enhancements
 Bumps `mochiweb` to latest version `3.2.2`
