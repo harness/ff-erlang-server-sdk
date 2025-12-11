@@ -4,7 +4,7 @@
   [
     {description, "Harness Feature Flags Server SDK"},
     {pkg_name, "harness_ff_erlang_server_sdk"},
-    {vsn, "3.0.3"},
+    {vsn, "3.0.4"},
     {registered, []},
     {mod, {cfclient_app, []}},
     {applications, [kernel, stdlib, cfapi, base64url, murmur, jsx, mochiweb]},
